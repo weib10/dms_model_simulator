@@ -19,6 +19,7 @@ hysteresis) and see how it copes with realistic model errors.
 
 ## Contents
 
+- [Requirements](#requirements)
 - [Quick start](#quick-start)
 - [What it produces](#what-it-produces)
 - [Checking a post-processing program](#checking-a-post-processing-program)
@@ -27,6 +28,40 @@ hysteresis) and see how it copes with realistic model errors.
 - [Outputs](#outputs)
 - [Conventions](#conventions)
 - [Known limitations](#known-limitations)
+
+## Requirements
+
+| what | version | notes |
+|---|---|---|
+| Python | **3.10 or newer** | macOS ships 3.9 as `/usr/bin/python3`, which is too old: install a newer one (python.org installer, Homebrew or uv) |
+| numpy | 1.25 or newer | installed by pip |
+| pyyaml, matplotlib, pillow | any recent | installed by pip |
+| pytest | 7 or newer | only for the tests (`.[test]`) |
+
+- Pure Python, CPU only: no GPU, no compiler, no system libraries. Runs on Windows, Linux and macOS (see [Tested on](#tested-on)).
+- Disk: the install is ~150 MB (mostly numpy and matplotlib); outputs are small except GIFs and `--image render`.
+- Windows: keep output directories short (e.g. `runs/`): catalog row paths are long and the 260-character path
+  limit makes deep ones fail.
+
+### Tested on
+
+`pip install -e ".[test]"`, `dms-sim demo` and the full test suite, from a fresh clone except on the Windows 11
+development machine (2026-11-09; numpy 2.5.4, pyyaml 6.0.3, matplotlib 3.11.2, pillow 13.0.0 everywhere):
+
+| OS | Python | tests |
+|---|---|---|
+| Windows 11 (x86_64) | 3.12.10 | 192 passed, 1 skipped |
+| Windows 10 (x86_64) | 3.12.10 | 192 passed, 1 skipped |
+| Ubuntu 26.04 on WSL2 (x86_64) | 3.14.4 | 192 passed, 1 skipped |
+| macOS 15.5 (Apple silicon) | 3.12.16 (via uv) | 192 passed, 1 skipped |
+
+The skipped test is a timing test (skipped when `DMS_SKIP_TIMING=1`).
+
+No Python 3.10+ on the machine? [uv](https://docs.astral.sh/uv/) fetches one without touching the system Python:
+
+```bash
+uv venv --python 3.12 .venv && uv pip install --python .venv -e ".[test]"
+```
 
 ## Quick start
 
