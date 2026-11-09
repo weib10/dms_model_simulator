@@ -58,8 +58,10 @@ def yaw_pitch_to_dir(yaw: float, pitch: float) -> np.ndarray:
 
 
 def angle_between(a: np.ndarray, b: np.ndarray) -> float:
-    c = np.dot(normalize(a), normalize(b))
-    return float(np.arccos(np.clip(c, -1, 1)) * R2D)
+    """Angle in degrees. atan2(|a x b|, a . b) instead of arccos(a . b): arccos turns a last-digit difference of a
+    near-1 dot product into ~1e-6 deg, so the same input gave different angles on different maths libraries."""
+    a, b = np.asarray(a, float), np.asarray(b, float)
+    return float(np.arctan2(np.linalg.norm(np.cross(a, b)), np.dot(a, b)) * R2D)
 
 
 def cv_to_flu(v: np.ndarray) -> np.ndarray:

@@ -26,6 +26,7 @@ hysteresis) and see how it copes with realistic model errors.
 - [Scenarios](#scenarios)
 - [Model errors](#model-errors)
 - [Outputs](#outputs)
+- [Reproducibility](#reproducibility)
 - [Conventions](#conventions)
 - [Known limitations](#known-limitations)
 
@@ -238,6 +239,38 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   timestamp / frame index / size / object count are written as 0.
 - **frame_yaml**: `<stem>.frames/labels/<frame>.yaml` with `detections` (class_id, confidence, left, top, width,
   height, class_name) and `timestamp_msec`. `--image render` adds the camera view per frame.
+
+## Reproducibility
+
+Four independent random sources, each with its own seed:
+
+| source | decides | set with |
+|---|---|---|
+| behaviour seed | blink timing, random events, what `gen-scenario` generates | `--seed`, entry `variation.seeds` |
+| model-error seed | box jitter, misses, false positives, head pose / gaze noise | `--emulator-seed`, entry `variation.emulator_seeds` |
+| variant N | driver position and size, camera mount error | `--variant N` |
+| expand seed | parameter draws in `catalog expand --mode random` only | `catalog expand --seed` |
+
+They do not disturb each other: enabling yawns does not shift the model noise, each box class has its own noise
+stream, and an entry's random parameters do not depend on which other entries are selected. The default
+`boundary` / `grid` expansion draws nothing.
+
+**What makes two runs the same test.** `catalog expand` writes a fingerprint into `manifest.json`: package
+version, git commit (and whether code, configs or catalog have uncommitted changes), numpy version, and a hash of
+every config file, of `catalog/profiles.yaml` / `behaviors.yaml` and of each selected entry. Every behaviour card
+prints its short id. A row id already encodes the entry, level, parameters, behaviour seed, scenario content,
+camera, variant, model-error seed and profile; the fingerprint adds code and configs.
+
+**Same machine:** identical inputs give byte-identical files. **Across operating systems:** text files are always
+written with LF, but the maths libraries may differ in the last digit of a float (measured Windows vs Linux:
+largest difference below 1e-12, no difference in which boxes are detected or in any label). Compare runs with:
+
+```bash
+dms-sim catalog verify runs/benchmark runs/rerun      # fingerprint, row ids, every row (numbers within --tol, default 1e-9)
+```
+
+It prints what differs and exits non-zero unless both runs are the same test with the same output. For a
+standard benchmark the simplest is to generate it once with a tagged version and share the files.
 
 ## Conventions
 

@@ -122,7 +122,7 @@ def cmd_render(a):
 
 
 def _write_jsonl(path: Path, rows):
-    with open(path, "w") as fh:
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
         for r in rows:
             fh.write(json.dumps(r) + "\n")
     return path
@@ -181,8 +181,8 @@ def cmd_demo(a):
               f"![timeline {c.name}]({stem}__timeline.png)", "",
               f"Preview: [{stem}.gif]({stem}.gif) (truth boxes green, model red, truth behaviour tags top right)", ""]
     report = out / "report.md"
-    report.write_text("\n".join(L), encoding="utf-8")
-    with open(out / "report.json", "w") as fh:
+    report.write_text("\n".join(L), encoding="utf-8", newline="\n")
+    with open(out / "report.json", "w", encoding="utf-8", newline="\n") as fh:
         json.dump({"scenario": name, "seed": a.seed, "emulator_seed": a.emulator_seed, "metrics": metrics}, fh, indent=2)
     print()
     print(mt); print()
@@ -257,7 +257,7 @@ def cmd_compare(a):
     print(table)
     if a.out:
         Path(a.out).mkdir(parents=True, exist_ok=True)
-        (Path(a.out) / f"compare__{name}.md").write_text(table + "\n")
+        (Path(a.out) / f"compare__{name}.md").write_text(table + "\n", encoding="utf-8", newline="\n")
         with open(Path(a.out) / f"compare__{name}.json", "w") as fh:
             json.dump(rows, fh, indent=2)
 
@@ -345,8 +345,8 @@ def cmd_batch(a):
     md = (f"# Batch: {len(scenarios)} scenario(s) x {len(variants)} variant(s) x {len(cams)} camera(s)\n\n"
           f"seed {a.seed}; outputs in data/\n\n## Model vs truth\n\n{table}\n\n## Driver and mount per run\n\n"
           + "\n".join(vt) + "\n")
-    (out / "batch_summary.md").write_text(md)
-    with open(out / "batch_summary.json", "w") as fh:
+    (out / "batch_summary.md").write_text(md, encoding="utf-8", newline="\n")
+    with open(out / "batch_summary.json", "w", encoding="utf-8", newline="\n") as fh:
         json.dump(recs, fh, indent=2, default=float)
     print(table)
     print(f"wrote {out}/batch_summary.md, batch_summary.json and {len(recs)} runs in {out}/data")
@@ -391,7 +391,7 @@ def cmd_catalog(a):
             raise SystemExit(f"{bad} invalid entr{'y' if bad == 1 else 'ies'}")
     elif a.action == "index":
         out = Path(a.out or C.CATALOG_DIR / "INDEX.md")
-        out.write_text(C.index_markdown(entries), encoding="utf-8")
+        out.write_text(C.index_markdown(entries), encoding="utf-8", newline="\n")
         print(f"wrote {out}")
     elif a.action == "expand":
         sel = C.select(entries, a.select, a.status, a.tag)
@@ -404,6 +404,23 @@ def cmd_catalog(a):
                        levels=a.level, overrides=overrides)
         print(f"wrote {a.out}/manifest.json: {len(man['rows'])} rows from {len(man['entries'])} entries"
               + (f" (planned, skipped: {', '.join(man['skipped_planned'])})" if man["skipped_planned"] else ""))
+    elif a.action == "verify":
+        from .repro import compare_runs
+        res = compare_runs(a.run_a, a.run_b, a.tol)
+        for s in res["fingerprint_diff"]:
+            print(f"fingerprint differs: {s}")
+        for s in res["fingerprint_info"]:
+            print(f"note (does not change the output): {s}")
+        for k, what in (("only_a", "rows only in A"), ("only_b", "rows only in B"), ("not_exported", "rows not exported")):
+            if res[k]:
+                print(f"{what}: {len(res[k])} (e.g. {res[k][0]})")
+        for rid, probs in list(res["rows_differ"].items())[:10]:
+            print(f"{rid}:\n  " + "\n  ".join(probs[:5]))
+        print(f"{res['rows_compared']} rows compared, {len(res['rows_differ'])} differ; largest number difference "
+              f"{res['worst_number_diff']:.3g} (tolerance {res['tol']:g})")
+        print("SAME TEST, SAME OUTPUT" if res["same"] else "DIFFERENT")
+        if not res["same"]:
+            raise SystemExit(1)
     elif a.action == "run":
         done = C.run(a.run_dir, a.select, a.jobs)
         print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row")
@@ -593,6 +610,10 @@ def main(argv=None):
     q.add_argument("run_dir"); q.add_argument("select", nargs="*", default=None,
                                          help="only these rows: entry ids, categories, families or prefixes (as for list)")
     q.add_argument("--jobs", type=int, default=1, help="parallel processes")
+    q = cs.add_parser("verify", help="compare two exported runs: fingerprint (code, configs, entries), row ids, "
+                                     "and every row's output (structure exact, numbers within --tol)")
+    q.add_argument("run_a"); q.add_argument("run_b")
+    q.add_argument("--tol", type=float, default=1e-9, help="largest allowed number difference (default 1e-9)")
     cg.set_defaults(fn=cmd_catalog)
     a = p.parse_args(argv)
     a.fn(a)

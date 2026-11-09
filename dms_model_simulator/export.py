@@ -114,7 +114,7 @@ def export_frame_yaml(records, camera, out_dir, cfg: dict | str | Path | None = 
                       f"    width: {x2 - x1:.{bd}f}", f"    height: {y2 - y1:.{bd}f}",
                       f"    class_name: {L.class_names[d['class_id']]}"]
         lines.append(f"timestamp_msec: {int(round(fr['t'] * 1e3))}")
-        (labels / f"{stem}.yaml").write_text("\n".join(lines) + "\n", encoding="ascii")
+        (labels / f"{stem}.yaml").write_text("\n".join(lines) + "\n", encoding="ascii", newline="\n")
         if image == "render":
             from .viz import draw_camera_view
             draw_camera_view(by_frame[fr["frame_index"]], camera, cabin, scale=1.0, clean=True).save(

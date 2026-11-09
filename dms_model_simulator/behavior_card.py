@@ -122,7 +122,7 @@ def card(sim, row: dict | None = None) -> dict:
     return {
         "row_id": row.get("row_id"), "entry": row.get("entry"), "title": row.get("title", ""),
         "summary": row.get("summary", ""), "params": row.get("params", {}), "level": row.get("level"),
-        "profile": row.get("profile"),
+        "profile": row.get("profile"), "fingerprint_id": row.get("fingerprint_id"),
         "scenario": sim.scenario["name"], "description": sim.scenario.get("description", ""),
         "camera": sim.camera.name, "fps": fps, "frames": len(sim.records),
         "duration_s": round(len(sim.records) / fps, 3), "seed": sim.seed, "emulator_seed": sim.emulator_seed,
@@ -149,6 +149,8 @@ def markdown(c: dict) -> str:
         L += [f"- 情境：`{c['entry']}` {c['title']}", f"- 說明：{c['summary']}" if c.get("summary") else None,
               f"- 難度：`{c['level']}`" if c.get("level") else None,
               f"- 參數：`{json.dumps(c['params'], ensure_ascii=False)}`"]
+    if c.get("fingerprint_id"):
+        L.append(f"- 版本指紋：`{c['fingerprint_id']}`（程式、設定、條目的雜湊；同一個指紋 + 同一個 row id = 同一個測試，見 manifest.json）")
     if c.get("profile"):
         L.append(f"- 誤差等級：`{c['profile']}`")
     L += [f"- 相機：`{c['camera']}`，{fps:g} fps，{c['frames']} 幀（{c['duration_s']:g} s）",
@@ -183,7 +185,7 @@ def write_card(sim, out_dir, row: dict | None = None) -> Path:
     c = card(sim, row)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    (out / "card.json").write_text(json.dumps(c, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "card.json").write_text(json.dumps(c, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     p = out / "card.md"
-    p.write_text(markdown(c), encoding="utf-8")
+    p.write_text(markdown(c), encoding="utf-8", newline="\n")
     return p

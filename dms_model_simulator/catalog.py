@@ -434,7 +434,7 @@ def save_scenario(sc: dict, path) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     head = {k: v for k, v in sc.items() if k != "segments"}
-    with open(p, "w", encoding="utf-8") as fh:
+    with open(p, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(yaml.safe_dump(head, sort_keys=False, default_flow_style=False, allow_unicode=True, width=1000))
         fh.write("segments:\n")
         for seg in sc["segments"]:
@@ -530,6 +530,9 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
         if n_rows > max_rows:
             raise CatalogError(f"more than {max_rows} rows; narrow the selection or raise --max-rows")
         plan.append((e, var, axes, psets))
+    from .repro import fingerprint, fingerprint_id
+    fp = fingerprint([e for e, *_ in plan])
+    fp_id = fingerprint_id(fp)
     out = Path(out_dir)
     (out / "scenarios").mkdir(parents=True, exist_ok=True)
     rows = []
@@ -549,10 +552,12 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
                                  "variant": v,
                                  "seed": int(bseed), "emulator_seed": int(es), "profile": pr,
                                  "emulator_overrides": resolve_profile(pr, profiles), "fps": fps,
-                                 "title": e.get("title", ""), "summary": e.get("summary", "")})
+                                 "title": e.get("title", ""), "summary": e.get("summary", ""),
+                                 "fingerprint_id": fp_id})
     man = {"mode": mode, "seed": seed, "n": n, "levels": list(levels or LEVELS), "overrides": overrides or {},
+           "fingerprint": fp, "fingerprint_id": fp_id,
            "entries": sorted({r["entry"] for r in rows}), "skipped_planned": skipped, "rows": rows}
-    (out / "manifest.json").write_text(json.dumps(man, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+    (out / "manifest.json").write_text(json.dumps(man, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     return man
 
 
@@ -618,7 +623,7 @@ def _run_row(r: dict, run_dir: str) -> dict:
     card = write_card(sim, d, row=r)
     info = {"row_id": r["row_id"], "frames_dir": str(st["path"]), "truth": str(truth), "frames": st["frames"],
             "card": str(card)}
-    (d / "row.json").write_text(json.dumps(info, indent=1) + "\n")
+    (d / "row.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8", newline="\n")
     return info
 
 
@@ -653,7 +658,7 @@ def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print) -> 
 def write_row_list(run_dir: Path, done: list[dict]) -> None:
     """<run>/rows.tsv: row_id, labels dir, truth JSONL, behaviour card, fps (one line per exported row)."""
     man = {r["row_id"]: r for r in load_manifest(run_dir)["rows"]}
-    with open(run_dir / "rows.tsv", "w", encoding="utf-8") as fh:
+    with open(run_dir / "rows.tsv", "w", encoding="utf-8", newline="\n") as fh:
         fh.write("row_id\tlabels_dir\ttruth\tcard\tfps\n")
         for i in done:
             fh.write(f"{i['row_id']}\t{i['frames_dir']}/labels\t{i['truth']}\t{i['card']}\t"

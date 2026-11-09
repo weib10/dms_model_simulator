@@ -145,7 +145,7 @@ class Simulation:
             self.dmsbin_stats = write_dms_bin(self.records, self.camera, dms_layout, out / f"{stem}.dms.bin",
                                               include_face=True if include_face is None else bool(include_face))
             paths.append(self.dmsbin_stats["path"])
-        with open(out / f"{stem}__camera.json", "w") as fh:
+        with open(out / f"{stem}__camera.json", "w", encoding="utf-8", newline="\n") as fh:
             desc = self.camera.describe()
             drv = self.cfgs["cabin"]["driver"]
             desc["driver"] = {"eye_point_offset": list(drv["eye_point_offset"]), "head_scale": self.cabin.head_scale}
@@ -156,7 +156,7 @@ class Simulation:
 
 
 def _write_jsonl(path: Path, rows) -> Path:
-    with open(path, "w") as fh:
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
         for r in rows:
             fh.write(json.dumps(r, default=_json_default) + "\n")
     return path

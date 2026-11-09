@@ -174,7 +174,7 @@ def save_yaml(scenario: dict, path: str | Path) -> Path:
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     head = {k: v for k, v in scenario.items() if k != "segments"}
-    with open(p, "w", encoding="utf-8") as fh:
+    with open(p, "w", encoding="utf-8", newline="\n") as fh:
         yaml.safe_dump(head, fh, sort_keys=False, default_flow_style=None)
         fh.write("segments:\n")
         for seg in scenario["segments"]:
