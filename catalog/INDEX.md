@@ -113,7 +113,7 @@
 | `NEG-DIS-TRAFFIC-LIGHT` | 抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1 / 2 / 3 s | N08 | look_up, traffic_light | 三段 | ready |
 | `NEG-DRW-ALERT-30` | 30 s 專心開車（正常眨眼） | N01 | sleepiness, baseline |  | ready |
 | `NEG-DRW-BLINK-HEAVY` | 很常眨眼（每分鐘 20 / 35 / 50 次），每次都正常長度 | N10 | blink | 三段 | ready |
-| `NEG-DRW-HAND-AT-EYE` | 揉眼睛、推眼鏡：右手指節擋住右眼（0.5 / 1 / 2 s，1 / 2 / 3 次） | N13 | hand_near_face, occlusion, rub_eyes | 三段 | ready |
+| `NEG-DRW-HAND-AT-EYE` | 揉眼睛、推眼鏡：右手指節擋住右眼（0.4 / 0.7 / 0.95 s，1 / 2 / 3 次） | N13 | hand_near_face, occlusion, rub_eyes | 三段 | ready |
 | `NEG-DRW-LOOKDOWN-EYES-OPEN` | 低頭看大腿 1.0 / 1.8 / 2.6 s，眼睛是睜開的 | N12 | look_down, class_flip | 三段 | ready |
 | `NEG-DRW-MUSIC-NOD` | 跟著音樂點頭：頭規律地上下點，眼睛一直看路 | N27 | look_down, head_nod | 三段 | ready |
 | `NEG-DRW-SNEEZE` | 打噴嚏、咳嗽：短閉眼＋頭往前點＋嘴張開 | N14 | look_down, mouth, sneeze | 三段 | ready |
@@ -127,7 +127,7 @@
 | `NEG-SMK-CIG-IN-LAP` | 菸夾在手上、手放在大腿（沒在抽）：2 / 5 / 10 s | N23 | smoking | 三段 | ready |
 | `NEG-SMK-HAND-AT-MOUTH` | 手摸嘴或托下巴，沒有菸（每次 1.5 / 3 / 4 s，1 / 2 / 3 次） | N21 | smoking, hand_near_face, occlusion | 三段 | ready |
 | `NEG-SMK-HAND-AT-MOUTH-FP` | 手摸嘴或托下巴，模擬模型在嘴前成段報出假香菸框（每次 1 / 3 / 6 s，1 / 2 / 3 次） | N21, C03 | smoking, hand_near_face, false_positive | 三段 | ready |
-| `NEG-SMK-HELD-STICK` | 嘴裡叼東西（沒用手扶）：棒棒糖 / 牙籤 / 吸管（3 / 6 / 10 s） | N22 | held_object, mouth, false_positive | 三段 | ready |
+| `NEG-SMK-HELD-STICK` | 嘴裡叼東西（沒用手扶）：牙籤 / 棒棒糖 / 吸管（3 / 6 / 10 s） | N22 | held_object, mouth, false_positive | 三段 | ready |
 | `NEG-SBT-HAND-ACROSS-CHEST` | 安全帶有繫，手摸耳朵、摸嘴、講電話時擋到一段安全帶（每次 1.5 / 4 / 8 s） | N29, V08, N20, N21 | seatbelt, occlusion, hand_near_face | 三段 | ready |
 | `NEG-ALL-BASIC-CLEAN-30` | 基本款：30 s 只看前方、正常眨眼 | N01 | basic, baseline |  | ready |
 | `NEG-ALL-DRINK-EAT` | 喝水、吃東西（手拿東西到嘴邊）：每口喝 1.5 / 3 / 5 s，吃東西 1 / 2 / 4 口 | N19 | hand_near_face, drinking, eating, occlusion | 三段 | ready |

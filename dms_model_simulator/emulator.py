@@ -224,7 +224,7 @@ class Emulator:
         cigarette): per rule a Markov chain that runs only while the truth hand state is in `when_hand` and the hand
         box is in the image (reset otherwise), active a share `p` of those frames in runs of mean `mean_frames`. The
         box is centred on the truth hand box, scaled by `box_scale` [w, h], with `jitter_frac` uniform jitter.
-        Optional `when_held`: the rule also needs the truth held object (cup, bottle; none = empty hand) in it.
+        Optional `when_held`: the rule also needs the truth held object (configs/cabin.yaml held_objects) in it.
         `anchor: held` centres the box on the held object's box instead of the hand box (an object in the mouth
         without a hand); `when_hand` is then optional (missing = any hand state)."""
         c = self.cfg.get("contextual_false_positives") or {}
@@ -236,6 +236,8 @@ class Emulator:
         for rule in c.get("rules") or []:
             name = rule["name"]
             when, held = rule.get("when_hand"), rule.get("when_held")
+            if when is None and rule.get("anchor", "hand") != "held":
+                raise ValueError(f"contextual_false_positives rule {name!r}: when_hand is required unless anchor: held")
             base = truth.get("held_bbox") if rule.get("anchor", "hand") == "held" else hand
             if base is None or (when is not None and truth.get("hand") not in ([when] if isinstance(when, str) else when)) or (
                     held is not None and truth.get("held", "none") not in ([held] if isinstance(held, str) else held)):

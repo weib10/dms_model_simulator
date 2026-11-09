@@ -34,8 +34,8 @@ hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_
 phone: none                  # none | lap | call
 cigarette: none              # none | mouth | hand (hand = at the current hand position)
 seatbelt: on                 # on | off (YAML on/off booleans are accepted)
-held: none                   # none | cup | bottle: an object at the lips (drinking; configs/cabin.yaml held_objects),
-                             # needs hand: at_mouth
+held: none                   # none | an object at the lips (configs/cabin.yaml held_objects): cup, bottle (need
+                             # hand: at_mouth), lollipop, toothpick, straw, pen (held in the mouth alone)
 
 # Per-frame behaviour labels, derived from the script (never from model output). See dms_model_simulator/events.py.
 events:

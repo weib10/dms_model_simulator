@@ -23,6 +23,8 @@ driver:
   ipd: 0.064                            # informational: eye positions come from landmarks.*_eye_center (keep in sync)
   head_pivot: [-0.08, 0.0, -0.06]       # rotation centre, head frame (relative to eye midpoint)
   head_center_offset: [0.0, 0.0, 0.03]  # nominal head centre = eye point + head_pivot + this (camera look_at_head aim, plots)
+  hand_scale: 1.0                       # hand size: hand box and the radius of hand / forearm occluders (PLACEHOLDER:
+                                        # measure how much a real hand hides, e.g. rubbing an eye, then set it)
 
 # Landmark template in head frame (X out of the face, Y left, Z up), origin = eye midpoint.
 landmarks:
@@ -264,5 +266,5 @@ occluders:
     type: cylinder
     active_when_hand: wheel_cross_r
     a: [0.48, -0.14, -0.09]
-    b: [0.25, -0.30, -0.30]
+    b: [0.25, -0.10, -0.35]      # elbow kept 7 cm off the dash_right lens
     radius: 0.035

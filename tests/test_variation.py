@@ -107,3 +107,30 @@ def test_demo_and_compare_with_variant(tmp_path):
     assert f"data/tiny_v1__{CAM}__card/card.md" in (demo / "report.md").read_text(encoding="utf-8")
     cli.main(["compare", "--scenario", str(sc), "--variant", "1", "--out", str(tmp_path / "cmp")])
     assert (tmp_path / "cmp" / "compare__tiny_v1.md").exists()
+
+
+def test_hand_scale_scales_hand_occluders_and_box_only():
+    cfgs = load_configs()
+    base = Cabin(cfgs["cabin"])
+    cfgs["cabin"]["driver"]["hand_scale"] = 0.8
+    small = Cabin(cfgs["cabin"])
+    assert np.isclose(small.hand_size, 0.8 * base.hand_size)
+    for a, b in zip(base.occluders, small.occluders):
+        if "active_when_hand" in a and "radius" in a:              # hand spheres and forearms
+            assert np.isclose(b["radius"], 0.8 * a["radius"]), a["name"]
+        else:                                                       # steering wheel etc. unchanged
+            assert a == b
+    h0, h1 = base.head_state(0, 0, 0), small.head_state(0, 0, 0)
+    assert np.allclose(base.hand_position("at_eye", h0), small.hand_position("at_eye", h1))   # same place
+    cfgs["cabin"]["driver"]["hand_scale"] = 0
+    with pytest.raises(ValueError):
+        Cabin(cfgs["cabin"])
+
+
+def test_hands_variation_has_its_own_stream():
+    base = {"driver": {"head_scale": [0.9, 1.1]}, "camera": {"mount_rotation_deg": {"yaw": [-2, 2]}}}
+    wide = {**base, "hands": {"hand_scale": [0.7, 1.3]}}
+    for n in range(5):
+        a, b = sample_variant(n, base), sample_variant(n, wide)
+        assert a["camera"] == b["camera"] and a["cabin"]["driver"]["head_scale"] == b["cabin"]["driver"]["head_scale"]
+        assert 0.7 <= b["cabin"]["driver"]["hand_scale"] <= 1.3 and "hand_scale" not in a["cabin"]["driver"]

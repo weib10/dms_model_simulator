@@ -173,10 +173,18 @@ def generate(cfg: dict, duration_s: float, seed: int = 0, name: str | None = Non
         pts = [a] + [c for c in cuts if a < c < b] + [b]
         for s, e in zip(pts[:-1], pts[1:]):
             seg, owned = {"target": tgt}, set()
-            for ecfg, eps, _ in kinds:
+            for ecfg, eps, out_key in kinds:
                 ep = _active(eps, s)
                 if ep:
-                    at = {k: v for k, v in _attrs(ecfg, ep[2]).items() if k not in owned}
+                    at = _attrs(ecfg, ep[2])
+                    if out_key not in builtin:
+                        # an extra kind (habits) only acts while no other kind is active, and sets all its
+                        # attributes or none (a drink's cup needs its hand: at_mouth; no toothpick during a
+                        # cigarette or a call)
+                        if owned:
+                            continue
+                    else:
+                        at = {k: v for k, v in at.items() if k not in owned}
                     seg = deep_merge(seg, at)
                     owned |= set(at)
             seg["duration"] = round((e - s) * res, 6)

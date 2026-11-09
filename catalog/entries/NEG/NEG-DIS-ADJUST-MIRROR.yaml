@@ -1,14 +1,18 @@
 id: NEG-DIS-ADJUST-MIRROR
 title: "調後照鏡：手握住後照鏡、眼睛看著鏡子（1 / 2 / 2.8 s）"
 summary: "對照門檻：Euro NCAP 長分心 3 s。眼睛離開路面看鏡子 small 1 s、medium 2 s、large 2.8 s，手離開方向盤。
-  後照鏡相機（rearview_mirror）的鏡頭就在鏡子上，手一握住整張臉都被擋（臉、眼、嘴全部偵測不到）；dash_right 看到的是轉頭看鏡子。"
+  後照鏡相機（rearview_mirror）的鏡頭就在鏡子上，手一握住整張臉都被擋（真值臉框遮擋 1.0，模型輸出裡臉、眼、嘴都沒有）；
+  dash_right 看到的是轉頭看鏡子，手在它的畫面外。"
 status: ready
 source: written
 tags: [mirror, hand_off_wheel, occlusion]
 behaviors: [N25]
 params:
+  hand_scale: {fixed: 1.0}          # hand size (configs/cabin.yaml driver.hand_scale); --param hand_scale=0.8
   look_s: {levels: {small: 1.0, medium: 2.0, large: 2.8}}
 template:
+  cabin:
+    driver: {hand_scale: "${hand_scale}"}
   segments:
     - {target: road_ahead,      duration: 3.0}
     - {target: rearview_mirror, duration: "${look_s}", hand: mirror}

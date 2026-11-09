@@ -147,11 +147,11 @@ A scenario is a list of segments. Each segment needs `target` (a gaze target fro
 | field | values |
 |---|---|
 | `head_pose`, `eye_openness`, `closure`, `blink`, `mouth_openness`, `yawn` | see `configs/behavior.yaml` |
-| `hand` | `wheel` \| `lap` \| `phone` \| `call` \| `smoke` \| `at_ear` \| `at_mouth` |
+| `hand` | `wheel` \| `lap` \| `phone` \| `call` \| `smoke` \| `at_ear` \| `at_mouth` \| `at_eye` \| `mirror` \| `wheel_cross_l` / `_c` / `_r` |
 | `phone` | `none` \| `lap` \| `call` |
 | `cigarette` | `none` \| `mouth` \| `hand` |
 | `seatbelt` | `on` \| `off` |
-| `held` | `none` \| `cup` \| `bottle` (with `hand: at_mouth`) |
+| `held` | `none` \| `cup` \| `bottle` (with `hand: at_mouth`) \| `lollipop` \| `toothpick` \| `straw` \| `pen` (in the mouth, no hand) |
 
 `gen-scenario` draws a Markov chain over the gaze targets, with phone, drowsiness, smoking and seatbelt-off
 episodes (`configs/scenario_gen.yaml`).
@@ -291,6 +291,10 @@ standard benchmark the simplest is to generate it once with a tagged version and
 ## Known limitations
 
 - Phone, hand and cigarette boxes have no visibility test: they are output even when the head hides them.
+- A hand is a sphere (plus a cylinder for the forearm in some poses), not a hand shape. Its size is
+  `driver.hand_scale` in `configs/cabin.yaml` (a placeholder until measured on real recordings): it sets how much
+  of the face a hand hides, e.g. while rubbing an eye. Entries that use it take `--param hand_scale=…`, and
+  `configs/variation.yaml` `hands:` can vary it per `--variant` (own random stream).
 - The `dash_right` optical axis does not point at the eye point, so the viewing angle the error model uses is
   smaller than the true one for that camera.
 - Landmarks outside the image count as visible; the far eye can reappear after a large head turn.

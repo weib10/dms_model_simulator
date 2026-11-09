@@ -313,3 +313,11 @@ def test_contextual_false_positive_anchored_on_a_held_object_in_the_mouth():
         assert d["bbox"] == pytest.approx(r["truth"]["held_bbox"])
     assert not any(d.get("context") for r in empty for d in r["pred"]["detections"])
     assert all(r["truth"]["held_bbox"] is None for r in empty)
+
+
+def test_contextual_rule_without_when_hand_needs_anchor_held():
+    rule = {"name": "loose", "class": "phone", "p": 0.5, "mean_frames": 5, "conf_range": [0.5, 0.6]}
+    sc = {"name": "d", "segments": [{"target": "road_ahead", "duration": 1.0, "hand": "at_ear"}]}
+    s = Simulation(sc, CAM, seed=1, emulator_overrides={"contextual_false_positives": {"enabled": True, "rules": [rule]}})
+    with pytest.raises(ValueError, match="when_hand"):
+        s.run()

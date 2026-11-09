@@ -343,3 +343,21 @@ def test_generator_extra_episode_kinds_and_mode_durations():
     for s in on["segments"]:
         if s.get("phone") == "call":
             assert s["hand"] == "call"
+
+
+def test_habits_on_top_of_builtin_kinds_never_break_generation():
+    # habits act only while no other kind is active and set all their attributes or none: a drink's cup always
+    # comes with hand: at_mouth, and no toothpick / cup shows up during a cigarette or a phone episode
+    import warnings
+    from dms_model_simulator import scenario_gen as G
+    base = G.load_gen_config()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        for seed in (2, 14, 21):                       # seeds that broke the attribute-by-attribute merge
+            sc = G.generate(deep_merge(base, {"habit_episodes": {"rate_per_min": 4}}), 300, seed)
+            Simulation(sc, "dash_right", fps=20)       # validates every segment (held needs its hand)
+            for s in sc["segments"]:
+                if s.get("held") == "cup":
+                    assert s.get("hand") == "at_mouth"
+                if s.get("held"):
+                    assert not s.get("cigarette") and not s.get("phone")

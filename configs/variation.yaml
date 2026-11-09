@@ -12,6 +12,9 @@ driver:
     z: [-0.08, 0.08]
   head_scale: [0.90, 1.10]     # head size (landmarks, lids, lips, head-frame offsets)
 
+hands:                         # own random stream: widening these ranges never changes the driver / camera draws
+  hand_scale: [1.0, 1.0]       # hand size (configs/cabin.yaml driver.hand_scale); widen once measured on real cases
+
 camera:                        # applied to whichever camera is simulated (the design aim stays on the nominal driver)
   mount_offset:                # vehicle frame (m)
     x: [-0.01, 0.01]

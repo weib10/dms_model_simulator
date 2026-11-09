@@ -80,7 +80,8 @@ behaviors:
         note: "瓶子舉到嘴邊可能被報成手機（emulator 的 bottle_at_mouth_as_phone）"}
   N20: {name: 手摸耳朵、撐頭（沒拿手機）, kind: normal, family: PHN, common: often, separable: medium, confused_with: [V08]}
   N21: {name: 手摸嘴、托下巴、抓鼻子（沒拿菸）, kind: normal, family: SMK, common: often, separable: medium, confused_with: [V10]}
-  N22: {name: 叼吸管、牙籤、筆、棒棒糖, kind: normal, family: SMK, common: sometimes, separable: hard, confused_with: [V10]}
+  N22: {name: 叼吸管、牙籤、筆、棒棒糖, kind: normal, family: SMK, common: sometimes, separable: hard, confused_with: [V10],
+        note: "細長物可能被報成菸框（emulator 的 stick_in_mouth_as_cigarette：吸管、筆機率較高）"}
   N23: {name: 菸拿在手上沒在抽, kind: normal, family: SMK, common: rare, separable: hard, confused_with: [V10],
         note: "待決定：目前真值把菸在手上算 smoking（behavior.yaml 的 smoking_cigarette_states 含 hand）"}
   N24: {name: 調冷氣、音響（手伸到中控）, kind: normal, family: DIS, common: often, separable: medium, confused_with: [V03, V09]}

@@ -62,7 +62,12 @@ class Cabin:
         self.phone_call_offset = s * np.array(cfg["phone_call_offset"], float)
         # head-frame hand states ("head_frame") read their position from "<state>_offset"
         self.hand_offsets = {k: s * np.array(cfg[f"{k}_offset"], float) for k, v in self.hands.items() if v == "head_frame"}
-        self.hand_size = float(cfg["hand_size"])
+        # hand_scale scales the hand: hand box size and the radius of every occluder tied to a hand state
+        # (hand spheres, forearms); hand positions stay where the config puts them
+        hs = self.hand_scale = float(d.get("hand_scale", 1.0))
+        if not hs > 0:
+            raise ValueError(f"driver.hand_scale must be > 0, got {d.get('hand_scale')!r}")
+        self.hand_size = hs * float(cfg["hand_size"])
         self.phone_size = tuple(cfg["phone_size"])
         self.cigarette_length, self.cigarette_diameter = (float(v) for v in cfg["cigarette_size"])
         self.cigarette_mouth = {k: np.array(v, float) for k, v in cfg["cigarette_mouth"].items()}
@@ -75,7 +80,8 @@ class Cabin:
         self.seatbelt_width = float(sb["width"])
         self.seatbelt_edge_samples = max(2, int(sb["edge_samples"]))
         self.seatbelt_occlusion_samples = max(1, int(sb["occlusion_samples"]))
-        self.occluders = cfg.get("occluders", [])
+        self.occluders = [dict(o, radius=hs * float(o["radius"])) if "active_when_hand" in o and "radius" in o else o
+                          for o in cfg.get("occluders", [])]
         self.held_objects = {k: {"start": s * np.array(v["start"], float), "dir": np.array(v["dir"], float),
                                  "length": float(v["length"]), "radius": float(v["radius"]),
                                  "needs_hand": v.get("needs_hand")}

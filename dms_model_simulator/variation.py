@@ -47,9 +47,12 @@ def sample_variant(variant: int, cfg: dict | None = None) -> dict:
     if int(variant) < 0:
         raise ValueError(f"variant must be >= 0, got {variant}")
     cfg = load_variation_config() if cfg is None else cfg
-    unknown = set(cfg) - {"driver", "camera"}
+    unknown = set(cfg) - {"driver", "camera", "hands"}
     if unknown:
-        raise ValueError(f"variation config: unknown sections {sorted(unknown)} (expected driver, camera)")
+        raise ValueError(f"variation config: unknown sections {sorted(unknown)} (expected driver, camera, hands)")
     rng = np.random.default_rng([int(variant), VARIANT_STREAM])
-    return {"variant": int(variant), "cabin": {"driver": _block(rng, cfg.get("driver"), "driver")},
-            "camera": _block(rng, cfg.get("camera"), "camera")}
+    driver = _block(rng, cfg.get("driver"), "driver")
+    camera = _block(rng, cfg.get("camera"), "camera")
+    # hands: own stream, so its ranges can change without moving the driver / camera draws of any variant
+    driver.update(_block(np.random.default_rng([int(variant), VARIANT_STREAM, 1]), cfg.get("hands"), "hands"))
+    return {"variant": int(variant), "cabin": {"driver": driver}, "camera": camera}
