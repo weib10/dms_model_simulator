@@ -77,7 +77,8 @@ class Cabin:
         self.seatbelt_occlusion_samples = max(1, int(sb["occlusion_samples"]))
         self.occluders = cfg.get("occluders", [])
         self.held_objects = {k: {"start": s * np.array(v["start"], float), "dir": np.array(v["dir"], float),
-                                 "length": float(v["length"]), "radius": float(v["radius"])}
+                                 "length": float(v["length"]), "radius": float(v["radius"]),
+                                 "needs_hand": v.get("needs_hand")}
                              for k, v in (cfg.get("held_objects") or {}).items()}
         for k, h in self.held_objects.items():
             if not h["length"] > 2 * h["radius"] > 0:

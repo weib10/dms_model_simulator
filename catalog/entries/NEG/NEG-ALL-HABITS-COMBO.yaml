@@ -1,0 +1,26 @@
+id: NEG-ALL-HABITS-COMBO
+title: "兩種正常行為疊在一起：邊笑邊看乘客、揉眼時低頭看儀表、邊講話邊看左鏡"
+summary: "對照：同時像兩種違規的組合（像分心＋像打哈欠／閉眼）。三段各一次，中間回前方 3 s：
+  (1) 看乘客 small 0.6 s、medium 0.9 s、large 1.2 s，同時大笑（嘴 0.4 / 0.55 / 0.7、眼 0.6 / 0.45 / 0.3）；
+  (2) 看儀表 0.6 / 1.2 / 1.8 s，同時右手揉右眼；(3) 看左鏡 0.5 / 0.8 / 1.2 s，同時講話（嘴 0.35）。
+  每段都在各自門檻內（長分心 3 s、儀表瞥視 2 s、鏡子 1.5 s、閉眼 1 s）。"
+status: ready
+source: written
+tags: [interaction, laugh, rub_eyes, glance]
+behaviors: [N17, N07, N13, N03, N15, N02]
+params:
+  chat_s: {levels: {small: 0.6, medium: 0.9, large: 1.2}}
+  mouth: {levels: {small: 0.4, medium: 0.55, large: 0.7}}
+  eyes: {levels: {small: 0.6, medium: 0.45, large: 0.3}}
+  rub_s: {levels: {small: 0.6, medium: 1.2, large: 1.8}}
+  mirror_s: {levels: {small: 0.5, medium: 0.8, large: 1.2}}
+template:
+  behavior: {transition_head_s: 0.25}
+  segments:
+    - {target: road_ahead,  duration: 3.0}
+    - {target: passenger,   duration: "${chat_s}", mouth_openness: "${mouth}", eye_openness: "${eyes}"}
+    - {target: road_ahead,  duration: 3.0}
+    - {target: cluster,     duration: "${rub_s}", hand: at_eye}
+    - {target: road_ahead,  duration: 3.0}
+    - {target: left_mirror, duration: "${mirror_s}", mouth_openness: 0.35}
+    - {target: road_ahead,  duration: 3.0, mouth_openness: 0.35}

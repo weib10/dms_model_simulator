@@ -421,8 +421,9 @@ def _check_scenario(sc: dict, cfgs: dict, fps: float, params: dict) -> list[str]
         if held != "none":
             if held not in (cab.get("held_objects") or {}):
                 errs.append(f"segment {i}: held {held!r} is not none / {' / '.join(cab.get('held_objects') or {})}")
-            if s.get("hand", beh["hand"]) != "at_mouth":
-                errs.append(f"segment {i}: held {held!r} needs hand: at_mouth")
+            need = ((cab.get("held_objects") or {}).get(held) or {}).get("needs_hand")
+            if need and s.get("hand", beh["hand"]) != need:
+                errs.append(f"segment {i}: held {held!r} needs hand: {need}")
         if "head_pose" in s and (not isinstance(s["head_pose"], list) or len(s["head_pose"]) != 3):
             errs.append(f"segment {i}: head_pose must be [yaw, pitch, roll]")
     return errs

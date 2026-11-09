@@ -29,7 +29,7 @@ class DriverFrame:
     yawning: bool = False
     cigarette: str = "none"       # none | mouth | hand
     seatbelt: str = "on"          # on | off
-    held: str = "none"            # none | an object at the lips (configs/cabin.yaml held_objects), hand at_mouth
+    held: str = "none"            # none | an object at the lips (configs/cabin.yaml held_objects)
 
 
 def on_off(v) -> str:
@@ -65,8 +65,9 @@ class BehaviorGenerator:
                 if held not in cabin.held_objects:
                     raise ValueError(f"held {held!r} is not none or one of {sorted(cabin.held_objects)} "
                                      "(configs/cabin.yaml held_objects)")
-                if s.get("hand", self.cfg["hand"]) != "at_mouth":
-                    raise ValueError(f"held {held!r} is an object at the lips: it needs hand: at_mouth")
+                need = cabin.held_objects[held].get("needs_hand")
+                if need and s.get("hand", self.cfg["hand"]) != need:
+                    raise ValueError(f"held {held!r} needs hand: {need} (configs/cabin.yaml held_objects)")
             s["held"] = held
             self.segments.append(s)
         self.duration = float(cum)

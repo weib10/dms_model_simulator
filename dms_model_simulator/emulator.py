@@ -224,7 +224,9 @@ class Emulator:
         cigarette): per rule a Markov chain that runs only while the truth hand state is in `when_hand` and the hand
         box is in the image (reset otherwise), active a share `p` of those frames in runs of mean `mean_frames`. The
         box is centred on the truth hand box, scaled by `box_scale` [w, h], with `jitter_frac` uniform jitter.
-        Optional `when_held`: the rule also needs the truth held object (cup, bottle; none = empty hand) in it."""
+        Optional `when_held`: the rule also needs the truth held object (cup, bottle; none = empty hand) in it.
+        `anchor: held` centres the box on the held object's box instead of the hand box (an object in the mouth
+        without a hand); `when_hand` is then optional (missing = any hand state)."""
         c = self.cfg.get("contextual_false_positives") or {}
         if not c.get("enabled"):
             return []
@@ -233,15 +235,16 @@ class Emulator:
         out = []
         for rule in c.get("rules") or []:
             name = rule["name"]
-            when, held = rule["when_hand"], rule.get("when_held")
-            if hand is None or truth.get("hand") not in ([when] if isinstance(when, str) else when) or (
+            when, held = rule.get("when_hand"), rule.get("when_held")
+            base = truth.get("held_bbox") if rule.get("anchor", "hand") == "held" else hand
+            if base is None or (when is not None and truth.get("hand") not in ([when] if isinstance(when, str) else when)) or (
                     held is not None and truth.get("held", "none") not in ([held] if isinstance(held, str) else held)):
                 self.ctx_state[name] = None
                 continue
             on = self.ctx_state[name] = markov_step(self.ctx_state.get(name), rule["p"], rule["mean_frames"], rng.random())
             if not on:
                 continue
-            x1, y1, x2, y2 = hand
+            x1, y1, x2, y2 = base
             sw, sh = rule.get("box_scale", [1.0, 1.0])
             w, h = (x2 - x1) * sw, (y2 - y1) * sh
             j = float(rule.get("jitter_frac", 0.05))

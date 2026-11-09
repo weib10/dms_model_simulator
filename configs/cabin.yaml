@@ -100,11 +100,17 @@ hands:                        # 3D positions of the hand centre for each hand st
   smoke: head_frame             # hand at the mouth holding a cigarette (smoke_offset)
   at_ear: head_frame            # hand at the right ear / cheek, no phone (scratching, resting the head)
   at_mouth: head_frame          # hand at the mouth, no cigarette (eating, drinking, covering a yawn)
+  at_eye: head_frame            # knuckles at the right eye (rubbing it, pushing glasses up): hides that eye
+  mirror: [0.36, -0.31, 0.13]   # hand gripping the rear-view mirror (adjusting it), just in front of a mirror camera
+  wheel_cross_l: [0.50, 0.12, -0.07]   # turning hand over hand: hand crossing the top of the wheel, left / centre /
+  wheel_cross_c: [0.50, 0.00, -0.08]   # right; on the steering-column camera's line of sight to the face
+  wheel_cross_r: [0.50, -0.12, -0.07]
 call_offset: [-0.075, -0.105, -0.030]        # head frame: hand at the right ear, behind the phone
 phone_call_offset: [-0.065, -0.090, -0.030]  # head frame: phone centre during a call (against the ear, inside the hand)
 smoke_offset: [0.075, -0.030, -0.095] # head frame: in front of and just below the right mouth corner
 at_ear_offset: [-0.075, -0.105, -0.030]   # head frame: as call_offset (same pose, empty hand)
 at_mouth_offset: [0.075, -0.030, -0.095]  # head frame: as smoke_offset
+at_eye_offset: [0.040, -0.034, -0.005]    # head frame: 4 cm in front of the right eye
 hand_size: 0.10               # metres, used for hand bbox
 phone_size: [0.07, 0.15]      # metres (w, h)
 
@@ -118,14 +124,20 @@ cigarette_hand:                       # cigarette: hand -- held between the fing
   offset: [0.0, 0.0, 0.04]            # segment centre relative to the hand centre; vehicle frame for a fixed
   dir:    [0.20, -0.30, 1.0]          # hand (wheel / lap / phone), head frame for a head_frame hand (smoke, call)
 
-# Objects at the lips while drinking (segment key `held`, with hand: at_mouth): a rod from `start` (head frame,
+# Objects at the lips (segment key `held`; `needs_hand`: the hand state the object needs, e.g. a cup needs
+# hand: at_mouth; none = held in the mouth alone): a rod from `start` (head frame,
 # the rim at the lips) along `dir` (head frame: out of the face and up, the bottom tipped up to drink), `length`
 # (> 2 x radius) and `radius` metres, occluding as a capsule whose rounded ends stay inside start .. length. Only an occluder (no OD class for it): it hides the mouth and lower face; a
 # contextual false-positive rule may report it as something else (when_held). PLACEHOLDER sizes. From a camera
 # below the face (steering column) the rays to the eyes pass in front of the mouth, so the object can hide an eye.
 held_objects:
-  cup:    {start: [0.020, -0.008, -0.075], dir: [0.85, -0.10, 0.20], length: 0.09, radius: 0.035}
-  bottle: {start: [0.020, -0.008, -0.075], dir: [0.90, -0.10, 0.30], length: 0.20, radius: 0.030}
+  cup:    {start: [0.020, -0.008, -0.075], dir: [0.85, -0.10, 0.20], length: 0.09, radius: 0.035, needs_hand: at_mouth}
+  bottle: {start: [0.020, -0.008, -0.075], dir: [0.90, -0.10, 0.30], length: 0.20, radius: 0.030, needs_hand: at_mouth}
+  # held in the mouth alone, pointing out of the face like a cigarette (cigarette: 0.08 m x 9 mm)
+  lollipop:  {start: [0.015, -0.008, -0.072], dir: [1.0, -0.20, -0.30], length: 0.07, radius: 0.0015}
+  toothpick: {start: [0.015, -0.008, -0.072], dir: [1.0, -0.25, -0.35], length: 0.06, radius: 0.0012}
+  straw:     {start: [0.015, -0.008, -0.072], dir: [1.0, -0.15, -0.25], length: 0.10, radius: 0.0035}
+  pen:       {start: [0.015, -0.008, -0.072], dir: [1.0, -0.20, -0.30], length: 0.14, radius: 0.0050}
 
 # Seatbelt: shoulder strap diagonal from the driver's left shoulder to the right hip (LHD, B-pillar anchor on
 # the left). Points are vehicle frame relative to the eye point (driver.eye_point_offset). The seatbelt box
@@ -204,4 +216,53 @@ occluders:
     type: sphere
     active_when_hand: at_mouth
     center: head_frame
+    radius: 0.035
+  - name: hand_at_eye            # knuckles in front of the right eye while hand == at_eye
+    type: sphere
+    active_when_hand: at_eye
+    center: head_frame
+    radius: 0.035
+  - name: hand_at_mirror         # hand on the rear-view mirror (right at the mirror camera)
+    type: sphere
+    active_when_hand: mirror
+    center: hand
+    radius: 0.045
+  - name: forearm_to_mirror      # forearm from the mirror down to the elbow
+    type: cylinder
+    active_when_hand: mirror
+    a: [0.34, -0.30, 0.10]
+    b: [0.15, -0.25, -0.15]
+    radius: 0.035
+  - name: hand_wheel_cross_l     # turning hand over hand: hand and forearm over the top of the wheel
+    type: sphere
+    active_when_hand: wheel_cross_l
+    center: hand
+    radius: 0.05
+  - name: forearm_wheel_cross_l
+    type: cylinder
+    active_when_hand: wheel_cross_l
+    a: [0.48, 0.10, -0.09]
+    b: [0.25, -0.20, -0.30]
+    radius: 0.035
+  - name: hand_wheel_cross_c
+    type: sphere
+    active_when_hand: wheel_cross_c
+    center: hand
+    radius: 0.05
+  - name: forearm_wheel_cross_c
+    type: cylinder
+    active_when_hand: wheel_cross_c
+    a: [0.48, -0.02, -0.10]
+    b: [0.25, -0.25, -0.30]
+    radius: 0.035
+  - name: hand_wheel_cross_r
+    type: sphere
+    active_when_hand: wheel_cross_r
+    center: hand
+    radius: 0.05
+  - name: forearm_wheel_cross_r
+    type: cylinder
+    active_when_hand: wheel_cross_r
+    a: [0.48, -0.14, -0.09]
+    b: [0.25, -0.30, -0.30]
     radius: 0.035

@@ -205,7 +205,9 @@ mouth_state_flip:
 # when_hand and the hand box is in the image, active a share p of the frames in runs of mean_frames frames; the box
 # is the truth hand box scaled by box_scale [w, h] (centred, jitter_frac jitter), conf uniform in conf_range.
 # Hand states at_ear / at_mouth (configs/cabin.yaml) are hand-to-face actions without a phone / cigarette.
-# Optional when_held: the rule also needs that held object (segment key `held`: cup, bottle; none = empty hand).
+# Optional when_held: the rule also needs that held object (segment key `held`: configs/cabin.yaml held_objects).
+# anchor: held = the box is the held object's box scaled by box_scale (an object in the mouth, no hand needed);
+# when_hand is then optional.
 contextual_false_positives:
   enabled: false
   rules:
@@ -225,6 +227,24 @@ contextual_false_positives:
       box_scale: [0.8, 0.3]
       jitter_frac: 0.05
       conf_range: [0.4, 0.75]
+    - name: stick_in_mouth_as_cigarette   # a thin stick at the lips; p grows with how cigarette-like it is
+      anchor: held
+      when_held: [straw, pen]
+      class: cigarette
+      p: 0.4
+      mean_frames: 12
+      box_scale: [1.0, 1.0]
+      jitter_frac: 0.05
+      conf_range: [0.4, 0.8]
+    - name: thin_stick_in_mouth_as_cigarette
+      anchor: held
+      when_held: [toothpick, lollipop]
+      class: cigarette
+      p: 0.15
+      mean_frames: 8
+      box_scale: [1.2, 1.5]
+      jitter_frac: 0.05
+      conf_range: [0.3, 0.6]
     - name: bottle_at_mouth_as_phone   # a bottle tipped up at the lips: a dark elongated object at the face
       when_hand: [at_mouth]
       when_held: [bottle]

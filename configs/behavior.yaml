@@ -29,7 +29,8 @@ yawn:                        # yawns; overridable per segment like "closure"; ze
   rate_per_min: 0
   duration_s: 4.0            # full yawn, smooth sin rise and fall
   peak_openness: 0.9
-hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_mouth (hand to face, empty hand)
+hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_mouth | at_eye (hand to face, empty hand)
+                             # | mirror | wheel_cross_l / _c / _r (configs/cabin.yaml hands; a scenario may add fixed ones)
 phone: none                  # none | lap | call
 cigarette: none              # none | mouth | hand (hand = at the current hand position)
 seatbelt: on                 # on | off (YAML on/off booleans are accepted)

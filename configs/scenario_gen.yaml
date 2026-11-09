@@ -79,3 +79,43 @@ seatbelt_off_episodes:         # driving unbuckled
   rate_per_min: 0.15
   duration: {mean_s: 15.0, sigma: 0.4, min_s: 5.0, max_s: 40.0}
   attrs: {seatbelt: "off"}
+
+# Any other `*_episodes` block is an extra kind (same keys; a mode may have its own `duration`). Extra kinds come
+# after the four above in priority and draw from their own stream (from a hash of the name); at rate 0 they leave
+# no trace in the scenario.
+habit_episodes:                # normal habits that look like violations (catalog/behaviors.yaml N-numbers)
+  rate_per_min: 0              # off by default; NAT-ALL-NORMAL-HABITS-300 turns it on
+  duration: {mean_s: 1.5, sigma: 0.4, min_s: 0.5, max_s: 4.0}
+  modes:
+    talk:                      # N15
+      p: 0.25
+      attrs: {mouth_openness: 0.35}
+      duration: {mean_s: 8.0, sigma: 0.5, min_s: 2.0, max_s: 20.0}
+    chew:                      # N18 (steady small opening; the rhythm is not modelled here)
+      p: 0.1
+      attrs: {mouth_openness: 0.15}
+      duration: {mean_s: 10.0, sigma: 0.5, min_s: 3.0, max_s: 30.0}
+    laugh:                     # N17
+      p: 0.1
+      attrs: {mouth_openness: 0.5, eye_openness: 0.45}
+      duration: {mean_s: 1.0, sigma: 0.3, min_s: 0.5, max_s: 1.5}
+    rub_eye:                   # N13
+      p: 0.15
+      attrs: {hand: at_eye}
+      duration: {mean_s: 1.0, sigma: 0.4, min_s: 0.4, max_s: 2.0}
+    drink:                     # N19
+      p: 0.1
+      attrs: {hand: at_mouth, held: cup}
+      duration: {mean_s: 2.0, sigma: 0.3, min_s: 1.0, max_s: 4.0}
+    chin_rest:                 # N21
+      p: 0.1
+      attrs: {hand: at_mouth}
+      duration: {mean_s: 3.0, sigma: 0.5, min_s: 1.0, max_s: 8.0}
+    ear_rest:                  # N20
+      p: 0.1
+      attrs: {hand: at_ear}
+      duration: {mean_s: 3.0, sigma: 0.5, min_s: 1.0, max_s: 8.0}
+    toothpick:                 # N22
+      p: 0.1
+      attrs: {held: toothpick}
+      duration: {mean_s: 15.0, sigma: 0.5, min_s: 5.0, max_s: 40.0}

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from dms_model_simulator import scenario_gen
 from dms_model_simulator.behavior import BehaviorGenerator
-from dms_model_simulator.config import load_configs, load_scenario
+from dms_model_simulator.config import deep_merge, load_configs, load_scenario
 from dms_model_simulator.events import label_events
 from dms_model_simulator.simulate import Simulation
 from dms_model_simulator.world import Cabin
@@ -289,6 +289,11 @@ def _merge_same(segs, ref):
     return out
 
 
+def test_object_held_in_the_mouth_needs_no_hand():
+    _, _, frames = _frames({"name": "t", "segments": [{"target": "road_ahead", "duration": 1.0, "held": "toothpick"}]})
+    assert {f.held for f in frames} == {"toothpick"} and {f.hand for f in frames} == {"wheel"}
+
+
 def test_held_object_follows_the_segment_and_needs_the_hand_at_the_mouth():
     sc = {"name": "t", "segments": [{"target": "road_ahead", "duration": 1.0},
                                     {"target": "road_ahead", "duration": 1.0, "hand": "at_mouth", "held": "cup"}]}
@@ -315,3 +320,26 @@ def test_head_turned_beyond_the_eyes_reach_is_off_road_even_with_a_road_target()
     assert max(e["off_road_s"] for e in geo) > 1.5 and not any(e["eyes_off_road"] for e in named)
     geo, _ = run(-20)
     assert not any(e["eyes_off_road"] for e in geo)
+
+
+def test_generator_extra_episode_kinds_and_mode_durations():
+    from dms_model_simulator import scenario_gen as G
+    base = G.load_gen_config()
+    assert [k for k, _ in G.episode_kinds(base)][-1] == "habit_episodes"
+    plain = G.generate(base, 120, 3)
+    assert "habit_episodes" not in plain["generator"]                    # rate 0: no trace at all
+    on = G.generate(deep_merge(base, {"habit_episodes": {"rate_per_min": 6}}), 120, 3)
+    eps = on["generator"]["habit_episodes"]
+    assert eps and all(len(e) == 3 for e in eps)
+    # the built-in kinds draw exactly as before (own streams); habits only add attributes
+    for k in ("phone_episodes", "drowsy_episodes", "smoking_episodes", "seatbelt_off_episodes"):
+        assert on["generator"][k] == plain["generator"][k]
+    # per-mode durations: talking lasts longer than rubbing an eye
+    talk = [b - a for a, b, m in eps if m == "talk"]
+    rub = [b - a for a, b, m in eps if m == "rub_eye"]
+    if talk and rub:
+        assert min(talk) >= 2.0 - 1e-9 and max(rub) <= 2.0 + 1e-9
+    # habits never overwrite what an earlier kind set: a phone call keeps hand: call
+    for s in on["segments"]:
+        if s.get("phone") == "call":
+            assert s["hand"] == "call"

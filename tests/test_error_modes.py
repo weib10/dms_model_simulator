@@ -294,3 +294,22 @@ def test_class_flip_flag_for_eye_and_mouth():
             closed = tr["mouth_openness"] < em["mouth_state_flip"]["threshold"]
             assert pr["mouth_openness"] == em["mouth_state_flip"]["open_value" if closed else "closed_value"]
     assert any(r["pred"].get("class_flip") == ["eye", "mouth"] for r in recs)
+
+
+def test_contextual_false_positive_anchored_on_a_held_object_in_the_mouth():
+    # a straw held in the mouth (no hand): the rule's box sits on the straw's box, not on a hand
+    rule = {"name": "straw_as_cig", "anchor": "held", "when_held": ["straw"], "class": "cigarette",
+            "p": 0.6, "mean_frames": 5, "box_scale": [1.0, 1.0], "jitter_frac": 0.0, "conf_range": [0.6, 0.8]}
+    sc = {"name": "d", "segments": [{"target": "road_ahead", "duration": 3.0},
+                                    {"target": "road_ahead", "duration": 4.0, "held": "straw"}]}
+    s = Simulation(sc, CAM, seed=1, emulator_overrides={"contextual_false_positives": {"enabled": True, "rules": [rule]}})
+    s.run()
+    straw = [r for r in s.records if r["truth"]["held"] == "straw"]
+    empty = [r for r in s.records if r["truth"]["held"] == "none"]
+    assert all(r["truth"]["hand"] == "wheel" and r["truth"]["held_bbox"] for r in straw)
+    hits = [(r, d) for r in straw for d in r["pred"]["detections"] if d.get("context") == "straw_as_cig"]
+    assert len(hits) > 0.3 * len(straw)
+    for r, d in hits:                                   # jitter 0, scale 1: the straw's own box
+        assert d["bbox"] == pytest.approx(r["truth"]["held_bbox"])
+    assert not any(d.get("context") for r in empty for d in r["pred"]["detections"])
+    assert all(r["truth"]["held_bbox"] is None for r in empty)

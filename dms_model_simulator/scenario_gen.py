@@ -12,6 +12,7 @@ are active, so changing such a kind changes the target sequence from the first b
 from __future__ import annotations
 import math
 import warnings
+import zlib
 from pathlib import Path
 import numpy as np
 import yaml
@@ -42,6 +43,15 @@ def _lognormal_mean(d: dict) -> float:
     return lo * cdf(za) + hi * (1.0 - cdf(zb)) + inner
 
 
+def _mean_duration(ecfg: dict, modes: dict | None) -> float:
+    """Mean episode duration: modes with their own `duration` weighted by p, the others use the kind's."""
+    if not modes or not any(m.get("duration") for m in modes.values()):
+        return _lognormal_mean(ecfg["duration"])
+    p = np.array([float(m["p"]) for m in modes.values()])
+    d = [_lognormal_mean(m.get("duration") or ecfg["duration"]) for m in modes.values()]
+    return float(np.dot(p / p.sum(), d))
+
+
 def _episodes(rng, ecfg: dict, n_ticks: int, res: float, modes: dict | None, name: str = "episodes"
               ) -> list[tuple[int, int, str | None]]:
     """Non-overlapping episodes as (start_tick, end_tick, mode), a renewal process whose long-run rate is
@@ -51,10 +61,10 @@ def _episodes(rng, ecfg: dict, n_ticks: int, res: float, modes: dict | None, nam
     out = []
     if rate <= 0:
         return out
-    gap_mean = 60.0 / rate - _lognormal_mean(ecfg["duration"])
+    gap_mean = 60.0 / rate - _mean_duration(ecfg, modes)
     if gap_mean < 0:
         warnings.warn(f"{name}: rate_per_min {rate} x mean duration exceeds 1 min; episodes are back to back "
-                      f"(actual rate {60.0 / _lognormal_mean(ecfg['duration']):.3f}/min)", stacklevel=3)
+                      f"(actual rate {60.0 / _mean_duration(ecfg, modes):.3f}/min)", stacklevel=3)
         gap_mean = 0.0
     t = 0.0
     total = n_ticks * res
@@ -68,6 +78,8 @@ def _episodes(rng, ecfg: dict, n_ticks: int, res: float, modes: dict | None, nam
             names = list(modes)
             p = np.array([float(modes[m]["p"]) for m in names])
             mode = names[int(rng.choice(len(names), p=p / p.sum()))]
+            if modes[mode].get("duration"):       # a mode's own duration (drawn after the mode: kinds without
+                dur = _lognormal(rng, modes[mode]["duration"])      # mode durations draw exactly as before)
         a = int(round(t / res))
         b = min(n_ticks, a + max(1, int(round(dur / res))))
         if a < b:
@@ -91,7 +103,17 @@ STREAMS = {"targets": 0, "phone_episodes": 1, "drowsy_episodes": 2, "smoking_epi
 
 
 def _stream(seed: int, name: str) -> np.random.Generator:
-    return np.random.default_rng([int(seed), STREAMS[name]])
+    """Stream of a consumer. Extra episode kinds (any other `*_episodes` block) get an id from a hash of their name,
+    so adding, removing or reordering kinds never shifts another kind's draws."""
+    k = STREAMS.get(name, 1000 + zlib.crc32(name.encode()) % 1_000_000)
+    return np.random.default_rng([int(seed), k])
+
+
+def episode_kinds(cfg: dict) -> list[tuple[str, str]]:
+    """The four built-in kinds in priority order, then every other `*_episodes` block of the config in file
+    order (lower priority: they only set attributes the earlier kinds leave free)."""
+    builtin = [k for k, _ in EPISODE_KINDS]
+    return list(EPISODE_KINDS) + [(k, k) for k in cfg if k.endswith("_episodes") and k not in builtin]
 
 
 def _attrs(ecfg: dict, mode: str | None) -> dict:
@@ -113,10 +135,11 @@ def generate(cfg: dict, duration_s: float, seed: int = 0, name: str | None = Non
     trans = cfg["transitions"]
     dwell = cfg["dwell"]
     kinds = []                       # (cfg, episodes, output key), priority order
-    for key, out_key in EPISODE_KINDS:
+    builtin = {k for k, _ in EPISODE_KINDS}
+    for key, out_key in episode_kinds(cfg):
         ecfg = cfg.get(key)
-        if not ecfg:
-            continue
+        if not ecfg or (key not in builtin and float(ecfg.get("rate_per_min", 0)) <= 0):
+            continue                 # an extra kind at rate 0 leaves no trace (scenario and row ids unchanged)
         kinds.append((ecfg, _episodes(_stream(seed, key), ecfg, n_ticks, res, ecfg.get("modes"), key), out_key))
     rng = _stream(seed, "targets")
 

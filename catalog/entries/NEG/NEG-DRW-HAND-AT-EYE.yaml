@@ -1,0 +1,19 @@
+id: NEG-DRW-HAND-AT-EYE
+title: "揉眼睛、推眼鏡：右手指節擋住右眼（0.5 / 1 / 2 s，1 / 2 / 3 次）"
+summary: "對照：閉眼（眼框不見或變扁）。眼睛其實是睜開的（真值不閉眼），但右眼被手擋住：dash_right、steering_column 都偵測不到右眼，
+  dash_right 的左眼與臉也會被擋掉一部分。每次 small 0.5 s、medium 1 s、large 2 s，共 1 / 2 / 3 次，中間 3 s。
+  只看「眼框不見」就判閉眼的後處理會在這裡誤報。"
+status: ready
+source: written
+tags: [hand_near_face, occlusion, rub_eyes]
+behaviors: [N13]
+params:
+  rub_s: {levels: {small: 0.5, medium: 1.0, large: 2.0}}
+  n: {levels: {small: 1, medium: 2, large: 3}}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${n}"
+      segments:
+        - {target: road_ahead, duration: "${rub_s}", hand: at_eye}
+        - {target: road_ahead, duration: 3.0}

@@ -178,6 +178,8 @@ def compute_truth(cabin: Cabin, cam: Camera, f: DriverFrame) -> dict:
     head = cabin.head_state(f.head_yaw, f.head_pitch, f.head_roll)
     held = getattr(f, "held", "none")
     occl = cabin.occluder_geometry(f.hand, head, held)
+    hs = cabin.held_segment(held, head)          # object at the lips: no OD class, its box anchors context rules
+    held_bbox = _clip_bbox(_segment_box(cam, hs[0], hs[1], 2 * hs[2]), cam.width, cam.height) if hs else None
     self_occl = cabin.self_occluder_geometry(head)
     W, H = cam.width, cam.height
 
@@ -336,6 +338,7 @@ def compute_truth(cabin: Cabin, cam: Camera, f: DriverFrame) -> dict:
         "blink": f.blink, "closure": f.closure,
         "eye_occluded": eye_occ, "mouth_occluded": mouth_occ,
         "hand": f.hand, "phone": f.phone, "cigarette": cigarette, "seatbelt": seatbelt, "held": held,
+        "held_bbox": held_bbox,
         "seatbelt_strap_bbox": strap_box,
         "detections": dets,
         "landmarks_px": {k: v.tolist() for k, v in lm_img.items()},

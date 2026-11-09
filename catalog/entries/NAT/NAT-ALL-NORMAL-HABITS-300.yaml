@@ -1,0 +1,27 @@
+id: NAT-ALL-NORMAL-HABITS-300
+title: "300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤"
+summary: "量每小時誤報數用的長段。沒有任何違規（沒有手機、疲勞、抽菸、未繫，也不看大腿），只有看路、看鏡子、看儀表、偶爾看乘客，
+  加上 configs/scenario_gen.yaml 的 habit_episodes（各種正常習慣，各有自己的時長）。這條的難度是習慣出現的頻率：
+  small 每分鐘 1 次、medium 2 次、large 4 次（是例外：其他條目的難度是離門檻多近）。看乘客、看中控最長 2.5 s、2 s。"
+status: ready
+source: generated
+tags: [natural, false_alarm, habits]
+behaviors: [N01, N02, N03, N07, N13, N15, N17, N18, N19, N20, N21, N22]
+params:
+  rate: {levels: {small: 1.0, medium: 2.0, large: 4.0}}
+generator:
+  duration_s: 300
+  config:
+    phone_episodes: {rate_per_min: 0}
+    drowsy_episodes: {rate_per_min: 0}
+    smoking_episodes: {rate_per_min: 0}
+    seatbelt_off_episodes: {rate_per_min: 0}
+    habit_episodes: {rate_per_min: "${rate}"}
+    transitions:
+      road_ahead: {phone_lap: 0.0}
+      center_display: {phone_lap: 0.0}
+    dwell:
+      passenger: {max_s: 2.5}
+      center_display: {max_s: 2.0}
+variation:
+  seeds: [0, 1]

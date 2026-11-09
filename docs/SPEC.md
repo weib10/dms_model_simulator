@@ -49,7 +49,9 @@ openness, blink / closure, hand / phone / cigarette / seatbelt / held states, `p
 `eyes_off_road` (scripted target off the road, or the actual gaze outside the yaw / pitch box of the on-road
 targets widened by `zone_classifier.tolerance_deg`), `off_road_s` (current continuous off-road time), `eyes_closed` (mean scripted openness below
 `closed_openness_threshold`), `closed_s`, `phone_use` (scripted, also when the phone is out of view),
-`phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`.
+`phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`. The full JSONL `truth` also
+has `held_bbox`: the image box of an object at the lips (`held`; no OD class of its own), the anchor of
+`anchor: held` context rules.
 
 ## Error flags (full JSONL `pred`)
 `dropped` (whole frame without output), `latency_fill` (initial frames of a latency queue), `source_frame`,
