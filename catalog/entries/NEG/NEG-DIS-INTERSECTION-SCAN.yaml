@@ -1,0 +1,15 @@
+id: NEG-DIS-INTERSECTION-SCAN
+title: "路口左右張望：看左前、右前路面各 2.5 s"
+summary: "視線還在路面上（road_left / road_right），不是分心，但頭轉的角度不小。"
+status: ready
+source: written
+tags: [head_turn, intersection]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_left,  duration: 2.5}
+    - {target: road_ahead, duration: 1.0}
+    - {target: road_right, duration: 2.5}
+    - {target: road_ahead, duration: 1.0}
+    - {target: road_left,  duration: 2.5}
+    - {target: road_ahead, duration: 3.0}

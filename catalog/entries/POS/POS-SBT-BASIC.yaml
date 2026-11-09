@@ -1,0 +1,13 @@
+id: POS-SBT-BASIC
+title: "基本款：沒繫安全帶 8 s，再繫回"
+summary: "安全帶家族的基本款：手在方向盤、不擋安全帶。"
+status: ready
+source: written
+tags: [basic, seatbelt]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  profiles: [ideal, nominal]

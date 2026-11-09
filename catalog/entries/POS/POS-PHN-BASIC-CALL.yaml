@@ -1,0 +1,13 @@
+id: POS-PHN-BASIC-CALL
+title: "基本款：看著路講電話 5 s，再放下"
+summary: "手機家族的基本款：手機貼耳、眼睛看路、頭不轉。"
+status: ready
+source: written
+tags: [basic, phone, call]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 5.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  profiles: [ideal, nominal]

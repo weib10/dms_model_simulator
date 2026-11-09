@@ -1,0 +1,12 @@
+name: smoking
+description: Driver smokes (hand at the mouth, then cigarette held on the wheel), then drives unbuckled.
+behavior: {}
+segments:
+  - {target: road_ahead,  duration: 2.0}
+  - {target: road_ahead,  duration: 3.0, hand: smoke, cigarette: mouth}
+  - {target: road_ahead,  duration: 2.0, hand: wheel, cigarette: mouth}
+  - {target: left_mirror, duration: 1.0, hand: wheel, cigarette: hand}
+  - {target: road_ahead,  duration: 2.0, hand: wheel, cigarette: hand}
+  - {target: road_ahead,  duration: 2.0, hand: smoke, cigarette: mouth}
+  - {target: road_ahead,  duration: 3.0, seatbelt: "off"}
+  - {target: road_ahead,  duration: 1.0}

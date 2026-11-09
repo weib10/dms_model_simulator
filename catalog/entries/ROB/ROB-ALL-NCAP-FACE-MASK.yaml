@@ -1,0 +1,19 @@
+id: ROB-ALL-NCAP-FACE-MASK
+title: "Euro NCAP 遮擋（口罩）：嘴框完全偵測不到"
+summary: "模擬器沒有口罩幾何，用 profile no_mouth（嘴框偵測率 0）近似；同一串行為含閉眼、轉頭、哈欠。"
+status: ready
+source: written
+tags: [ncap, occlusion, mask, robustness]
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 8.0}
+    - {target: road_ahead, duration: 3.0, eye_openness: 0.05}
+    - {target: road_ahead, duration: 6.0}
+    - {target: passenger,  duration: 4.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 3.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 4.0}
+variation:
+  cameras: [dash_right]
+  profiles: [no_mouth]

@@ -1,0 +1,13 @@
+id: BND-PHN-CALL-DURATION
+title: "講電話的時間從 0.25 s 掃到 6 s"
+summary: "手機貼耳（兩台相機都看得到），通話時間由短到長。看講多久開始被當成講手機。"
+status: ready
+source: written
+tags: [phone, call, duration]
+params:
+  call_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 6.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${call_s}", hand: call, phone: call}
+    - {target: road_ahead, duration: 3.0}

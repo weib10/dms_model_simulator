@@ -1,0 +1,13 @@
+id: CLR-DRW-AFTER-YAWN
+title: "打一次哈欠，之後 15 s 正常開車"
+summary: "只有一次哈欠，之後 15 s 眼睛、嘴巴都正常。"
+status: ready
+source: written
+tags: [sleepiness, yawn, decay]
+template:
+  segments:
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 14.0}
+variation:
+  profiles: [ideal, nominal]

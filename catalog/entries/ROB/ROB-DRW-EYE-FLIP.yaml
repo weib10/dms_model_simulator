@@ -1,0 +1,16 @@
+id: ROB-DRW-EYE-FLIP
+title: "睜眼被認成閉眼，每次 0.5–2 s"
+summary: "60 s 正常開車，模擬模型把睜眼報成閉眼（eye_flip_0p5s / eye_flip_2s：5% 的幀、每次平均 0.5 s 或 2 s），中間夾一次真的 2.5 s 閉眼。眨眼會切斷翻轉，所以這條把眨眼降到每分鐘 2 次。"
+status: ready
+source: written
+tags: [robustness, class_flip]
+template:
+  behavior: {blink: {rate_per_min: 2}}
+  segments:
+    - {target: road_ahead, duration: 6.0}
+    - {target: road_ahead, duration: 24.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 30.0}
+variation:
+  emulator_seeds: [0, 1, 2, 3, 4]
+  profiles: [nominal, eye_flip_0p5s, eye_flip_2s]

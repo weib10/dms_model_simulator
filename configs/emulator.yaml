@@ -1,0 +1,236 @@
+# Model-output error model. Every number here is a tunable placeholder to be fitted to real logs.
+# Optional error modes, all OFF by default (enable them per run with
+# Simulation(emulator_overrides=...) or a catalog/profiles.yaml profile): burst misses (detection.<class>.mean_miss_frames),
+# burst frame drops (pipeline.drop_mean_frames), eye / mouth class flips (eye_state_flip, mouth_state_flip) and
+# context-dependent false positives (contextual_false_positives). Each is a two-state Markov chain: a share r
+# of frames in the "bad" state (miss / drop / flip / FP), in runs of mean_* frames on average.
+# Detection p = p_max * sigmoid((x - threshold) / scale) * ...: each term has a "50% of p_max" point and a width.
+# Noise: every `temporal_rho` is the AR(1) frame-to-frame correlation of a unit-variance process (stationary
+# from frame 0; after a gap of D frames where the quantity is not produced the correlation is rho**D).
+
+pipeline:
+  drop_frame_prob: 0.005        # frame produces no output at all
+  drop_mean_frames: null        # null = independent per frame; N = drops come in runs of N frames on average
+                                # (same long-run drop rate drop_frame_prob)
+  latency_frames: 0             # output of frame i is reported at frame i + latency (pred carries source_frame = i)
+
+detection:
+  # Any class may set mean_miss_frames: N (null / absent = each frame drawn independently). With N the misses come
+  # in runs of N frames on average (hand over the face, glare), at the same long-run detection rate p; where p is
+  # low (p < 1 / (N + 1)) the runs get longer still. A missed run of a class persists across frames where the
+  # class is not evaluated (e.g. eyes while the face is missed).
+  face:
+    p_max: 0.995
+    mean_miss_frames: null
+    min_width_px: 40            # face width at which detection prob is 50% of p_max
+    width_scale_px: 12
+    yaw_limit_deg: 75           # |head yaw relative to camera| at which the yaw factor is 50%
+    yaw_scale_deg: 8
+    occlusion_power: 2.0        # p *= (1 - occluded_fraction) ** power
+    bbox_noise_frac: 0.03       # std of corner noise as fraction of bbox size
+    temporal_rho: 0.7           # AR(1) correlation of bbox noise between frames
+    conf_base: 0.97
+    conf_noise_std: 0.02
+  eye:                          # left_eye / right_eye
+    p_max: 0.98
+    mean_miss_frames: null
+    min_width_px: 10
+    width_scale_px: 4
+    yaw_limit_deg: 60
+    yaw_scale_deg: 8
+    occlusion_power: 2.0
+    bbox_noise_frac: 0.06
+    temporal_rho: 0.6
+    conf_base: 0.92
+    conf_noise_std: 0.04
+    requires_face: true
+  mouth:
+    p_max: 0.97
+    mean_miss_frames: null
+    min_width_px: 12            # mouth (corner to corner) width at which detection prob is 50% of p_max
+    width_scale_px: 5
+    yaw_limit_deg: 65
+    yaw_scale_deg: 8
+    occlusion_power: 2.0
+    bbox_noise_frac: 0.06
+    temporal_rho: 0.6
+    conf_base: 0.90
+    conf_noise_std: 0.04
+    requires_face: true
+  hand:
+    p_max: 0.95
+    mean_miss_frames: null
+    min_width_px: 25
+    width_scale_px: 10
+    bbox_noise_frac: 0.08
+    temporal_rho: 0.6
+    conf_base: 0.85
+    conf_noise_std: 0.06
+  phone:
+    p_max: 0.90
+    mean_miss_frames: null
+    min_width_px: 15
+    width_scale_px: 6
+    bbox_noise_frac: 0.10
+    temporal_rho: 0.6
+    conf_base: 0.80
+    conf_noise_std: 0.08
+  cigarette:
+    p_max: 0.85
+    mean_miss_frames: null
+    min_width_px: 10            # small, thin object: 50% of p_max at ~10 px box width
+    width_scale_px: 4
+    bbox_noise_frac: 0.12
+    temporal_rho: 0.6
+    conf_base: 0.75
+    conf_noise_std: 0.08
+  seatbelt:
+    p_max: 0.95
+    mean_miss_frames: null
+    min_width_px: 30            # width of the (clipped) strap box at which detection prob is 50% of p_max
+    width_scale_px: 10
+    occlusion_power: 1.0        # occlusion = fraction of the strap centreline hidden (steering wheel, hand)
+    bbox_noise_frac: 0.05
+    temporal_rho: 0.8
+    conf_base: 0.88
+    conf_noise_std: 0.05
+    seatbelt_off_false_positive_rate: 0.02     # per frame, belt off: a strap box is still reported
+    seatbelt_off_false_positive_conf_range: [0.3, 0.6]
+  false_positives:
+    rate_per_frame: 0.01          # mean number of spurious boxes per frame (count ~ Poisson; any value >= 0)
+    classes: [phone, hand]
+    conf_range: [0.3, 0.6]
+    size_px_range: [20, 120]
+
+# Box noise that grows in harder views (all gains 0 = off, the default output). Every class's bbox_noise_frac is
+# multiplied by 1 + occlusion * occluded_fraction + rel_yaw * min(|head yaw rel. camera| / 45 deg, 2) (face / eye /
+# mouth only) + small * min(min_width_px / box width px, 4). E.g. rel_yaw 1.0: a head turned 45 deg from the
+# camera doubles the jitter; small 1.0: a box at the class's 50 % detection width doubles it.
+box_conditions:
+  occlusion: 0.0
+  rel_yaw: 0.0
+  small: 0.0
+
+# Box jumps: now and then a box lands somewhere else (centre shifted by N(0, shift_frac) of its size, size scaled
+# by U(scale_range)) for a run of mean_frames frames (1-2 = a one- or two-frame spike), then comes back. One
+# two-state chain per class with long-run share p, multiplied by `gain` of the view (same form as box_conditions).
+# features_follow_face: when the face box jumps the eye / mouth boxes move with it (a whole-face miscrop);
+# false = only the face box moves, which upsets logic built on where the features sit in the face box most.
+box_jump:
+  enabled: false
+  classes: [face, eye, mouth, hand, phone, cigarette, seatbelt]
+  p: 0.01
+  mean_frames: 1.5
+  shift_frac: 0.4
+  scale_range: [0.8, 1.25]
+  gain: {occlusion: 0.0, rel_yaw: 0.0, small: 0.0}
+  features_follow_face: false
+
+head_pose:
+  base_std_deg: 1.5
+  per_deg_rel_yaw: 0.03         # std grows with |head yaw relative to camera|
+  per_px_inv_face_width: 60.0   # std += this / face_width_px
+  bias_deg: [0.0, 0.0, 0.0]     # yaw, pitch, roll
+  temporal_rho: 0.85
+  conf_base: 0.95
+  conf_per_deg_std: 0.05        # score drops with predicted std
+
+gaze:
+  base_std_deg: 2.0
+  per_deg_gaze_to_camera: 0.04  # std grows with angle between gaze ray and ray to camera
+  per_deg_rel_head_yaw: 0.03
+  per_px_inv_eye_width: 40.0    # std += this / eye_width_px
+  bias_deg: [0.0, 0.0]          # yaw, pitch
+  temporal_rho: 0.9
+  valid_min_openness: 0.25      # eyes more closed than this => gaze invalid (also the "eyes open" set of metrics)
+  invalid_if_both_eyes_occluded: true   # gaze invalid when no eye is usable: occluded OR not detected this frame
+  max_gaze_to_camera_deg: 95    # beyond this the eye is not visible enough; gaze invalid
+  conf_base: 0.9
+  conf_per_deg_std: 0.08        # conf drops with predicted std
+
+# Openness outputs = clip(truth + noise, 0, 1), null for an eye / the mouth the model did not detect this frame.
+# The clip biases values near the ends: truth 1.0 with noise_std 0.05 gives a mean of ~0.98 and exactly 1.0
+# on about half of the frames (likewise at 0 for closed eyes / mouth). Intended (a bounded output); fit to logs.
+eye_openness:
+  noise_std: 0.05
+  temporal_rho: 0.7
+
+mouth_openness:
+  noise_std: 0.06
+  temporal_rho: 0.7
+
+# Persistent open / closed class errors of the eye and mouth boxes (open / closed output classes come from the
+# reported openness vs the layout's class_map thresholds). While flipped the emulator reports open_value /
+# closed_value instead of the noisy openness, so the pipeline JSONL and dms.bin agree; flipped frames carry
+# `class_flip` in the full JSONL. One chain per face for both eyes (they flip together) and one for the mouth: per frame a flip
+# probability q (sum of the terms of the current truth direction, clipped to [0, 1]); runs of mean_frames frames;
+# reset to correct whenever the truth class changes (a blink is never hidden by a flip that started before it;
+# after the reset a new flip starts at the per-frame entry rate, not with probability q at once); forgotten when
+# the eyes / mouth leave the truth (out of view), so it does not come back with them. While they are in the truth
+# but not evaluated (face missed) the state is kept, like a burst miss.
+# Gaze validity and metrics.summarize still use the truth openness.
+eye_state_flip:
+  enabled: false
+  threshold: 0.2                # keep = the layout class_map eye threshold (truth below => closed)
+  mean_frames: 10
+  closed_value: 0.1             # reported when an open eye is reported closed
+  open_value: 0.6               # reported when a closed eye is reported open
+  gaze_pitch_key: eye_in_head_pitch   # truth gaze field for p_gaze_down (lids droop with eye-in-head pitch;
+                                      # steering_column: phone_lap -36 deg, cluster / center_display -12 deg)
+  open_to_closed:               # open eye reported closed: looking down into the lap, squinting, small eyes
+    p_base: 0.01
+    p_gaze_down: 0.3            # added when the gaze points down past gaze_down_pitch_deg (sigmoid of width scale)
+    gaze_down_pitch_deg: -25
+    gaze_down_scale_deg: 3
+    p_small: 0.1                # added for small eye boxes (sigmoid: 50% at small_width_px)
+    small_width_px: 12
+    small_scale_px: 3
+  closed_to_open:               # closed eye reported open (glasses glare, partial closure)
+    p_base: 0.05
+
+mouth_state_flip:
+  enabled: false
+  threshold: 0.55               # keep = the layout class_map mouth threshold (truth below => closed)
+  mean_frames: 8
+  closed_value: 0.1             # reported when an open mouth is reported closed
+  open_value: 0.7               # reported when a closed mouth is reported open (>= threshold)
+  closed_to_open:               # closed mouth reported open (talking, eating, hand at the mouth)
+    p_base: 0.01
+    p_hand_state: {at_mouth: 0.3, smoke: 0.15}   # added while the truth hand is in that state
+  open_to_closed:               # yawn missed (hand covering it, head turned)
+    p_base: 0.05
+
+# Boxes the model reports because of what the hand does (uniform random false positives above almost never sit
+# near the face, so they rarely move a phone / smoking alert). Per rule: while the truth hand state is in
+# when_hand and the hand box is in the image, active a share p of the frames in runs of mean_frames frames; the box
+# is the truth hand box scaled by box_scale [w, h] (centred, jitter_frac jitter), conf uniform in conf_range.
+# Hand states at_ear / at_mouth (configs/cabin.yaml) are hand-to-face actions without a phone / cigarette.
+# Optional when_held: the rule also needs that held object (segment key `held`: cup, bottle; none = empty hand).
+contextual_false_positives:
+  enabled: false
+  rules:
+    - name: hand_at_ear_as_phone
+      when_hand: [at_ear]
+      class: phone
+      p: 0.4
+      mean_frames: 15
+      box_scale: [0.7, 1.4]
+      jitter_frac: 0.05
+      conf_range: [0.45, 0.8]
+    - name: hand_at_mouth_as_cigarette
+      when_hand: [at_mouth]
+      class: cigarette
+      p: 0.3
+      mean_frames: 10
+      box_scale: [0.8, 0.3]
+      jitter_frac: 0.05
+      conf_range: [0.4, 0.75]
+    - name: bottle_at_mouth_as_phone   # a bottle tipped up at the lips: a dark elongated object at the face
+      when_hand: [at_mouth]
+      when_held: [bottle]
+      class: phone
+      p: 0.3
+      mean_frames: 10
+      box_scale: [0.8, 1.6]
+      jitter_frac: 0.05
+      conf_range: [0.4, 0.7]

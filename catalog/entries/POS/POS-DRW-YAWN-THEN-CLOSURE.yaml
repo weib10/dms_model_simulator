@@ -1,0 +1,16 @@
+id: POS-DRW-YAWN-THEN-CLOSURE
+title: "先打哈欠，3 s 後閉眼 2.5 s"
+summary: "哈欠和閉眼接連出現。"
+status: ready
+source: written
+tags: [sleepiness, yawn, closure, interaction]
+template:
+  behavior: {blink: {rate_per_min: 6}}
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 6.0}
+variation:
+  profiles: [ideal, nominal]

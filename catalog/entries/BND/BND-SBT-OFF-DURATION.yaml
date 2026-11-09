@@ -1,0 +1,13 @@
+id: BND-SBT-OFF-DURATION
+title: "沒繫安全帶的時間從 0.5 s 掃到 10 s"
+summary: "手在方向盤、不擋安全帶，只改變沒繫的時間長短。"
+status: ready
+source: written
+tags: [seatbelt, duration]
+params:
+  off_s: {grid: [0.5, 1.0, 2.0, 4.0, 6.0, 10.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${off_s}", seatbelt: "off"}
+    - {target: road_ahead, duration: 3.0}

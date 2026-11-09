@@ -1,0 +1,13 @@
+id: NEG-DRW-SQUINT
+title: "瞇眼（陽光或習慣）：開合度 0.3–0.4，持續 15 s"
+summary: "開合度在模擬器的閉眼門檻（0.2）之上，眼睛是睜開的，只是比較小。"
+status: ready
+source: written
+tags: [squint]
+params:
+  openness: {grid: [0.3, 0.4]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 15.0, eye_openness: "${openness}"}
+    - {target: road_ahead, duration: 2.0}

@@ -1,0 +1,7 @@
+id: NEG-DIS-MIRROR-CHECK
+title: "正常開車，短暫看左右鏡、後照鏡、儀表（每次 0.6–0.9 s）"
+summary: "現有劇本 scenarios/mirror_check.yaml 原封包。看鏡子是正常駕駛，但會有短暫轉頭。"
+status: ready
+source: written
+tags: [mirror, glance, existing]
+from_scenario: scenarios/mirror_check.yaml

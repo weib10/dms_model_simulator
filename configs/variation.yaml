@@ -1,0 +1,23 @@
+# Driver and camera variation (dms_model_simulator/variation.py): `--variant N` draws one variant from these ranges, the
+# same for every scenario and camera, so a scenario can be replayed with different drivers and camera mounts.
+# Each entry is a uniform range [lo, hi]; a missing entry (or lo == hi) leaves the nominal value. Variant draws
+# use their own random stream (seed N), independent of the behaviour (--seed) and model noise.
+# The nominal values live in configs/cabin.yaml (driver) and configs/cameras.yaml (mounts); a scenario can also set
+# them directly with a `cabin:` / `camera:` block (see README "Scenarios").
+
+driver:
+  eye_point_offset:            # vehicle frame (m): seat fore / aft (x), lateral (y), sitting height (z)
+    x: [-0.10, 0.10]
+    y: [-0.04, 0.04]
+    z: [-0.08, 0.08]
+  head_scale: [0.90, 1.10]     # head size (landmarks, lids, lips, head-frame offsets)
+
+camera:                        # applied to whichever camera is simulated (the design aim stays on the nominal driver)
+  mount_offset:                # vehicle frame (m)
+    x: [-0.01, 0.01]
+    y: [-0.01, 0.01]
+    z: [-0.01, 0.01]
+  mount_rotation_deg:          # about the camera's own axes, see dms_model_simulator/camera.py
+    yaw:   [-2.0, 2.0]
+    pitch: [-2.0, 2.0]
+    roll:  [-2.0, 2.0]

@@ -1,0 +1,46 @@
+# Camera presets. Positions are in the vehicle frame (origin = nominal driver eye point).
+# orientation: "look_at_head" (auto-aim at nominal head centre + look_at_offset) or {yaw, pitch} of the optical axis.
+# Optional mounting error: mount_offset [x, y, z] (m, vehicle frame) and mount_rotation_deg [yaw, pitch, roll] (about the
+# camera axes, after aiming; see dms_model_simulator/camera.py). configs/variation.yaml draws them per --variant.
+# The default offset puts the nominal eye point on the optical axis, so a face / gaze at the nominal eye point
+# looking into the lens reads yaw = pitch = 0 in the camera face frame (camera-frame angles are axis based:
+# 0 = parallel to the reversed optical axis, wherever the head is).
+defaults:
+  width: 1280
+  height: 800
+  hfov_deg: 60.0
+  distortion: [0.0, 0.0]        # k1, k2 (radial, on normalised coordinates)
+  orientation: look_at_head
+  look_at_offset: [0.08, 0.0, 0.03]   # = -(driver.head_pivot + driver.head_center_offset): aim at the eye point
+
+cameras:
+  # Column-top mount: looks over the hub through the upper gap between hub and rim (see cabin.yaml occluders).
+  # Nominal driver fully visible; drivers ~8 cm lower / higher (driver.eye_point_offset z) or a head pitched
+  # down ~30 deg lose a landmark or more to the hub / rim.
+  steering_column:
+    position: [0.67, 0.00, -0.136]
+    hfov_deg: 55.0
+  # Top of the cluster, also through the upper wheel gap.
+  cluster:
+    position: [0.73, 0.00, -0.148]
+  rearview_mirror:
+    position: [0.40, -0.35, 0.15]
+    hfov_deg: 70.0
+  a_pillar_left:
+    position: [0.45, 0.62, 0.08]
+    hfov_deg: 70.0
+  center_stack:
+    position: [0.65, -0.45, -0.20]
+    hfov_deg: 65.0
+  overhead_console:
+    position: [0.15, -0.30, 0.42]
+    hfov_deg: 80.0
+  # Dash mount right of the steering wheel, looking back at a 3/4 view of the driver, wheel out of view;
+  # wide lens with mild barrel distortion.
+  dash_right:
+    width: 1920
+    height: 1080
+    hfov_deg: 80.0
+    distortion: [-0.10, 0.0]          # mild barrel
+    position: [0.43, -0.20, -0.13]
+    orientation: {yaw: 172.4, pitch: 3.5}   # optical axis: backwards, slightly towards the driver, slightly up

@@ -1,0 +1,21 @@
+id: NEG-ALL-DRINK-EAT
+title: "喝水、吃東西（手拿東西到嘴邊）"
+summary: "杯子、瓶子貼在嘴上（held，手在 at_mouth），仰頭 10–15° 喝；吃東西 = 手到嘴、沒拿東西。杯子、瓶子只遮住嘴和下半臉（從方向盤柱的低角度可能擋到一隻眼）。ctx_fp 讓模擬模型在手到嘴邊時報假香菸框、瓶子貼嘴時報假手機框（configs/emulator.yaml contextual_false_positives）。"
+status: ready
+source: written
+tags: [hand_near_face, drinking, eating, occlusion]
+params:
+  drink_s: {grid: [2.0, 4.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: cup, head_pose: [0, 10, 0]}
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: bottle, head_pose: [0, 15, 0]}
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 1.5, hand: at_mouth}
+    - {target: road_ahead, duration: 2.0}
+    - {target: road_ahead, duration: 1.5, hand: at_mouth}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  profiles: [nominal, ctx_fp]

@@ -1,0 +1,207 @@
+# Vehicle frame: X forward, Y left, Z up, metres.
+# Origin = nominal driver eye point (midpoint between the eyes, nominal seat position).
+# All numbers are placeholders for a generic left-hand-drive sedan; replace with measured values.
+
+targets:            # 3D points the driver looks at (gaze zones)
+  road_ahead:       [20.0,  0.00,  0.00]
+  left_mirror:      [ 0.55, 0.85, -0.10]
+  right_mirror:     [ 0.65,-1.60, -0.10]
+  rearview_mirror:  [ 0.40,-0.35,  0.15]
+  cluster:          [ 0.65, 0.00, -0.28]
+  center_display:   [ 0.70,-0.45, -0.35]
+  phone_lap:        [ 0.25,-0.05, -0.55]
+  passenger:        [ 0.10,-0.70,  0.00]
+  road_left:        [15.0,  6.00,  0.00]
+  road_right:       [15.0, -6.00,  0.00]
+
+zone_classifier:
+  tolerance_deg: 8.0        # gaze ray within this angle of a target => that zone, else "other"
+  default_zone: other
+
+driver:
+  eye_point_offset: [0.0, 0.0, 0.0]     # driver-to-driver seat/height variation
+  ipd: 0.064                            # informational: eye positions come from landmarks.*_eye_center (keep in sync)
+  head_pivot: [-0.08, 0.0, -0.06]       # rotation centre, head frame (relative to eye midpoint)
+  head_center_offset: [0.0, 0.0, 0.03]  # nominal head centre = eye point + head_pivot + this (camera look_at_head aim, plots)
+
+# Landmark template in head frame (X out of the face, Y left, Z up), origin = eye midpoint.
+landmarks:
+  left_eye_outer:   [-0.010,  0.048,  0.000]
+  left_eye_inner:   [ 0.000,  0.016,  0.000]
+  left_eye_center:  [ 0.000,  0.032,  0.000]
+  right_eye_outer:  [-0.010, -0.048,  0.000]
+  right_eye_inner:  [ 0.000, -0.016,  0.000]
+  right_eye_center: [ 0.000, -0.032,  0.000]
+  nose_bridge:      [ 0.010,  0.000, -0.010]
+  nose_tip:         [ 0.030,  0.000, -0.035]
+  mouth_left:       [ 0.005,  0.025, -0.070]
+  mouth_right:      [ 0.005, -0.025, -0.070]
+  mouth_center:     [ 0.012,  0.000, -0.070]
+  chin:             [ 0.000,  0.000, -0.120]
+  forehead:         [ 0.000,  0.000,  0.075]
+  left_temple:      [-0.030,  0.072,  0.035]
+  right_temple:     [-0.030, -0.072,  0.035]
+  left_cheek:       [-0.020,  0.075, -0.035]
+  right_cheek:      [-0.020, -0.075, -0.035]
+  left_ear:         [-0.085,  0.075, -0.015]   # not in the face box (ears excluded)
+  right_ear:        [-0.085, -0.075, -0.015]
+  left_jaw:         [-0.070,  0.072, -0.040]   # face contour just in front of the ear: face box side edge on the
+  right_jaw:        [-0.070, -0.072, -0.040]   # side turning away (annotation only; PLACEHOLDER position)
+
+face_outline: [forehead, left_temple, left_cheek, chin, right_cheek, right_temple]
+eye_half_height: 0.006        # fully open lid half-height (m), scaled by openness
+eye_min_openness_frac: 0.15   # closed lids still span this fraction of eye_half_height (bbox never collapses)
+mouth_half_height: 0.022      # fully open (yawn) lip half-height (m) around mouth_center, scaled by mouth_openness
+mouth_min_openness_frac: 0.20 # closed lips still span this fraction of mouth_half_height (lip thickness)
+face_bbox_pad: 0.10           # box_style geometric only: bbox padding as a fraction of the landmark extent
+
+# OD box convention.
+#   annotation: boxes as a human labeller would draw them, i.e. what a trained model learns to output. face = hairline (forehead) .. chin along the face contour, ears
+#     excluded (side edges: cheeks in view, else the jaw points in front of the ears; profile: nose tip .. jaw);
+#     eye = inner .. outer corner, just below the brow .. lower lid (the whole socket, so the box does not
+#     shrink when the eye closes); mouth = philtrum .. below the lower lip, corners widened a little (sizes
+#     in annotation_boxes below). A part hidden by the head itself (far eye behind the nose) is cut off;
+#     an eye / mouth with no more than min_visible_fraction visible is not labelled.
+#   geometric: tight landmark boxes (eye / mouth height follows openness).
+box_style: annotation
+annotation_boxes:
+  eye_top: 0.011              # m above the eye centre (brow ~20 mm above, minus half a finger ~9 mm)
+  eye_bottom: 0.006           # m below the eye centre (lower lid)
+  mouth_top: 0.020            # m above mouth_center (philtrum)
+  mouth_below_lower_lip: 0.018  # one index finger
+  mouth_side_extend: 0.009    # half an index finger beyond each corner
+  min_facing_cos: 0.0         # a grid point counts as hidden by the head unless its surface faces the camera
+  samples: [5, 3]             # head-frame grid (across, up) per eye / mouth region for the visibility tests
+  min_visible_fraction: 0.334 # an eye / mouth is boxed only if more than this share is visible
+landmark_visibility:          # self-occlusion: landmark normal = normalise(template point + [normal_forward_bias, 0, 0])
+  normal_forward_bias: 0.10   # (head frame); visible if cos(normal, ray to camera) > min_facing_cos
+  min_facing_cos: -0.5        # (and not behind a self_occluder below). Tuned with nose_ridge so that, turning
+                              # away from a camera at eye height, the far eye's inner corner hides first (~56 deg),
+                              # then its outer corner / centre (~63 / 69), then the far temple / cheek (~70 / 72)
+# Parts of the head that hide other landmarks (self-occlusion: landmarks_visible / self_occluded_fraction only,
+# never the detection "occlusion"). cylinder a -> b (landmark names or head-frame points), radius in metres.
+self_occluders:
+  - name: nose_ridge          # hides the far eye's inner corner first when the head turns away from the camera
+    a: [0.0, 0.0, 0.0]        # between the eyes, at eye height (the template nose_bridge is 1 cm lower: a ridge
+    b: nose_tip               # from it hides the far eye all at once, ~33 deg with r 0.012, or never with r < 0.01)
+    radius: 0.006
+    applies_to: [left_eye_outer, left_eye_inner, left_eye_center, right_eye_outer, right_eye_inner, right_eye_center]
+  - name: nose_root           # fills the head behind the ridge, so a far-eye ray cannot pass between nose and face
+    a: [-0.012, 0.0, 0.0]
+    b: [0.0, 0.0, 0.0]
+    radius: 0.006
+    applies_to: [left_eye_outer, left_eye_inner, left_eye_center, right_eye_outer, right_eye_inner, right_eye_center]
+
+hands:                        # 3D positions of the hand centre for each hand state
+  wheel: [0.42, 0.15, -0.15]
+  lap:   [0.25, 0.05, -0.55]
+  phone: [0.25,-0.05, -0.55]
+  call:  head_frame             # head_frame = resolved from "<state>_offset" below, moves with the head
+  smoke: head_frame             # hand at the mouth holding a cigarette (smoke_offset)
+  at_ear: head_frame            # hand at the right ear / cheek, no phone (scratching, resting the head)
+  at_mouth: head_frame          # hand at the mouth, no cigarette (eating, drinking, covering a yawn)
+call_offset: [-0.075, -0.105, -0.030]        # head frame: hand at the right ear, behind the phone
+phone_call_offset: [-0.065, -0.090, -0.030]  # head frame: phone centre during a call (against the ear, inside the hand)
+smoke_offset: [0.075, -0.030, -0.095] # head frame: in front of and just below the right mouth corner
+at_ear_offset: [-0.075, -0.105, -0.030]   # head frame: as call_offset (same pose, empty hand)
+at_mouth_offset: [0.075, -0.030, -0.095]  # head frame: as smoke_offset
+hand_size: 0.10               # metres, used for hand bbox
+phone_size: [0.07, 0.15]      # metres (w, h)
+
+# Cigarette = a thin cylinder (segment of length cigarette_size[0], diameter cigarette_size[1]).
+# Its bbox is the projected segment padded by the projected diameter.
+cigarette_size: [0.08, 0.009]         # metres (length, diameter)
+cigarette_mouth:                      # cigarette: mouth -- filter end held at the lips
+  start: [0.015, -0.008, -0.072]      # head frame (near mouth_center), filter end
+  dir:   [1.0, -0.20, -0.30]          # head frame, pointing out of the face and slightly down
+cigarette_hand:                       # cigarette: hand -- held between the fingers (needs a hand state)
+  offset: [0.0, 0.0, 0.04]            # segment centre relative to the hand centre; vehicle frame for a fixed
+  dir:    [0.20, -0.30, 1.0]          # hand (wheel / lap / phone), head frame for a head_frame hand (smoke, call)
+
+# Objects at the lips while drinking (segment key `held`, with hand: at_mouth): a rod from `start` (head frame,
+# the rim at the lips) along `dir` (head frame: out of the face and up, the bottom tipped up to drink), `length`
+# (> 2 x radius) and `radius` metres, occluding as a capsule whose rounded ends stay inside start .. length. Only an occluder (no OD class for it): it hides the mouth and lower face; a
+# contextual false-positive rule may report it as something else (when_held). PLACEHOLDER sizes. From a camera
+# below the face (steering column) the rays to the eyes pass in front of the mouth, so the object can hide an eye.
+held_objects:
+  cup:    {start: [0.020, -0.008, -0.075], dir: [0.85, -0.10, 0.20], length: 0.09, radius: 0.035}
+  bottle: {start: [0.020, -0.008, -0.075], dir: [0.90, -0.10, 0.30], length: 0.20, radius: 0.030}
+
+# Seatbelt: shoulder strap diagonal from the driver's left shoulder to the right hip (LHD, B-pillar anchor on
+# the left). Points are vehicle frame relative to the eye point (driver.eye_point_offset). The seatbelt box
+# covers the belt on the B-pillar (with its outlet) together with the strap across the chest, so it spans
+# pillar_path + top..bottom. pillar_path: retractor -> D-ring outlet, then on to `top` (PLACEHOLDER).
+seatbelt_strap:
+  top:    [-0.08, 0.18, -0.15]        # left shoulder: 0.15 m below, 0.18 m left of the eye point
+  bottom: [ 0.05,-0.20, -0.55]        # right hip: 0.55 m below, 0.20 m right
+  pillar_path:
+    - [-0.30, 0.48, -0.45]            # belt leaving the pillar trim towards the retractor
+    - [-0.28, 0.45, -0.02]            # D-ring outlet on the B-pillar, about ear height
+  width: 0.05                         # metres
+  edge_samples: 8                     # points per long edge when projecting (follows lens distortion)
+  occlusion_samples: 6                # centreline points ray-tested against the occluders
+
+# Ray tests camera -> landmark: an occluder hides a point only if the ray meets it more than surface_eps
+# before the point (a landmark touching the hand is not hidden by it; one inside a hand sphere is).
+occlusion:
+  surface_eps: 0.003           # metres
+  torus_segments: 36           # polyline pieces of a torus rim
+
+# Occluders between camera and face (vehicle frame unless noted).
+#   torus: rim (center, normal, radius, tube_radius); disc: flat disc (center, normal, radius);
+#   cylinder: thin rod a -> b (radius); sphere: ball (center = vehicle point, or "hand" / "head_frame" = at the
+#   hand position of active_when_hand). active_when_hand: only while the hand is in that state.
+# Steering wheel: rim + hub + three spokes (3, 6 and 9 o'clock), all in the wheel plane
+# (center [0.42, 0, -0.22], normal [-0.90, 0, 0.44]; in-plane "left" = +Y, "down" = [-0.439, 0, -0.898]).
+occluders:
+  - name: steering_wheel
+    type: torus
+    center: [0.42, 0.0, -0.22]
+    normal: [-0.90, 0.0, 0.44]
+    radius: 0.19
+    tube_radius: 0.016
+  - name: steering_wheel_hub     # airbag cover
+    type: disc
+    center: [0.42, 0.0, -0.22]
+    normal: [-0.90, 0.0, 0.44]
+    radius: 0.09
+  - name: steering_wheel_spoke_left
+    type: cylinder
+    a: [0.42, 0.09, -0.22]       # hub edge
+    b: [0.42, 0.19, -0.22]       # rim
+    radius: 0.012
+  - name: steering_wheel_spoke_right
+    type: cylinder
+    a: [0.42, -0.09, -0.22]
+    b: [0.42, -0.19, -0.22]
+    radius: 0.012
+  - name: steering_wheel_spoke_bottom
+    type: cylinder
+    a: [0.3805, 0.0, -0.3009]    # center + 0.09 * down
+    b: [0.3366, 0.0, -0.3907]    # center + 0.19 * down
+    radius: 0.012
+  - name: hand_on_wheel          # driver's hand on the rim while hand == wheel (at hands.wheel)
+    type: sphere
+    active_when_hand: wheel
+    center: hand
+    radius: 0.045
+  - name: hand_on_call           # only active while hand == call
+    type: sphere
+    active_when_hand: call
+    center: head_frame           # head_frame = at "<active_when_hand>_offset" (call_offset if none)
+    radius: 0.06
+  - name: hand_smoking           # fingers in front of the mouth while hand == smoke
+    type: sphere
+    active_when_hand: smoke
+    center: head_frame
+    radius: 0.035
+  - name: hand_at_ear            # only active while hand == at_ear (as hand_on_call)
+    type: sphere
+    active_when_hand: at_ear
+    center: head_frame
+    radius: 0.06
+  - name: hand_at_mouth          # only active while hand == at_mouth (as hand_smoking)
+    type: sphere
+    active_when_hand: at_mouth
+    center: head_frame
+    radius: 0.035

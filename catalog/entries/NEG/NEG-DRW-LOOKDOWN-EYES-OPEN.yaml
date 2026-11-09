@@ -1,0 +1,15 @@
+id: NEG-DRW-LOOKDOWN-EYES-OPEN
+title: "低頭看大腿 3 s，眼睛是睜開的"
+summary: "低頭時眼框變小，真實模型常把睜眼認成閉眼。eye_flip 讓模擬模型在低頭、眼框變小時成段報成閉眼，nominal 不翻，兩個對照。"
+status: ready
+source: written
+tags: [look_down, class_flip]
+params:
+  look_s: {grid: [3.0, 5.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 8.0}
+    - {target: phone_lap,  duration: "${look_s}"}
+    - {target: road_ahead, duration: 4.0}
+variation:
+  profiles: [nominal, eye_flip]

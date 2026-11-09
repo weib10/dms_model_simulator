@@ -1,0 +1,13 @@
+id: BND-DRW-SINGLE-CLOSURE
+title: "正常開車中單次閉眼，閉眼時間從 0.3 s 掃到 6 s"
+summary: "前 7 s 正常，閉眼一次，再睜眼 4 s。看閉眼多久開始被當成疲勞、睜眼後多久解除。"
+status: ready
+source: written
+tags: [closure, duration]
+params:
+  closure_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: "${closure_s}", eye_openness: 0.05}
+    - {target: road_ahead, duration: 4.0}

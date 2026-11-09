@@ -1,0 +1,16 @@
+id: BND-DIS-GLITCH-RETURN
+title: "頭轉 2 s，短暫回正 0.1–1.0 s，再轉 2 s"
+summary: "兩次轉頭中間夾一次很短的回正。看後處理把它當成一次還是兩次分心、計時有沒有歸零。"
+status: ready
+source: written
+tags: [head_turn, glitch]
+params:
+  gap_s: {grid: [0.1, 0.2, 0.3, 0.5, 1.0]}
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 2.0, head_pose: [-50, 0, 0]}
+    - {target: road_ahead, duration: "${gap_s}"}
+    - {target: road_ahead, duration: 2.0, head_pose: [-50, 0, 0]}
+    - {target: road_ahead, duration: 3.0}

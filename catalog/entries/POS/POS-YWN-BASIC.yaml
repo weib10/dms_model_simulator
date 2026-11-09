@@ -1,0 +1,13 @@
+id: POS-YWN-BASIC
+title: "基本款：打一次哈欠（嘴張大 3 s）"
+summary: "哈欠的基本款：開合度 0.9 持續 3 s，眼睛正常。"
+status: ready
+source: written
+tags: [basic, yawn]
+template:
+  segments:
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 3.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  profiles: [ideal, nominal]

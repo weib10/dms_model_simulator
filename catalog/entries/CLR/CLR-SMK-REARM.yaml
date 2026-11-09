@@ -1,0 +1,15 @@
+id: CLR-SMK-REARM
+title: "叼菸 4 s、拿掉 6 s、再叼 4 s"
+summary: "手在方向盤，菸含在嘴上。看菸拿掉後有沒有解除、第二次有沒有再觸發。"
+status: ready
+source: written
+tags: [smoking, clear, rearm]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 4.0, hand: wheel, cigarette: mouth}
+    - {target: road_ahead, duration: 6.0}
+    - {target: road_ahead, duration: 4.0, hand: wheel, cigarette: mouth}
+    - {target: road_ahead, duration: 6.0}
+variation:
+  profiles: [ideal, nominal]

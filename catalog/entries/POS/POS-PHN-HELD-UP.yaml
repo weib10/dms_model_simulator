@@ -1,0 +1,17 @@
+id: POS-PHN-HELD-UP
+title: "手機舉在臉前 30 cm（打字、看訊息），眼睛看手機或看路"
+summary: "大腿上的手機拍不到，所以用舉起的手機（phone_up 位置），並算進真值的 phone_use。"
+status: ready
+source: written
+tags: [phone, held_up]
+params:
+  look: {grid: [phone_up, road_ahead]}      # 看手機 / 拿著但看路
+template:
+  cabin:
+    targets: {phone_up: [0.30, -0.10, 0.0]}
+    hands: {phone_up: [0.31, -0.10, -0.04]}
+  behavior: {events: {phone_states: [lap, call, phone_up]}}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: "${look}",  duration: 5.0, hand: phone_up, phone: phone_up}
+    - {target: road_ahead, duration: 3.0}

@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+out/
+*.egg-info/
+.pytest_cache/
+.claude/
+runs/
+build/
+.venv/
+
+# local inputs (recordings, logs), not in git
+inputs/
+
+# maintainer's local notes (agent rules, progress), not published
+AGENTS.md
+HANDOFF.md

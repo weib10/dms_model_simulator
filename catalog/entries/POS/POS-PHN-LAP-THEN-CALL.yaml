@@ -1,0 +1,7 @@
+id: POS-PHN-LAP-THEN-CALL
+title: "低頭看大腿上的手機，再接電話（通話時看乘客 1.5 s）"
+summary: "現有劇本 scenarios/phone_distraction.yaml 原封包。大腿上的手機兩台相機都拍不到，只有通話段（第 4、5 段）看得到手機。"
+status: ready
+source: written
+tags: [phone, call, existing]
+from_scenario: scenarios/phone_distraction.yaml

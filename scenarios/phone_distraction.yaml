@@ -1,0 +1,11 @@
+name: phone_distraction
+description: Driver looks down to a phone in the lap, then takes a call.
+behavior: {}
+segments:
+  - {target: road_ahead,  duration: 2.0}
+  - {target: phone_lap,   duration: 3.0, hand: phone, phone: lap}
+  - {target: road_ahead,  duration: 1.0, hand: phone, phone: lap}
+  - {target: phone_lap,   duration: 2.0, hand: phone, phone: lap}
+  - {target: road_ahead,  duration: 3.0, hand: call,  phone: call}
+  - {target: passenger,   duration: 1.5, hand: call,  phone: call}
+  - {target: road_ahead,  duration: 2.0}

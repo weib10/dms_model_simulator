@@ -1,0 +1,11 @@
+id: POS-SMK-PUFF
+title: "手拿菸到嘴邊抽 3 s"
+summary: "手遮住嘴，嘴框可能偵測不到。"
+status: ready
+source: written
+tags: [smoking, puff, occlusion]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 3.0, hand: smoke, cigarette: mouth}
+    - {target: road_ahead, duration: 3.0}

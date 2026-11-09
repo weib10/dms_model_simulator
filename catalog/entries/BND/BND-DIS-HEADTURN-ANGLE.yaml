@@ -1,0 +1,14 @@
+id: BND-DIS-HEADTURN-ANGLE
+title: "頭轉 4 s，角度從 ±15° 掃到 ±60°"
+summary: "同一段轉頭換不同角度，兩台相機、左右分開。看轉多大角度開始被當成分心；角度換成框的變化要看相機位置。"
+status: ready
+source: written
+tags: [head_turn, angle]
+params:
+  yaw_deg: {grid: [-60, -50, -40, -30, -20, -15, 15, 20, 30, 40, 50, 60]}
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 4.0, head_pose: ["${yaw_deg}", 0, 0]}
+    - {target: road_ahead, duration: 3.0}

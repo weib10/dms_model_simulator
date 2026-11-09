@@ -1,0 +1,10 @@
+name: drowsy
+description: Progressive drowsiness with long closures, yawns, head nodding and a 2 s micro-sleep.
+behavior:
+  blink: {rate_per_min: 8, duration_s: 0.3}
+segments:
+  - {target: road_ahead, duration: 3.0}
+  - {target: road_ahead, duration: 4.0, eye_openness: 0.6, closure: {rate_per_min: 10, duration_s: 1.2}, yawn: {rate_per_min: 6}}
+  - {target: road_ahead, duration: 4.0, eye_openness: 0.4, closure: {rate_per_min: 20, duration_s: 2.0}, yawn: {rate_per_min: 6}, head_pose: [0, -25, 0]}
+  - {target: road_ahead, duration: 2.0, eye_openness: 0.05, head_pose: [0, -30, 0]}   # micro-sleep: scripted, so every seed is drowsy
+  - {target: road_ahead, duration: 2.0}

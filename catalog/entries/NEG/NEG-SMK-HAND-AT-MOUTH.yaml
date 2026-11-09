@@ -1,0 +1,11 @@
+id: NEG-SMK-HAND-AT-MOUTH
+title: "手摸嘴或托下巴，沒有菸"
+summary: "遮擋版（同 NEG-PHN-HAND-AT-EAR）；有假香菸框的版本是 NEG-SMK-HAND-AT-MOUTH-FP。"
+status: ready
+source: written
+tags: [smoking, hand_near_face, occlusion]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 4.0, hand: smoke, cigarette: none}
+    - {target: road_ahead, duration: 3.0}

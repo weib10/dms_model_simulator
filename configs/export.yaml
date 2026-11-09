@@ -1,0 +1,17 @@
+# Export settings (dms_model_simulator/export.py, `dms-sim export`, `dms-sim catalog run`).
+
+simulation:
+  fps: 20                      # model output rate; --fps overrides
+  labels: sim                  # pipeline JSONL labels written next to the export: sim | mapped (layout class_map)
+
+layout: null                   # binary / frame_yaml layout (class ids, thresholds); null = configs/binlog.yaml
+
+# <out>/labels/<frame index, zero padded>.yaml, one per frame (also frames without objects: `detections: []`),
+# fields class_id, confidence, left, top, width, height (LTWH, original-image pixels), class_name, plus
+# timestamp_msec (round(t*1000), frame 0 = 0). Objects, class ids and thresholds are those of the layout.
+# image render: <out>/images/<same stem>.<image_ext>.
+frame_yaml:
+  digits: 8
+  image_ext: png
+  box_decimals: 3
+  conf_decimals: 6

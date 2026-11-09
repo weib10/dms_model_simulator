@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dms_model_simulator"
+version = "0.1.0"
+description = "Simulator of DMS object-detection and gaze model outputs under different camera placements"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = ["numpy>=1.25", "pyyaml", "matplotlib", "pillow"]   # numpy: Generator.spawn
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.scripts]
+dms-sim = "dms_model_simulator.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["dms_model_simulator*"]

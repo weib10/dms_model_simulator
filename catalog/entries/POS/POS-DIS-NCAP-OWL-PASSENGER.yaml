@@ -1,0 +1,14 @@
+id: POS-DIS-NCAP-OWL-PASSENGER
+title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看乘客 4 s"
+summary: "視線離開路面 3 s 以上，頭和眼一起轉。看乘客是水平方向的經典區域，從 dash_right 看是往相機那側轉。駕駛側車窗見 POS-DIS-NCAP-OWL-WINDOW，往下看見 POS-DIS-NCAP-OWL-DOWN。"
+status: ready
+source: written
+tags: [ncap, head_turn, long_distraction]
+template:
+  behavior: {transition_head_s: 0.3}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: passenger,  duration: 4.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 4.0}
+variation:
+  cameras: [dash_right]

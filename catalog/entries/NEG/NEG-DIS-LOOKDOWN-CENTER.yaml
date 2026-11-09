@@ -1,0 +1,23 @@
+id: NEG-DIS-LOOKDOWN-CENTER
+title: "看中控或儀表 1.0–1.5 s，連續 6 次"
+summary: "每次都很短的低頭。低頭時臉框的水平變化很小，從框上不太看得出來。"
+status: ready
+source: written
+tags: [glance, center_display, blind_spot]
+params:
+  glance_s: {grid: [1.0, 1.5]}
+template:
+  segments:
+    - {target: road_ahead,     duration: 3.0}
+    - {target: center_display, duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 2.0}
+    - {target: cluster,        duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 2.0}
+    - {target: center_display, duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 2.0}
+    - {target: cluster,        duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 2.0}
+    - {target: center_display, duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 2.0}
+    - {target: cluster,        duration: "${glance_s}"}
+    - {target: road_ahead,     duration: 3.0}

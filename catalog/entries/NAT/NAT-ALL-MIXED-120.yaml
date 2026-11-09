@@ -1,0 +1,7 @@
+id: NAT-ALL-MIXED-120
+title: "120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸、未繫安全帶片段"
+summary: "現有劇本 scenarios/random_120s.yaml（gen-scenario seed 1）。適合量每分鐘告警數、告警被切成幾段。"
+status: ready
+source: generated
+tags: [natural, existing]
+from_scenario: scenarios/random_120s.yaml

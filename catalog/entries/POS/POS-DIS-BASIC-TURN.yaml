@@ -1,0 +1,15 @@
+id: POS-DIS-BASIC-TURN
+title: "基本款：頭向右轉 60° 看乘客 7 s，再回正"
+summary: "分心家族的基本款：角度大、時間長，回正後恢復正常。只用 dash_right、只轉右邊：從這台相機看右轉時臉的變化最穩定。"
+status: ready
+source: written
+tags: [basic, head_turn]
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: passenger,  duration: 7.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  cameras: [dash_right]
+  profiles: [ideal, nominal]

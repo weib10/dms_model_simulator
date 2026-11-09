@@ -1,0 +1,11 @@
+id: POS-YWN-ONLY
+title: "眼睛正常，只打一次大哈欠（嘴張大 4 s）"
+summary: "嘴巴開合度 0.9 持續 4 s，沒有閉眼。"
+status: ready
+source: written
+tags: [yawn]
+template:
+  segments:
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 4.0}

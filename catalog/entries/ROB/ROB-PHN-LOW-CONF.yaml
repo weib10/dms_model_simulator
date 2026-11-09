@@ -1,0 +1,14 @@
+id: ROB-PHN-LOW-CONF
+title: "手機框分數偏低，講電話 6 s"
+summary: "low_conf 讓手機框的分數落在常見輸出門檻附近，套用門檻時部分幀的手機框會消失。"
+status: ready
+source: written
+tags: [robustness, phone, conf]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 6.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 4.0}
+variation:
+  emulator_seeds: [0, 1, 2, 3, 4]
+  profiles: [nominal, low_conf]

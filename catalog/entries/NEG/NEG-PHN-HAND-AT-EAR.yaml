@@ -1,0 +1,14 @@
+id: NEG-PHN-HAND-AT-EAR
+title: "手摸耳朵或撐頭，沒拿手機"
+summary: "手在臉旁只會遮住臉或嘴，這條是遮擋版；有假手機框的版本是 NEG-PHN-HAND-AT-EAR-FP。"
+status: ready
+source: written
+tags: [phone, hand_near_face, occlusion]
+params:
+  hold_s: {grid: [3.0, 6.0]}
+template:
+  behavior: {events: {phone_hand_states: [phone]}}   # hand: call without a phone is not phone use here
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${hold_s}", hand: call, phone: none}
+    - {target: road_ahead, duration: 3.0}

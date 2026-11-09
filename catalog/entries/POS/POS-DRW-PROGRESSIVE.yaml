@@ -1,0 +1,7 @@
+id: POS-DRW-PROGRESSIVE
+title: "一路變睏：開合度下降、長閉眼、哈欠、低頭，最後 2 s 微睡"
+summary: "現有劇本 scenarios/drowsy.yaml 原封包。"
+status: ready
+source: written
+tags: [drowsy, progressive, existing]
+from_scenario: scenarios/drowsy.yaml

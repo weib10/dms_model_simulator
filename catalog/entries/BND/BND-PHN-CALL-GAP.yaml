@@ -1,0 +1,15 @@
+id: BND-PHN-CALL-GAP
+title: "講電話 3 s、放下一下、再講 3 s"
+summary: "中間放下手機的時間很短。看後處理把它當成一通還是兩通、放下時有沒有解除。"
+status: ready
+source: written
+tags: [phone, call, gap]
+params:
+  gap_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 3.0, hand: call, phone: call}
+    - {target: road_ahead, duration: "${gap_s}"}
+    - {target: road_ahead, duration: 3.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 3.0}

@@ -1,0 +1,11 @@
+id: NEG-SMK-CIG-IN-LAP
+title: "菸夾在手上、手放在大腿（沒在抽）"
+summary: "有菸，但離臉很遠，沒有在抽。"
+status: ready
+source: written
+tags: [smoking]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 5.0, hand: lap, cigarette: hand}
+    - {target: road_ahead, duration: 3.0}

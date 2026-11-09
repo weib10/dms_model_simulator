@@ -1,0 +1,17 @@
+id: ROB-DIS-LOW-FPS
+title: "15 fps 時頭向右轉，持續時間從 1 s 掃到 6 s"
+summary: "和 BND-DIS-HEADTURN-DURATION 同一個劇本，改成 15 fps。後處理若用時間戳計時，結果應該和 20 fps 一樣；若數幀數就會不同。"
+status: ready
+source: written
+tags: [robustness, frame_rate, head_turn]
+fps: 15
+params:
+  turn_s: {grid: [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]}   # whole frames at 15 fps
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${turn_s}", head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  cameras: [dash_right]

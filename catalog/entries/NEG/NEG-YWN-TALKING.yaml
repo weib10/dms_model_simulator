@@ -1,0 +1,13 @@
+id: NEG-YWN-TALKING
+title: "講話：嘴巴微開（開合度 0.3–0.45）持續 10 s"
+summary: "講話的嘴型，開合度在張嘴門檻以下。只有固定開合，沒有一開一合的動態。"
+status: ready
+source: written
+tags: [talking, mouth]
+params:
+  mouth: {grid: [0.3, 0.45]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 10.0, mouth_openness: "${mouth}"}
+    - {target: road_ahead, duration: 2.0}

@@ -1,0 +1,15 @@
+id: NEG-SBT-HAND-ACROSS-CHEST
+title: "安全帶有繫，手摸耳朵、摸嘴、講電話時擋到一段安全帶"
+summary: "手抬到臉旁時會遮住部分安全帶框，安全帶其實一直繫著。"
+status: ready
+source: written
+tags: [seatbelt, occlusion, hand_near_face]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 4.0, hand: at_ear}
+    - {target: road_ahead, duration: 2.0}
+    - {target: road_ahead, duration: 4.0, hand: at_mouth}
+    - {target: road_ahead, duration: 2.0}
+    - {target: road_ahead, duration: 5.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 3.0}

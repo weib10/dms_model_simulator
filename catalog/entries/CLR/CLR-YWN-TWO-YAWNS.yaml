@@ -1,0 +1,15 @@
+id: CLR-YWN-TWO-YAWNS
+title: "兩次哈欠，間隔 10 s"
+summary: "嘴張大（開合度 0.9）4 s，兩次之間閉嘴 10 s。看兩次哈欠是不是各被當成一次。"
+status: ready
+source: written
+tags: [yawn, clear, rearm]
+template:
+  segments:
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 10.0}
+    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: 6.0}
+variation:
+  profiles: [ideal, nominal]

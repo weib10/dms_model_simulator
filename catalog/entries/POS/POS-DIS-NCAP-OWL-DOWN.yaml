@@ -1,0 +1,21 @@
+id: POS-DIS-NCAP-OWL-DOWN
+title: "Euro NCAP 長分心（owl，往下看）：看中控或乘客腳踏區 4 s"
+summary: "頭會往下、往右轉。低頭的部分在臉框的水平變化上很小，主要只剩水平分量。"
+status: ready
+source: written
+tags: [ncap, head_turn, long_distraction, look_down, blind_spot]
+params:
+  zone:
+    grid:
+      - {target: center_display,     duration: 4.0, head_pose: [-30, -25, 0]}   # infotainment / centre console
+      - {target: passenger_footwell, duration: 4.0, head_pose: [-45, -35, 0]}   # passenger footwell
+template:
+  cabin:
+    targets: {passenger_footwell: [0.60, -0.60, -0.65]}
+  behavior: {transition_head_s: 0.3}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - "${zone}"
+    - {target: road_ahead, duration: 4.0}
+variation:
+  cameras: [dash_right]

@@ -1,0 +1,11 @@
+id: POS-DRW-MICROSLEEP
+title: "正常開車 8 s 後微睡 2 s"
+summary: "一次 2 s 的閉眼。"
+status: ready
+source: written
+tags: [closure, microsleep]
+template:
+  segments:
+    - {target: road_ahead, duration: 8.0}
+    - {target: road_ahead, duration: 2.0, eye_openness: 0.05, head_pose: [0, -10, 0]}
+    - {target: road_ahead, duration: 3.0}

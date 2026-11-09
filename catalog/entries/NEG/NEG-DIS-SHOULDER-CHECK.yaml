@@ -1,0 +1,18 @@
+id: NEG-DIS-SHOULDER-CHECK
+title: "變換車道前快速轉頭看盲點 0.8 s，重複 3 次"
+summary: "大角度但很短的轉頭，是正常駕駛動作。"
+status: ready
+source: written
+tags: [head_turn, shoulder_check]
+params:
+  look_s: {grid: [0.6, 0.8, 1.0]}
+template:
+  behavior: {transition_head_s: 0.15}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${look_s}", head_pose: [60, 0, 0]}
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${look_s}", head_pose: [60, 0, 0]}
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${look_s}", head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 3.0}

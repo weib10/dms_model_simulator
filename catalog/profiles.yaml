@@ -1,0 +1,244 @@
+# Model-error profiles for catalog runs: each is an `emulator_overrides` dict deep-merged into configs/emulator.yaml
+# (Simulation(emulator_overrides=...)). The error modes are explained at the top of configs/emulator.yaml.
+#
+# Profiles stack with "+": `jit2+jmp1+mis2` deep-merges them left to right (later parts win). Stacks work in an
+# entry's variation.profiles, `catalog expand --profile` and `run / demo / render / export --profile`. A profile
+# may also be `compose: "a+b"` (a named stack of the plain profiles).
+# Names end up in row ids, which are Windows directory names: keep them short, no ':' or '+'.
+#
+# Graded dimensions (1 = a bit worse than nominal, 2 = clearly bad, 3 = bad but the boxes are still there): pick one
+# level per dimension and stack them. All levels are guesses until fitted to real model logs, so read results as
+# "how much error the post-processing tolerates", not as a prediction of the real model.
+#   jit  box jitter: noise x1.5 / x2.5 / x4, more in hard views (box_conditions: occlusion, head yaw, small boxes);
+#        jit3 also lowers temporal_rho to 0.3 (jumpy frame to frame instead of slow drift)
+#   jmp  box jumps: a box lands elsewhere for 1-3 frames, more often in hard views (box_jump). A jumped face box
+#        moves without its eyes / mouth, which upsets any logic built on where the features sit in the face box
+#   mis  misses: lower detection rates, in runs of 3 / 8 / 20 frames
+#   drp  dropped frames: 2 / 5 / 10 %, in runs of 2 / 4 / 8 frames
+#   lat  latency: 2 / 5 frames
+#   cnf  scores close to typical output thresholds (eye / mouth / phone / cigarette / seatbelt boxes fall under them)
+#   flp  eye / mouth open-closed class flips
+#   fp   false positives: random boxes, and hand at the ear / mouth reported as a phone / cigarette
+# Bundles: bad = level 2 of the box dimensions + level 1 of the rest; worst = level 3 / 2.
+profiles:
+  nominal:                     # configs/emulator.yaml as is
+    emulator_overrides: {}
+  ideal:                       # logic tests: every box detected, no dropped frames, no false positives, no conf /
+    emulator_overrides:        # openness noise (box corners keep their noise), so a failing rule points at the
+      pipeline: {drop_frame_prob: 0.0, latency_frames: 0}       # post-processing, not at the detector model
+      detection:
+        face:      {p_max: 1.0, conf_noise_std: 0.0}
+        eye:       {p_max: 1.0, conf_noise_std: 0.0}
+        mouth:     {p_max: 1.0, conf_noise_std: 0.0}
+        hand:      {p_max: 1.0, conf_noise_std: 0.0}
+        phone:     {p_max: 1.0, conf_noise_std: 0.0}
+        cigarette: {p_max: 1.0, conf_noise_std: 0.0}
+        seatbelt:  {p_max: 1.0, conf_noise_std: 0.0, seatbelt_off_false_positive_rate: 0.0}
+        false_positives: {rate_per_frame: 0.0}
+      eye_openness: {noise_std: 0.0}
+      mouth_openness: {noise_std: 0.0}
+  low_conf:                    # object scores just above typical output thresholds: with a per-class conf_threshold
+    emulator_overrides:        # in the layout and the default conf noise, some frames fall below and drop out
+      detection:
+        phone:     {conf_base: 0.45}
+        cigarette: {conf_base: 0.25}
+        seatbelt:  {conf_base: 0.30}
+  low_det:                     # every class detected less often (p_max lower)
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.90}
+        eye: {p_max: 0.85}
+        mouth: {p_max: 0.85}
+        phone: {p_max: 0.70}
+        cigarette: {p_max: 0.65}
+        seatbelt: {p_max: 0.75}
+  drops:                       # whole frames without output
+    emulator_overrides:
+      pipeline: {drop_frame_prob: 0.10}
+  latency:                     # output of frame i reported at frame i + 3
+    emulator_overrides:
+      pipeline: {latency_frames: 3}
+  noisy_box:                   # box corner noise x3
+    emulator_overrides:
+      detection:
+        face: {bbox_noise_frac: 0.09}
+        eye: {bbox_noise_frac: 0.18}
+        mouth: {bbox_noise_frac: 0.18}
+        phone: {bbox_noise_frac: 0.30}
+        cigarette: {bbox_noise_frac: 0.36}
+        seatbelt: {bbox_noise_frac: 0.15}
+  burst_miss_5:               # same detection rates as low_det, but misses come in runs of 5 frames on average
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.9, mean_miss_frames: 5}
+        eye: {p_max: 0.85, mean_miss_frames: 5}
+        mouth: {p_max: 0.85, mean_miss_frames: 5}
+        phone: {p_max: 0.7, mean_miss_frames: 5}
+        cigarette: {p_max: 0.65, mean_miss_frames: 5}
+        seatbelt: {p_max: 0.75, mean_miss_frames: 5}
+  burst_miss_15:               # same detection rates as low_det, but misses come in runs of 15 frames on average
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.9, mean_miss_frames: 15}
+        eye: {p_max: 0.85, mean_miss_frames: 15}
+        mouth: {p_max: 0.85, mean_miss_frames: 15}
+        phone: {p_max: 0.7, mean_miss_frames: 15}
+        cigarette: {p_max: 0.65, mean_miss_frames: 15}
+        seatbelt: {p_max: 0.75, mean_miss_frames: 15}
+  burst_miss_30:               # same detection rates as low_det, but misses come in runs of 30 frames on average
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.9, mean_miss_frames: 30}
+        eye: {p_max: 0.85, mean_miss_frames: 30}
+        mouth: {p_max: 0.85, mean_miss_frames: 30}
+        phone: {p_max: 0.7, mean_miss_frames: 30}
+        cigarette: {p_max: 0.65, mean_miss_frames: 30}
+        seatbelt: {p_max: 0.75, mean_miss_frames: 30}
+  eye_flip:                    # open eyes reported closed: mostly when looking down or the eye box is small
+    emulator_overrides:
+      eye_state_flip: {enabled: true}
+  eye_flip_0p5s:               # open eyes reported closed on 5% of frames in runs of 0.5 s (10 frames). Blinks end a
+                               # run (the chain restarts when the true class changes) and face misses split it, so the
+                               # closed-eye runs in the output are shorter; few runs per minute, so the share varies by seed
+    emulator_overrides:
+      eye_state_flip: {enabled: true, mean_frames: 10, open_to_closed: {p_base: 0.05}}
+  eye_flip_2s:                 # same, runs of 2 s (40 frames)
+    emulator_overrides:
+      eye_state_flip: {enabled: true, mean_frames: 40, open_to_closed: {p_base: 0.05}}
+  ctx_fp:                      # hand at the ear reported as a phone, hand at the mouth as a cigarette
+    emulator_overrides:
+      contextual_false_positives: {enabled: true}
+  no_eyes:                     # sunglasses stand-in: eye boxes never detected (no eyewear geometry in the simulator)
+    emulator_overrides:
+      detection:
+        eye: {p_max: 0.0}
+  no_mouth:                    # face-mask stand-in: mouth box never detected (no mask geometry in the simulator)
+    emulator_overrides:
+      detection:
+        mouth: {p_max: 0.0}
+
+  # ---- graded dimensions (see the header) ----
+  jit1:
+    emulator_overrides:
+      box_conditions: {occlusion: 0.5, rel_yaw: 0.5, small: 0.5}
+      detection:
+        face: {bbox_noise_frac: 0.045}
+        eye: {bbox_noise_frac: 0.09}
+        mouth: {bbox_noise_frac: 0.09}
+        hand: {bbox_noise_frac: 0.12}
+        phone: {bbox_noise_frac: 0.15}
+        cigarette: {bbox_noise_frac: 0.18}
+        seatbelt: {bbox_noise_frac: 0.075}
+  jit2:
+    emulator_overrides:
+      box_conditions: {occlusion: 1.0, rel_yaw: 1.0, small: 1.0}
+      detection:
+        face: {bbox_noise_frac: 0.075}
+        eye: {bbox_noise_frac: 0.15}
+        mouth: {bbox_noise_frac: 0.15}
+        hand: {bbox_noise_frac: 0.20}
+        phone: {bbox_noise_frac: 0.25}
+        cigarette: {bbox_noise_frac: 0.30}
+        seatbelt: {bbox_noise_frac: 0.125}
+  jit3:
+    emulator_overrides:
+      box_conditions: {occlusion: 2.0, rel_yaw: 2.0, small: 2.0}
+      detection:
+        face: {bbox_noise_frac: 0.12, temporal_rho: 0.3}
+        eye: {bbox_noise_frac: 0.24, temporal_rho: 0.3}
+        mouth: {bbox_noise_frac: 0.24, temporal_rho: 0.3}
+        hand: {bbox_noise_frac: 0.32, temporal_rho: 0.3}
+        phone: {bbox_noise_frac: 0.40, temporal_rho: 0.3}
+        cigarette: {bbox_noise_frac: 0.48, temporal_rho: 0.3}
+        seatbelt: {bbox_noise_frac: 0.20, temporal_rho: 0.3}
+  jmp1:
+    emulator_overrides:
+      box_jump: {enabled: true, p: 0.005, mean_frames: 1.5, shift_frac: 0.3, gain: {occlusion: 1.0, rel_yaw: 1.0, small: 1.0}}
+  jmp2:
+    emulator_overrides:
+      box_jump: {enabled: true, p: 0.02, mean_frames: 2.0, shift_frac: 0.5, gain: {occlusion: 2.0, rel_yaw: 2.0, small: 2.0}}
+  jmp3:
+    emulator_overrides:
+      box_jump: {enabled: true, p: 0.05, mean_frames: 3.0, shift_frac: 0.8, scale_range: [0.6, 1.5],
+                 gain: {occlusion: 3.0, rel_yaw: 3.0, small: 3.0}}
+  mis1:
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.97, mean_miss_frames: 3}
+        eye: {p_max: 0.93, mean_miss_frames: 3}
+        mouth: {p_max: 0.93, mean_miss_frames: 3}
+        phone: {p_max: 0.85, mean_miss_frames: 3}
+        cigarette: {p_max: 0.80, mean_miss_frames: 3}
+        seatbelt: {p_max: 0.90, mean_miss_frames: 3}
+  mis2:
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.92, mean_miss_frames: 8}
+        eye: {p_max: 0.85, mean_miss_frames: 8}
+        mouth: {p_max: 0.85, mean_miss_frames: 8}
+        phone: {p_max: 0.75, mean_miss_frames: 8}
+        cigarette: {p_max: 0.70, mean_miss_frames: 8}
+        seatbelt: {p_max: 0.80, mean_miss_frames: 8}
+  mis3:
+    emulator_overrides:
+      detection:
+        face: {p_max: 0.85, mean_miss_frames: 20}
+        eye: {p_max: 0.75, mean_miss_frames: 20}
+        mouth: {p_max: 0.75, mean_miss_frames: 20}
+        phone: {p_max: 0.60, mean_miss_frames: 20}
+        cigarette: {p_max: 0.55, mean_miss_frames: 20}
+        seatbelt: {p_max: 0.65, mean_miss_frames: 20}
+  drp1:
+    emulator_overrides:
+      pipeline: {drop_frame_prob: 0.02, drop_mean_frames: 2}
+  drp2:
+    emulator_overrides:
+      pipeline: {drop_frame_prob: 0.05, drop_mean_frames: 4}
+  drp3:
+    emulator_overrides:
+      pipeline: {drop_frame_prob: 0.10, drop_mean_frames: 8}
+  lat1:
+    emulator_overrides:
+      pipeline: {latency_frames: 2}
+  lat2:
+    emulator_overrides:
+      pipeline: {latency_frames: 5}
+  cnf1:                        # object scores lowered towards typical output thresholds. The face is left alone:
+    emulator_overrides:        # conf is also scaled by the detection probability, so a face near its threshold would
+                               # vanish in every head turn; face loss is the mis dimension's job
+      detection:
+        eye: {conf_base: 0.60, conf_noise_std: 0.07}
+        mouth: {conf_base: 0.65, conf_noise_std: 0.07}
+        phone: {conf_base: 0.50, conf_noise_std: 0.10}
+        cigarette: {conf_base: 0.30, conf_noise_std: 0.10}
+        seatbelt: {conf_base: 0.35, conf_noise_std: 0.08}
+  cnf2:
+    emulator_overrides:
+      detection:
+        eye: {conf_base: 0.50, conf_noise_std: 0.09}
+        mouth: {conf_base: 0.60, conf_noise_std: 0.09}
+        phone: {conf_base: 0.42, conf_noise_std: 0.12}
+        cigarette: {conf_base: 0.22, conf_noise_std: 0.12}
+        seatbelt: {conf_base: 0.27, conf_noise_std: 0.10}
+  flp1:
+    emulator_overrides:
+      eye_state_flip: {enabled: true}
+      mouth_state_flip: {enabled: true}
+  flp2:
+    emulator_overrides:
+      eye_state_flip: {enabled: true, mean_frames: 20, open_to_closed: {p_base: 0.03, p_gaze_down: 0.5, p_small: 0.2}}
+      mouth_state_flip: {enabled: true, mean_frames: 15, closed_to_open: {p_base: 0.03, p_hand_state: {at_mouth: 0.5, smoke: 0.3}}}
+  fp1:
+    emulator_overrides:
+      detection: {false_positives: {rate_per_frame: 0.02}}
+      contextual_false_positives: {enabled: true}
+  fp2:
+    emulator_overrides:
+      detection: {false_positives: {rate_per_frame: 0.05}}
+      contextual_false_positives: {enabled: true}
+
+  # ---- bundles ----
+  bad:
+    compose: "jit2+jmp2+mis2+drp1+cnf1+flp1+fp1"
+  worst:
+    compose: "jit3+jmp3+mis3+drp2+lat1+cnf2+flp2+fp2"

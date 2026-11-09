@@ -1,0 +1,73 @@
+name: random_120s
+description: Randomly generated scenario (Markov targets, seed 1, 120.0 s).
+behavior: {}
+generator:
+  seed: 1
+  duration_s: 120.0
+  phone_episodes:
+  - [107.3, 120.0, lap]
+  drowsy_episodes:
+  - [73.3, 86.5]
+  smoking_episodes:
+  - [113.4, 120.0, puff]
+  seatbelt_off_episodes: []
+segments:
+  - {target: road_ahead, duration: 4.7}
+  - {target: cluster, duration: 0.8}
+  - {target: road_ahead, duration: 4.6}
+  - {target: rearview_mirror, duration: 0.7}
+  - {target: road_ahead, duration: 4.8}
+  - {target: left_mirror, duration: 0.7}
+  - {target: road_ahead, duration: 2.9}
+  - {target: phone_lap, duration: 1.4}
+  - {target: road_ahead, duration: 6.1}
+  - {target: road_right, duration: 0.4}
+  - {target: road_ahead, duration: 2.6}
+  - {target: right_mirror, duration: 0.8}
+  - {target: road_ahead, duration: 1.7}
+  - {target: phone_lap, duration: 4.4}
+  - {target: center_display, duration: 1.5}
+  - {target: road_ahead, duration: 1.2}
+  - {target: left_mirror, duration: 0.8}
+  - {target: road_ahead, duration: 2.2}
+  - {target: rearview_mirror, duration: 0.5}
+  - {target: road_ahead, duration: 3.5}
+  - {target: phone_lap, duration: 1.2}
+  - {target: road_ahead, duration: 5.7}
+  - {target: passenger, duration: 0.7}
+  - {target: road_ahead, duration: 2.5}
+  - {target: left_mirror, duration: 0.5}
+  - {target: road_ahead, duration: 3.3}
+  - {target: cluster, duration: 0.7}
+  - {target: road_ahead, duration: 3.9}
+  - {target: center_display, duration: 0.6}
+  - {target: road_ahead, duration: 2.5}
+  - {target: center_display, duration: 1.5}
+  - {target: phone_lap, duration: 1.8}
+  - {target: road_ahead, duration: 2.1}
+  - {target: road_ahead, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 0.7}
+  - {target: cluster, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 1.0}
+  - {target: road_ahead, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 5.7}
+  - {target: road_left, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 0.5}
+  - {target: road_ahead, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 2.6}
+  - {target: rearview_mirror, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 0.8}
+  - {target: road_ahead, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 1.6}
+  - {target: left_mirror, eye_openness: 0.5, closure: {rate_per_min: 12, duration_s: 1.5}, yawn: {rate_per_min: 2}, duration: 0.3}
+  - {target: left_mirror, duration: 0.7}
+  - {target: road_ahead, duration: 3.3}
+  - {target: rearview_mirror, duration: 0.9}
+  - {target: road_ahead, duration: 3.9}
+  - {target: left_mirror, duration: 0.7}
+  - {target: road_ahead, duration: 0.9}
+  - {target: center_display, duration: 1.1}
+  - {target: road_ahead, duration: 4.1}
+  - {target: cluster, duration: 1.0}
+  - {target: road_ahead, duration: 4.2}
+  - {target: road_ahead, hand: phone, phone: lap, duration: 0.8}
+  - {target: cluster, hand: phone, phone: lap, duration: 0.9}
+  - {target: road_ahead, hand: phone, phone: lap, duration: 1.3}
+  - {target: rearview_mirror, hand: phone, phone: lap, duration: 0.7}
+  - {target: road_ahead, hand: phone, phone: lap, duration: 2.4}
+  - {target: road_ahead, hand: phone, phone: lap, cigarette: mouth, duration: 1.2}
+  - {target: phone_lap, hand: phone, phone: lap, cigarette: mouth, duration: 2.4}
+  - {target: road_ahead, hand: phone, phone: lap, cigarette: mouth, duration: 3.0}

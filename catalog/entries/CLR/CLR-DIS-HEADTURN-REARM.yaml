@@ -1,0 +1,17 @@
+id: CLR-DIS-HEADTURN-REARM
+title: "頭向右轉 6 s、回正 4 s、再轉 6 s"
+summary: "兩次明確的轉頭，中間回正夠久。看第一次回正後有沒有解除、第二次轉頭有沒有再觸發。只用 dash_right（理由見 BND-DIS-HEADTURN-DURATION）。"
+status: ready
+source: written
+tags: [head_turn, clear, rearm]
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 4.0}
+variation:
+  cameras: [dash_right]
+  profiles: [ideal, nominal]

@@ -1,0 +1,63 @@
+# Made-up consumer layout for the tests (not any real product's format): separate open / shut classes for the
+# eyes and the mouth (class_map rules on the predicted openness), per-class conf thresholds, the hand not written,
+# a file header with magic + version, a reserved header array, xyxy boxes and an integer score.
+
+endian: little
+
+file_header:
+  magic: "TLY1"
+  version: 3
+  version_type: u16
+
+header_fields:
+  - {name: timestamp,   type: u32}
+  - {name: frame_index, type: u32}
+  - {name: width,       type: u16}
+  - {name: height,      type: u16}
+  - {name: spare,       type: i16, count: 4}     # not filled by the simulator: written as 0
+  - {name: num_objects, type: u8}
+
+object_fields:
+  - {name: class_id, type: u16}
+  - {name: x1,       type: f32}
+  - {name: y1,       type: f32}
+  - {name: x2,       type: f32}
+  - {name: y2,       type: f32}
+  - {name: score,    type: u16}
+
+bbox_format: xyxy
+conf_scale: 10000
+timestamp_unit: ms
+
+class_ids:
+  belt_strap: 0
+  lids_open: 1
+  jaw_open: 2
+  handset: 3
+  face_box: 4
+  smoke_stick: 5
+  lids_shut: 6
+  jaw_shut: 7
+
+class_map:
+  face: face_box
+  left_eye:  {state: eye_openness,   threshold: lids_threshold, below: lids_shut, otherwise: lids_open}
+  right_eye: {state: eye_openness,   threshold: lids_threshold, below: lids_shut, otherwise: lids_open}
+  mouth:     {state: mouth_openness, threshold: jaw_threshold,  below: jaw_shut,  otherwise: jaw_open}
+  hand: null
+  phone: handset
+  cigarette: smoke_stick
+  seatbelt: belt_strap
+
+lids_threshold: 0.3
+jaw_threshold: 0.5
+
+conf_threshold:
+  face_box: 0.3
+  lids_open: 0.45
+  lids_shut: 0.45
+  jaw_open: 0.33
+  jaw_shut: 0.33
+  handset: 0.5
+  smoke_stick: 0.1
+  belt_strap: 0.12

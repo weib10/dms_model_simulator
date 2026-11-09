@@ -1,0 +1,46 @@
+# Driver behaviour defaults. A scenario file can override any key under "behavior".
+fps: 30
+head_gain_yaw: 0.65          # fraction of the target angle taken by the head (rest by the eyes)
+head_gain_pitch: 0.45
+head_yaw_limit_deg: 60
+head_pitch_limit_deg: 35
+transition_head_s: 0.45      # head move duration between targets
+transition_gaze_s: 0.12      # saccade duration (gaze direction, smoothstep in angle from the current eye origin)
+saccade_peak_speed_deg_s: 600 # longer saccades than transition_gaze_s when 1.5 x amplitude / duration would exceed this
+eye_in_head_limit_deg:       # eyes never rotate further than this from the head axis; a target beyond it is
+  yaw: 45                    # reached only as the head turns (gaze points exactly at the target once within)
+  pitch: 45
+rest_head_pose: [0.0, 0.0, 0.0]   # yaw, pitch, roll (deg) when gaze target is straight ahead
+
+# Event rates (blink / closure / yawn rate_per_min) are long-run events per minute of driving: they are converted
+# into a start hazard over event-free time (blinks and closures exclude each other; yawns are independent), so a
+# long run measures the configured rate. Each kind draws from its own random stream.
+blink:
+  rate_per_min: 15
+  duration_s: 0.18
+  min_openness: 0.0
+eye_openness: 1.0            # baseline openness when not blinking (0..1)
+closure:                     # long eye closures (drowsiness); zero rate disables
+  rate_per_min: 0
+  duration_s: 1.5
+  openness: 0.05             # eye openness during a closure
+mouth_openness: 0.05         # baseline mouth openness (0 closed .. 1 fully open)
+yawn:                        # yawns; overridable per segment like "closure"; zero rate disables
+  rate_per_min: 0
+  duration_s: 4.0            # full yawn, smooth sin rise and fall
+  peak_openness: 0.9
+hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_mouth (hand to face, empty hand)
+phone: none                  # none | lap | call
+cigarette: none              # none | mouth | hand (hand = at the current hand position)
+seatbelt: on                 # on | off (YAML on/off booleans are accepted)
+held: none                   # none | cup | bottle: an object at the lips (drinking; configs/cabin.yaml held_objects),
+                             # needs hand: at_mouth
+
+# Per-frame behaviour labels, derived from the script (never from model output). See dms_model_simulator/events.py.
+events:
+  on_road_targets: [road_ahead, road_left, road_right]   # scripted targets that count as eyes on road
+  closed_openness_threshold: 0.2   # mean scripted eye openness strictly below this counts as eyes closed
+  phone_states: [lap, call]        # phone states that count as phone use
+  phone_hand_states: [phone, call] # hand states that count as phone use
+  smoking_cigarette_states: [mouth, hand]   # cigarette states that count as smoking
+  seatbelt_off_states: [off]       # seatbelt states that count as seatbelt_off

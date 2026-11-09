@@ -1,0 +1,11 @@
+id: POS-ALL-SMOKE-AND-CALL
+title: "菸含在嘴上，同時講電話 6 s"
+summary: "兩種物件同時在臉旁：手機貼耳（手在 call），菸含在嘴上。看兩種行為會不會互相壓過。"
+status: ready
+source: written
+tags: [smoking, phone, interaction]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 6.0, hand: call, phone: call, cigarette: mouth}
+    - {target: road_ahead, duration: 3.0}

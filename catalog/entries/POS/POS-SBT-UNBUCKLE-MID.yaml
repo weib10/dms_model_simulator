@@ -1,0 +1,11 @@
+id: POS-SBT-UNBUCKLE-MID
+title: "開車中解開安全帶 10 s 再繫回"
+summary: "一次明確的未繫，之後繫回。"
+status: ready
+source: written
+tags: [seatbelt]
+template:
+  segments:
+    - {target: road_ahead, duration: 5.0}
+    - {target: road_ahead, duration: 10.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 5.0}

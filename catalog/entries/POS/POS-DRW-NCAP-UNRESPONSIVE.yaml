@@ -1,0 +1,13 @@
+id: POS-DRW-NCAP-UNRESPONSIVE
+title: "Euro NCAP 無反應駕駛：閉眼、頭垂到胸前 10 s 不動"
+summary: "睡著後一直沒回應。頭低 45° 時眼睛可能被眉骨擋住、甚至整張臉偵測不到，這時模型輸出裡看不到閉眼框。"
+status: ready
+source: written
+tags: [ncap, closure, sleep, unresponsive, head_down]
+template:
+  behavior: {transition_head_s: 1.5}
+  segments:
+    - {target: road_ahead, duration: 8.0}
+    - {target: road_ahead, duration: 10.0, eye_openness: 0.0, head_pose: [0, -45, 0]}
+variation:
+  profiles: [ideal, nominal]

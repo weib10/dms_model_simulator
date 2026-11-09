@@ -1,0 +1,13 @@
+name: mirror_check
+description: Attentive driving with periodic mirror and cluster checks.
+behavior: {}
+segments:
+  - {target: road_ahead,      duration: 2.0}
+  - {target: left_mirror,     duration: 0.8}
+  - {target: road_ahead,      duration: 1.5}
+  - {target: rearview_mirror, duration: 0.7}
+  - {target: road_ahead,      duration: 1.5}
+  - {target: cluster,         duration: 0.6}
+  - {target: road_ahead,      duration: 1.5}
+  - {target: right_mirror,    duration: 0.9}
+  - {target: road_ahead,      duration: 2.0}

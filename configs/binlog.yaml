@@ -1,0 +1,82 @@
+# Default binary log layout (dms.bin): one packed record per frame with the model's detections.
+# Copy this file and point `--layout` at the copy to write another consumer's format
+# (`dms-sim run --format dmsbin --layout my_layout.yaml`).
+#
+# File = [file_header] then per frame: frame header (header_fields, in order) followed by
+# num_objects object records (object_fields, in order). Fields are packed with no padding/alignment
+# (struct "<" / ">" semantics); add explicit {name: pad, type: pad, size: N} entries if the consumer's
+# C struct has compiler padding.
+#
+# Field types: u8 i8 u16 i16 u32 i32 u64 i64 f32 f64 (optionally `count: N` for a fixed array), pad (needs
+# size; written as zero bytes) or record (nested `fields:`, e.g. a C sub-struct). A field's `role` (default:
+# its name) tells the writer what to put there. Header roles: timestamp, frame_index, width, height,
+# num_objects. Object roles: class_id, score, and the box fields x, y, w, h (bbox_format xywh / ltwh) or
+# x1, y1, x2, y2 (xyxy). Any other field (e.g. slots the consumer fills in itself) is written as its
+# `default` (0) and read back raw.
+
+endian: little                 # little | big
+
+file_header:                   # fixed prefix at the start of the file; empty magic + null version = none
+  magic: ""                    # ASCII string, or hex like "0x444D5331"
+  version: null                # integer, or null for no version field
+  version_type: u32
+
+header_fields:
+  - {name: timestamp,   type: u64}
+  - {name: frame_index, type: u32}
+  - {name: width,       type: u16}
+  - {name: height,      type: u16}
+  - {name: num_objects, type: u16}
+
+object_fields:
+  - {name: class_id, type: u8}
+  - {name: x,        type: f32}
+  - {name: y,        type: f32}
+  - {name: w,        type: f32}
+  - {name: h,        type: f32}
+  - {name: score,    type: f32}
+
+bbox_format: xywh              # xywh = top-left x, y, width, height | xyxy = corners x1, y1, x2, y2
+conf_scale: 1.0                # stored score = score * conf_scale (rounded if the field is an integer)
+timestamp_unit: ms             # ms | us | s (rounded if the field is an integer)
+
+# simulator detection class -> consumer class id. Many-to-one allowed (both eyes -> one "eye" id).
+# Simulator classes missing here are skipped (and counted). Simulator classes: face, left_eye, right_eye,
+# mouth, hand, phone, cigarette, seatbelt (names as in dms_model_simulator/schema.py LABELS).
+class_ids:
+  face: 0
+  left_eye: 1
+  right_eye: 1
+  mouth: 2
+  hand: 3
+  phone: 4
+  cigarette: 5
+  seatbelt: 6
+
+# id -> name used when reading back (needed because class_ids is many-to-one).
+# Ids not listed here fall back to the first simulator class mapped to that id, else "id<N>".
+class_names:
+  0: face
+  1: eye
+  2: mouth
+  3: hand
+  4: phone
+  5: cigarette
+  6: seatbelt
+
+# Optional per-class score threshold (consumer class name -> minimum score); detections below it are not
+# written (and counted as below_threshold). Empty = write every detection.
+conf_threshold: {}
+
+# Optional class map: simulator class -> consumer class (a name in class_ids, or null = not written). A rule
+# picks a class from the predicted state, e.g. models with separate open / closed eye classes:
+#   class_map:
+#     face: face
+#     left_eye:  {state: eye_openness,   threshold: eye_closed_threshold, below: eye_closed, otherwise: eye_open}
+#     right_eye: {state: eye_openness,   threshold: eye_closed_threshold, below: eye_closed, otherwise: eye_open}
+#     mouth:     {state: mouth_openness, threshold: mouth_open_threshold, below: mouth_closed, otherwise: mouth_open}
+#     hand: null
+#   eye_closed_threshold: 0.3      # a rule's threshold is a number or the name of a top-level key like this
+#   mouth_open_threshold: 0.4
+# With a class map, class_ids lists the consumer classes (eye_closed: 1, eye_open: 2, ...). The same map is
+# used by `--labels mapped` for the pipeline JSONL.

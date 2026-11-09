@@ -1,0 +1,24 @@
+id: ROB-ALL-BURST-MISS
+title: "連續漏框 1 / 5 / 15 / 30 幀"
+summary: "和 ROB-ALL-ERROR-PROFILES 同一串行為，再加一段轉頭。low_det 是每幀各自漏（約 1 幀一段），burst_miss_5 / 15 / 30 的漏框率和 low_det 一樣，只是連成平均 5 / 15 / 30 幀一段。"
+status: ready
+source: written
+tags: [robustness, burst_miss]
+template:
+  behavior: {transition_head_s: 0.1}
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: 5.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 5.0, hand: wheel, cigarette: mouth}
+    - {target: road_ahead, duration: 6.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 3.0}
+    - {target: passenger,  duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  cameras: [dash_right]
+  emulator_seeds: [0, 1, 2]
+  profiles: [nominal, low_det, burst_miss_5, burst_miss_15, burst_miss_30]

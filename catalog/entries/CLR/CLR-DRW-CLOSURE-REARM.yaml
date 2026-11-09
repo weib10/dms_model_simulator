@@ -1,0 +1,16 @@
+id: CLR-DRW-CLOSURE-REARM
+title: "閉眼 2.5 s、睜眼 12 s、再閉眼 2.5 s"
+summary: "兩次明確的閉眼，中間睜眼夠久。看第一次睜眼後有沒有解除、第二次閉眼有沒有再觸發。"
+status: ready
+source: written
+tags: [closure, clear, rearm]
+template:
+  behavior: {blink: {rate_per_min: 6}}
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 12.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 12.0}
+variation:
+  profiles: [ideal, nominal]

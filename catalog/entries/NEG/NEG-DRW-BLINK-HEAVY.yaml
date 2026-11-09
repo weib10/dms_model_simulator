@@ -1,0 +1,12 @@
+id: NEG-DRW-BLINK-HEAVY
+title: "很常眨眼（每分鐘 30–40 次），每次都正常長度"
+summary: "閉眼類別頻繁出現，但都是正常眨眼，不是疲勞。"
+status: ready
+source: written
+tags: [blink]
+params:
+  rate: {grid: [30, 40]}
+template:
+  behavior: {blink: {rate_per_min: "${rate}", duration_s: 0.25}}
+  segments:
+    - {target: road_ahead, duration: 20.0}

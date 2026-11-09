@@ -1,0 +1,13 @@
+id: POS-DIS-NCAP-LIZARD
+title: "Euro NCAP 長分心（lizard，只動眼睛）：頭不動，眼睛看中控 4 s"
+summary: "lizard 指頭幾乎不動、只有眼睛離開路面。頭姿固定在 [-5, -5, 0]，視線落在中控（在眼球 45° 限制內）。只有框沒有視線的輸出，從框上幾乎看不出來。"
+status: ready
+source: written
+tags: [ncap, long_distraction, gaze_only, blind_spot]
+template:
+  segments:
+    - {target: road_ahead,     duration: 3.0}
+    - {target: center_display, duration: 4.0, head_pose: [-5, -5, 0]}
+    - {target: road_ahead,     duration: 4.0}
+variation:
+  cameras: [dash_right]

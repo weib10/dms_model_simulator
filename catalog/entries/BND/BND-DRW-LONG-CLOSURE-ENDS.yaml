@@ -1,0 +1,16 @@
+id: BND-DRW-LONG-CLOSURE-ENDS
+title: "單次閉眼 1.2 s 或 8 s"
+summary: "只取兩端：很短的閉眼和很長的閉眼。中間的時長看 BND-DRW-SINGLE-CLOSURE。"
+status: ready
+source: written
+tags: [sleepiness, closure, duration]
+params:
+  closure_s: {grid: [1.2, 8.0]}
+template:
+  behavior: {blink: {rate_per_min: 6}}
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: "${closure_s}", eye_openness: 0.05}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  profiles: [ideal, nominal]

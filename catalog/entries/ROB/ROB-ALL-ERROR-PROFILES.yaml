@@ -1,0 +1,20 @@
+id: ROB-ALL-ERROR-PROFILES
+title: "通話、抽菸、微睡、未繫安全帶各一段，在五種模型誤差設定下重跑"
+summary: "同一個劇本換誤差設定（偵測率低、掉幀、延遲、框抖動）。連續漏框見 ROB-ALL-BURST-MISS，眼睛類別翻轉見 ROB-DRW-EYE-FLIP。"
+status: ready
+source: written
+tags: [robustness, profiles]
+template:
+  segments:
+    - {target: road_ahead, duration: 7.0}
+    - {target: road_ahead, duration: 5.0, hand: call, phone: call}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 5.0, hand: wheel, cigarette: mouth}
+    - {target: road_ahead, duration: 6.0}
+    - {target: road_ahead, duration: 2.5, eye_openness: 0.05}
+    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  cameras: [dash_right]
+  profiles: [nominal, low_det, drops, latency, noisy_box]

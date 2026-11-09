@@ -1,0 +1,15 @@
+id: CLR-SBT-REBUCKLE
+title: "解開安全帶 8 s、繫回 8 s、再解開 8 s"
+summary: "看繫回後有沒有解除、第二次解開有沒有再觸發。"
+status: ready
+source: written
+tags: [seatbelt, clear, rearm]
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 8.0}
+    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: 6.0}
+variation:
+  profiles: [ideal, nominal]

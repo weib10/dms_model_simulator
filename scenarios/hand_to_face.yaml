@@ -1,0 +1,16 @@
+name: hand_to_face
+description: >-
+  Negative for phone / smoking / drowsiness: hand at the ear and at the mouth with nothing in it, a glance into the
+  lap with the eyes open, then normal driving. No phone_use, smoking or drowsy truth event. With the emulator's
+  contextual_false_positives / eye_state_flip enabled this is where a post-processor's false alarms come from.
+behavior: {}
+segments:
+  - {target: road_ahead, duration: 2.0}
+  - {target: road_ahead, duration: 4.0, hand: at_ear}
+  - {target: road_ahead, duration: 2.0}
+  - {target: road_ahead, duration: 3.0, hand: at_mouth}
+  - {target: road_ahead, duration: 2.0}
+  - {target: phone_lap,  duration: 2.0}
+  - {target: road_ahead, duration: 2.0}
+  - {target: left_mirror, duration: 3.0, hand: at_ear}
+  - {target: road_ahead, duration: 2.0}

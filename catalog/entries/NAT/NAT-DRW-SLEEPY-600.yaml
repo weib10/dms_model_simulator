@@ -1,0 +1,15 @@
+id: NAT-DRW-SLEEPY-600
+title: "600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段）"
+summary: "長時間、反覆出現的疲勞片段。看疲勞相關的輸出被切成幾段、走勢如何。"
+status: ready
+source: generated
+tags: [natural, drowsy]
+generator:
+  duration_s: 600
+  config:
+    phone_episodes: {rate_per_min: 0}
+    smoking_episodes: {rate_per_min: 0}
+    seatbelt_off_episodes: {rate_per_min: 0}
+    drowsy_episodes: {rate_per_min: 0.6}
+variation:
+  cameras: [dash_right]

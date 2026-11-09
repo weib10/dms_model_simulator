@@ -1,0 +1,81 @@
+# Random scenario generator (dms_model_simulator/scenario_gen.py).
+# Gaze target sequence = Markov chain; dwell time per visit ~ lognormal(mean_s, sigma) clipped to [min_s, max_s].
+# Phone, drowsiness, smoking and seatbelt-off episodes are a renewal process in time (non-overlapping within a
+# kind): `rate_per_min` is the long-run number of episodes per minute (the exponential gap after an episode has
+# mean 60 / rate - mean duration; a warning is given and episodes run back to back if that is negative). They
+# overlay segment attributes. Where kinds overlap, the earlier kind in the order phone, drowsy, smoking,
+# seatbelt_off keeps the attributes it sets (e.g. a phone episode keeps `hand: phone` during a smoking episode).
+# The target chain and every episode kind draw from their own random stream, so tuning one kind leaves the
+# other kinds' episodes of a seed unchanged; a kind with `target_bias` (phone, drowsy) still changes the target
+# sequence, because its episodes re-weight the transitions. A missing block or rate 0 disables a kind.
+# The requested duration is rounded to the nearest tick and must be at least one tick.
+# All targets must exist in configs/cabin.yaml "targets".
+
+start_target: road_ahead
+time_resolution_s: 0.1         # segment durations (and the total duration) are rounded to this
+
+# transitions[from][to] = relative weight (rows are normalised; self-transitions allowed)
+transitions:
+  road_ahead:      {left_mirror: 1.0, right_mirror: 0.6, rearview_mirror: 1.2, cluster: 1.5, center_display: 0.8,
+                    phone_lap: 0.4, passenger: 0.3, road_left: 0.6, road_right: 0.6}
+  left_mirror:     {road_ahead: 1.0}
+  right_mirror:    {road_ahead: 1.0}
+  rearview_mirror: {road_ahead: 0.9, left_mirror: 0.1}
+  cluster:         {road_ahead: 0.9, center_display: 0.1}
+  center_display:  {road_ahead: 0.8, cluster: 0.1, phone_lap: 0.1}
+  phone_lap:       {road_ahead: 0.9, center_display: 0.1}
+  passenger:       {road_ahead: 1.0}
+  road_left:       {road_ahead: 1.0}
+  road_right:      {road_ahead: 1.0}
+
+dwell:                         # per-target dwell distribution; "default" for targets not listed
+  default:         {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  road_ahead:      {mean_s: 4.0, sigma: 0.6, min_s: 0.8, max_s: 15.0}
+  road_left:       {mean_s: 1.0, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  road_right:      {mean_s: 1.0, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  center_display:  {mean_s: 1.2, sigma: 0.5, min_s: 0.4, max_s: 4.0}
+  phone_lap:       {mean_s: 1.8, sigma: 0.5, min_s: 0.5, max_s: 6.0}
+  passenger:       {mean_s: 1.2, sigma: 0.5, min_s: 0.4, max_s: 4.0}
+
+phone_episodes:                # driver handles a phone for a while
+  rate_per_min: 0.6
+  duration: {mean_s: 10.0, sigma: 0.4, min_s: 3.0, max_s: 30.0}
+  modes:                       # probability, segment attributes, and transition weight multipliers
+    lap:
+      p: 0.6
+      attrs: {hand: phone, phone: lap}
+      target_bias: {phone_lap: 6.0}
+    call:
+      p: 0.4
+      attrs: {hand: call, phone: call}
+      target_bias: {}
+
+drowsy_episodes:               # reduced openness, long closures, yawns, attention locked ahead
+  rate_per_min: 0.3
+  duration: {mean_s: 12.0, sigma: 0.4, min_s: 4.0, max_s: 40.0}
+  attrs:
+    eye_openness: 0.5
+    closure: {rate_per_min: 12, duration_s: 1.5}
+    yawn: {rate_per_min: 2}
+  target_bias: {left_mirror: 0.3, right_mirror: 0.3, rearview_mirror: 0.3, cluster: 0.5, center_display: 0.3,
+                phone_lap: 0.3, passenger: 0.3, road_left: 0.3, road_right: 0.3}
+
+smoking_episodes:              # cigarette at the lips or in the hand; modes like phone_episodes
+  rate_per_min: 0.3
+  duration: {mean_s: 15.0, sigma: 0.4, min_s: 4.0, max_s: 45.0}
+  modes:
+    mouth:                     # cigarette held in the lips, hands unchanged
+      p: 0.4
+      attrs: {cigarette: mouth}
+    puff:                      # hand at the mouth (fingers occlude the lower face)
+      p: 0.3
+      attrs: {hand: smoke, cigarette: mouth}
+    hand:                      # cigarette between the fingers of the current hand (wheel by default)
+      p: 0.3
+      attrs: {cigarette: hand}
+  # target_bias per mode works as for phone_episodes (none by default)
+
+seatbelt_off_episodes:         # driving unbuckled
+  rate_per_min: 0.15
+  duration: {mean_s: 15.0, sigma: 0.4, min_s: 5.0, max_s: 40.0}
+  attrs: {seatbelt: "off"}

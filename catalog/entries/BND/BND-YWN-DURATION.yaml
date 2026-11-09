@@ -1,0 +1,13 @@
+id: BND-YWN-DURATION
+title: "嘴張大的時間從 0.25 s 掃到 5 s"
+summary: "嘴巴開合度 0.9，持續時間由短到長。開合度多少算張嘴，由輸出格式的開閉門檻決定（模擬器預設 0.55）。"
+status: ready
+source: written
+tags: [yawn, duration]
+params:
+  yawn_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 5.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: 0.9}
+    - {target: road_ahead, duration: 3.0}

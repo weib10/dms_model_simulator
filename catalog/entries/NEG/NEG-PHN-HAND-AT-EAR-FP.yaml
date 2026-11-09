@@ -1,0 +1,15 @@
+id: NEG-PHN-HAND-AT-EAR-FP
+title: "手摸耳朵，模擬模型在手的位置成段報出假手機框"
+summary: "NEG-PHN-HAND-AT-EAR 加上誤報：手在耳邊（沒有手機）時，ctx_fp 讓模擬模型在手的位置成段報出手機框，假框持續 hold_s 1–6 s。"
+status: ready
+source: written
+tags: [phone, hand_near_face, false_positive]
+params:
+  hold_s: {grid: [1.0, 2.0, 3.0, 6.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${hold_s}", hand: at_ear, phone: none}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  profiles: [ctx_fp]

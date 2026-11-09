@@ -1,0 +1,15 @@
+id: NEG-SMK-HAND-AT-MOUTH-FP
+title: "手摸嘴或托下巴，模擬模型在嘴前成段報出假香菸框"
+summary: "NEG-SMK-HAND-AT-MOUTH 加上誤報：手在嘴邊（沒有菸）時，ctx_fp 讓模擬模型在嘴前成段報出香菸框。"
+status: ready
+source: written
+tags: [smoking, hand_near_face, false_positive]
+params:
+  hold_s: {grid: [1.0, 2.0, 3.0, 6.0]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${hold_s}", hand: at_mouth, cigarette: none}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  profiles: [ctx_fp]

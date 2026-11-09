@@ -1,0 +1,18 @@
+id: NAT-ALL-CLEAN-300
+title: "300 s 日常駕駛：看路、看鏡子、看儀表，沒有手機、疲勞、抽菸、未繫"
+summary: "誤報率的基準線。用 gen-scenario 產生，四種片段的頻率都設 0；看鏡子、看乘客會有短暫轉頭。"
+status: ready
+source: generated
+tags: [natural, false_alarm]
+generator:
+  duration_s: 300
+  config:
+    phone_episodes: {rate_per_min: 0}
+    drowsy_episodes: {rate_per_min: 0}
+    smoking_episodes: {rate_per_min: 0}
+    seatbelt_off_episodes: {rate_per_min: 0}
+    transitions:
+      road_ahead: {phone_lap: 0.0}
+      center_display: {phone_lap: 0.0}
+variation:
+  seeds: [0, 1]
