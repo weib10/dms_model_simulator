@@ -352,6 +352,18 @@ def cmd_batch(a):
     print(f"wrote {out}/batch_summary.md, batch_summary.json and {len(recs)} runs in {out}/data")
 
 
+def parse_param_overrides(items: list[str]) -> dict:
+    """["name=value", ...] -> {name: value}; values are parsed as YAML (numbers, lists, dicts, strings)."""
+    import yaml
+    out = {}
+    for it in items or []:
+        name, sep, val = it.partition("=")
+        if not sep or not name.strip():
+            raise SystemExit(f"--param {it!r}: expected NAME=VALUE")
+        out[name.strip()] = yaml.safe_load(val)
+    return out
+
+
 def cmd_catalog(a):
     """Scenario catalog (catalog/, see catalog/README.md): list / show / validate / index / expand / run."""
     from . import catalog as C
@@ -383,8 +395,13 @@ def cmd_catalog(a):
         print(f"wrote {out}")
     elif a.action == "expand":
         sel = C.select(entries, a.select, a.status, a.tag)
+        overrides = parse_param_overrides(a.param)
+        unused = sorted(k for k in overrides if not any(k in (e.get("params") or {}) for e in sel))
+        if unused:
+            raise SystemExit(f"--param {', '.join(unused)}: no selected entry has this parameter")
         man = C.expand(sel, a.out, a.mode, a.n, a.seed, cameras=a.camera, variants=a.variants,
-                       emulator_seeds=a.emulator_seeds, profile_names=a.profile, max_rows=a.max_rows)
+                       emulator_seeds=a.emulator_seeds, profile_names=a.profile, max_rows=a.max_rows,
+                       levels=a.level, overrides=overrides)
         print(f"wrote {a.out}/manifest.json: {len(man['rows'])} rows from {len(man['entries'])} entries"
               + (f" (planned, skipped: {', '.join(man['skipped_planned'])})" if man["skipped_planned"] else ""))
     elif a.action == "run":
@@ -568,6 +585,10 @@ def main(argv=None):
     q.add_argument("--emulator-seeds", type=int, default=None, help="override: model-noise seeds 0..N-1")
     q.add_argument("--profile", nargs="+", default=None, help="override: error profiles (catalog/profiles.yaml)")
     q.add_argument("--max-rows", type=int, default=2000)
+    q.add_argument("--level", nargs="+", default=None, choices=["small", "medium", "large"],
+                   help="difficulty levels of entries with `levels` parameters (default: all three, one row each)")
+    q.add_argument("--param", action="append", default=[], metavar="NAME=VALUE",
+                   help="fix a parameter in every selected entry that has it (value parsed as YAML); repeatable")
     q = cs.add_parser("run", help="export every manifest row (frame_yaml + JSONL + behaviour card)")
     q.add_argument("run_dir"); q.add_argument("select", nargs="*", default=None,
                                          help="only these rows: entry ids, categories, families or prefixes (as for list)")

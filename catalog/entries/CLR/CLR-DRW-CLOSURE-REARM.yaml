@@ -4,6 +4,7 @@ summary: "兩次明確的閉眼，中間睜眼夠久。看第一次睜眼後有�
 status: ready
 source: written
 tags: [closure, clear, rearm]
+behaviors: [V05]
 template:
   behavior: {blink: {rate_per_min: 6}}
   segments:

@@ -4,6 +4,7 @@ summary: "模擬器沒有墨鏡幾何，用 profile no_eyes（眼框偵測率 0�
 status: ready
 source: written
 tags: [ncap, occlusion, sunglasses, robustness]
+behaviors: [C01]
 template:
   behavior: {transition_head_s: 0.1}
   segments:

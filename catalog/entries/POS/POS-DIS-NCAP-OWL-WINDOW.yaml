@@ -4,6 +4,7 @@ summary: "dash_right 在駕駛右前方，往左轉是背向相機：臉框的�
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, blind_spot]
+behaviors: [V01]
 params:
   yaw_deg: {grid: [30, 45, 60, 75]}
 template:

@@ -4,6 +4,7 @@ summary: "視線離開路面 3 s 以上，頭和眼一起轉。看乘客是水�
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction]
+behaviors: [V01]
 template:
   behavior: {transition_head_s: 0.3}
   segments:

@@ -4,6 +4,7 @@ summary: "抽菸家族的基本款：手不在臉前，嘴與菸都沒被遮。"
 status: ready
 source: written
 tags: [basic, smoking]
+behaviors: [V10]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

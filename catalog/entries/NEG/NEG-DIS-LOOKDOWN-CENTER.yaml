@@ -4,6 +4,7 @@ summary: "每次都很短的低頭。低頭時臉框的水平變化很小，從�
 status: ready
 source: written
 tags: [glance, center_display, blind_spot]
+behaviors: [N03]
 params:
   glance_s: {grid: [1.0, 1.5]}
 template:

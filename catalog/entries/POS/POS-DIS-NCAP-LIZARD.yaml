@@ -4,6 +4,7 @@ summary: "lizard 指頭幾乎不動、只有眼睛離開路面。頭姿固定在
 status: ready
 source: written
 tags: [ncap, long_distraction, gaze_only, blind_spot]
+behaviors: [V02]
 template:
   segments:
     - {target: road_ahead,     duration: 3.0}

@@ -4,6 +4,7 @@ summary: "VATS（visual attention time sharing）是每次都很短、但 30 s �
 status: ready
 source: written
 tags: [ncap, short_distraction, glance, accumulation]
+behaviors: [V04]
 template:
   behavior: {transition_head_s: 0.2}
   segments:

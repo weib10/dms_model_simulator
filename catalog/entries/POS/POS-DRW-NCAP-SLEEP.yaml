@@ -4,6 +4,7 @@ summary: "Euro NCAP 把閉眼 3 s 以上算睡著（1–3 s 是微睡，見 POS-
 status: ready
 source: written
 tags: [ncap, closure, sleep]
+behaviors: [V06]
 template:
   segments:
     - {target: road_ahead, duration: 8.0}

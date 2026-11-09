@@ -4,6 +4,7 @@ summary: "低頭時眼框變小，真實模型常把睜眼認成閉眼。eye_fli
 status: ready
 source: written
 tags: [look_down, class_flip]
+behaviors: [N12]
 params:
   look_s: {grid: [3.0, 5.0]}
 template:

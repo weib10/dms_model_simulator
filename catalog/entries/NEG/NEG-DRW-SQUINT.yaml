@@ -4,6 +4,7 @@ summary: "開合度在模擬器的閉眼門檻（0.2）之上，眼睛是睜開�
 status: ready
 source: written
 tags: [squint]
+behaviors: [N11]
 params:
   openness: {grid: [0.3, 0.4]}
 template:

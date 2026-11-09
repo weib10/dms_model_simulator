@@ -4,6 +4,7 @@ summary: "同一個劇本換誤差設定（偵測率低、掉幀、延遲、框�
 status: ready
 source: written
 tags: [robustness, profiles]
+behaviors: [C03, V08, V10, V05, V11]
 template:
   segments:
     - {target: road_ahead, duration: 7.0}

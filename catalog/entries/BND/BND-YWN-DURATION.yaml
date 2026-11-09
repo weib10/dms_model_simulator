@@ -4,6 +4,7 @@ summary: "嘴巴開合度 0.9，持續時間由短到長。開合度多少算張
 status: ready
 source: written
 tags: [yawn, duration]
+behaviors: [V07]
 params:
   yawn_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 5.0]}
 template:

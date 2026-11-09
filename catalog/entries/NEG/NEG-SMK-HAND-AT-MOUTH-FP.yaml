@@ -4,6 +4,7 @@ summary: "NEG-SMK-HAND-AT-MOUTH 加上誤報：手在嘴邊（沒有菸）時，
 status: ready
 source: written
 tags: [smoking, hand_near_face, false_positive]
+behaviors: [N21, C03]
 params:
   hold_s: {grid: [1.0, 2.0, 3.0, 6.0]}
 template:

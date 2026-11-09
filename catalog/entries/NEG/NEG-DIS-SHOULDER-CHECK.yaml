@@ -4,6 +4,7 @@ summary: "大角度但很短的轉頭，是正常駕駛動作。"
 status: ready
 source: written
 tags: [head_turn, shoulder_check]
+behaviors: [N04]
 params:
   look_s: {grid: [0.6, 0.8, 1.0]}
 template:

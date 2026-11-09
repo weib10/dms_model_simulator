@@ -1,0 +1,20 @@
+id: NEG-DIS-EYES-ONLY-GLANCE
+title: "只動眼睛的短瞥：頭不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照）"
+summary: "對照：lizard 長分心（只動眼睛 4 s）。頭姿固定在正前方附近，視線看儀表、中控各一次為一輪，
+  每次 small 0.5 s、medium 1.0 s、large 1.5 s，共 2 輪，中間回路面 2 s。只有框、沒有視線輸出時幾乎看不出來。"
+status: ready
+source: written
+tags: [glance, gaze_only]
+behaviors: [N09, N03]
+params:
+  look_s: {levels: {small: 0.5, medium: 1.0, large: 1.5}}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: 2
+      segments:
+        - {target: cluster,        duration: "${look_s}", head_pose: [0, -3, 0]}
+        - {target: road_ahead,     duration: 2.0}
+        - {target: center_display, duration: "${look_s}", head_pose: [-5, -5, 0]}
+        - {target: road_ahead,     duration: 2.0}
+    - {target: road_ahead, duration: 2.0}

@@ -4,6 +4,7 @@ summary: "視線還在路面上（road_left / road_right），不是分心，但
 status: ready
 source: written
 tags: [head_turn, intersection]
+behaviors: [N05]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

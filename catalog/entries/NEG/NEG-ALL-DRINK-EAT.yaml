@@ -4,6 +4,7 @@ summary: "杯子、瓶子貼在嘴上（held，手在 at_mouth），仰頭 10–
 status: ready
 source: written
 tags: [hand_near_face, drinking, eating, occlusion]
+behaviors: [N19]
 params:
   drink_s: {grid: [2.0, 4.0]}
 template:

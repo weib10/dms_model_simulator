@@ -4,6 +4,7 @@ summary: "睡著後一直沒回應。頭低 45° 時眼睛可能被眉骨擋住�
 status: ready
 source: written
 tags: [ncap, closure, sleep, unresponsive, head_down]
+behaviors: [V06]
 template:
   behavior: {transition_head_s: 1.5}
   segments:

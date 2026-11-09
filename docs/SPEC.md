@@ -46,7 +46,8 @@ visible: gaze with `valid: false`. Openness only for what the model detected in 
 
 Truth JSONL (`*.truth.jsonl`), same `frame_id`: exact `od`, head pose, gaze (with zone and scripted target),
 openness, blink / closure, hand / phone / cigarette / seatbelt / held states, `phone_visible`, and `events`:
-`eyes_off_road`, `off_road_s` (current continuous off-road time), `eyes_closed` (mean scripted openness below
+`eyes_off_road` (scripted target off the road, or the actual gaze outside the yaw / pitch box of the on-road
+targets widened by `zone_classifier.tolerance_deg`), `off_road_s` (current continuous off-road time), `eyes_closed` (mean scripted openness below
 `closed_openness_threshold`), `closed_s`, `phone_use` (scripted, also when the phone is out of view),
 `phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`.
 

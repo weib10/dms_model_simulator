@@ -4,6 +4,7 @@ summary: "手機家族的基本款：手機貼耳、眼睛看路、頭不轉。"
 status: ready
 source: written
 tags: [basic, phone, call]
+behaviors: [V08]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

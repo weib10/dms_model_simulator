@@ -1,0 +1,19 @@
+id: NEG-ALL-LAUGH
+title: "大笑：嘴張開、眼睛瞇起"
+summary: "同時像兩種違規：打哈欠（嘴張大且久）與閉眼（開合度 < 0.2）。嘴 small 0.4、medium 0.55、large 0.75，
+  眼睛 0.6 / 0.45 / 0.3（0.25 以下視線輸出會失效），每次 0.8 / 1.2 / 1.5 s（哈欠通常 3–4 s），笑 2 次，中間 3 s。"
+status: ready
+source: written
+tags: [yawn, closure, mouth, squint, laugh]
+behaviors: [N17]
+params:
+  mouth: {levels: {small: 0.4, medium: 0.55, large: 0.75}}
+  eyes: {levels: {small: 0.6, medium: 0.45, large: 0.3}}
+  laugh_s: {levels: {small: 0.8, medium: 1.2, large: 1.5}}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: 2
+      segments:
+        - {target: road_ahead, duration: "${laugh_s}", mouth_openness: "${mouth}", eye_openness: "${eyes}"}
+        - {target: road_ahead, duration: 3.0}

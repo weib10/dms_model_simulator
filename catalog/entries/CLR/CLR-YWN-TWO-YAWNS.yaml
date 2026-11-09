@@ -4,6 +4,7 @@ summary: "嘴張大（開合度 0.9）4 s，兩次之間閉嘴 10 s。看兩次�
 status: ready
 source: written
 tags: [yawn, clear, rearm]
+behaviors: [V07]
 template:
   segments:
     - {target: road_ahead, duration: 4.0}

@@ -4,6 +4,7 @@ summary: "模擬器沒有口罩幾何，用 profile no_mouth（嘴框偵測率 0
 status: ready
 source: written
 tags: [ncap, occlusion, mask, robustness]
+behaviors: [C02]
 template:
   behavior: {transition_head_s: 0.1}
   segments:

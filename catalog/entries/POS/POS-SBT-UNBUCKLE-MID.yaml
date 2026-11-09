@@ -4,6 +4,7 @@ summary: "一次明確的未繫，之後繫回。"
 status: ready
 source: written
 tags: [seatbelt]
+behaviors: [V11]
 template:
   segments:
     - {target: road_ahead, duration: 5.0}

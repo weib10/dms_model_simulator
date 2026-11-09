@@ -4,6 +4,7 @@ summary: "講話的嘴型，開合度在張嘴門檻以下。只有固定開合�
 status: ready
 source: written
 tags: [talking, mouth]
+behaviors: [N15]
 params:
   mouth: {grid: [0.3, 0.45]}
 template:

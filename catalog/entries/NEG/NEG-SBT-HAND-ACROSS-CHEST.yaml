@@ -4,6 +4,7 @@ summary: "手抬到臉旁時會遮住部分安全帶框，安全帶其實一直�
 status: ready
 source: written
 tags: [seatbelt, occlusion, hand_near_face]
+behaviors: [N29, V08, N20, N21]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

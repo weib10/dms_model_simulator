@@ -4,6 +4,7 @@ summary: "兩種物件同時在臉旁：手機貼耳（手在 call），菸含�
 status: ready
 source: written
 tags: [smoking, phone, interaction]
+behaviors: [V10, V08]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

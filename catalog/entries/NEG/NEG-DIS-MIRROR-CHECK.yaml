@@ -4,4 +4,5 @@ summary: "現有劇本 scenarios/mirror_check.yaml 原封包。看鏡子是正�
 status: ready
 source: written
 tags: [mirror, glance, existing]
+behaviors: [N02, N03]
 from_scenario: scenarios/mirror_check.yaml

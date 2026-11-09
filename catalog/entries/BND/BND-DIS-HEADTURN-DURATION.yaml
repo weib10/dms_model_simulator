@@ -4,14 +4,18 @@ summary: "前 10 s 看前方，接著頭向右轉 60° 一段時間，再回正 
 status: ready
 source: written
 tags: [head_turn, duration]
+behaviors: [V01]
 params:
   yaw_deg: {fixed: -60}                # − = 駕駛的右邊
   turn_s: {grid: [0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0]}
 template:
+  cabin:
+    targets:                        # 3 m away in the head's direction: the eyes follow the head
+      head_-60: [1.500, -2.598, 0.0]
   behavior: {transition_head_s: 0.1}
   segments:
     - {target: road_ahead, duration: 10.0}
-    - {target: road_ahead, duration: "${turn_s}", head_pose: ["${yaw_deg}", 0, 0]}
+    - {target: "head_${yaw_deg}", duration: "${turn_s}", head_pose: ["${yaw_deg}", 0, 0]}
     - {target: road_ahead, duration: 3.0}
 variation:
   cameras: [dash_right]

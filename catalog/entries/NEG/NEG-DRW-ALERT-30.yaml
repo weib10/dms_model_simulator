@@ -4,6 +4,7 @@ summary: "沒有哈欠、沒有長閉眼，只有正常眨眼。"
 status: ready
 source: written
 tags: [sleepiness, baseline]
+behaviors: [N01]
 template:
   segments:
     - {target: road_ahead, duration: 30.0}

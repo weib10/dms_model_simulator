@@ -4,6 +4,7 @@ summary: "看繫回後有沒有解除、第二次解開有沒有再觸發。"
 status: ready
 source: written
 tags: [seatbelt, clear, rearm]
+behaviors: [V11]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

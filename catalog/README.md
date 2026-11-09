@@ -5,6 +5,11 @@
 
 - 全部條目一覽：[INDEX.md](INDEX.md)（`dms-sim catalog index` 產生）
 - 條目：`entries/<類別>/<id>.yaml`，一條一個檔
+- 行為清單：[behaviors.yaml](behaviors.yaml)。每個行為類別一個編號（V 違規、N 正常、C 外觀條件），標常見度、好不好分、會跟哪幾號搞混；
+  條目用 `behaviors:` 指過去（第一個是主行為）。★（常見且好分）的行為一定不能出問題：`tests/test_behaviors.py` 檢查每個 ★ 行為都有條目，
+  而且條目的真值符合 `expect`（違規在 small 難度也要觸發，正常行為在 large 難度也不能越界）。常見度、好分度是估計值，有真實案例再改。
+- 難度：參數寫成 `{levels: {small: …, medium: …, large: …}}`。難度 = 離它像的那個違規門檻多近（small 一看就知道，large 貼著門檻但不跨過），
+  每條在 summary 寫明對照的門檻。一列只取一個難度，條目裡所有 levels 參數同時取那一級（不做笛卡兒積）。
 - 模型誤差設定：[profiles.yaml](profiles.yaml)。分維度分等級（`jit` 抖動、`jmp` 跳動、`mis` 漏框、`drp` 掉幀、`lat` 延遲、`cnf` 分數偏低、`flp` 開閉眼嘴判錯、`fp` 誤報，各 1–3 級），用 `+` 疊加，例如 `jit2+jmp2+mis1`；`bad`、`worst` 是現成組合。等級是刻意粗略的，用來看後處理撐得住多少誤差。
 
 ## 怎麼讀 id
@@ -43,6 +48,8 @@ dms-sim catalog expand --tag basic --profile nominal jit2 jmp2+mis2 worst --out 
 dms-sim catalog validate                     # 檢查所有條目
 dms-sim catalog expand BND PHN --out runs/r1 # 展開成具體劇本 + runs/r1/manifest.json
 dms-sim catalog run runs/r1 --jobs 4         # 每列匯出到 runs/r1/rows/<row_id>/，並寫 rows.tsv
+dms-sim catalog expand NEG --level large --out runs/h1        # 只要最難的一級（預設三級都出，row id 帶難度）
+dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直接覆蓋參數（值用 YAML 解析；只套到有這個參數的條目）
 ```
 
 每一列（`rows/<row_id>/`）有：
@@ -64,14 +71,16 @@ status: ready                                  # ready | planned（模擬器還�
 needs: []                                      # planned 時：缺的能力
 source: written                                # written | recorded（真錄影整理而來）| generated
 tags: [phone, call, duration]
+behaviors: [V08]                               # catalog/behaviors.yaml 的編號，主行為放第一個
 params:                                        # 參數，模板裡用 "${名稱}"
   call_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 6.0]}
-  # 其他寫法：{fixed: v} {choice: [...]} {uniform: [lo, hi]}
+  # 其他寫法：{fixed: v} {choice: [...]} {uniform: [lo, hi]} {levels: {small: v, medium: v, large: v}}
 template:                                      # 就是 scenarios/*.yaml 的格式（behavior / cabin / camera / segments）
   segments:
     - {target: road_ahead, duration: 3.0}
     - {target: road_ahead, duration: "${call_s}", hand: call, phone: call}
     - {target: road_ahead, duration: 3.0}
+    # 重複一段：{repeat: N, segments: [...]}（N 可以是參數，可巢狀），例如「看乘客 ${glance_s} 秒、回前方 3 秒」重複 ${n} 次
 # 或 from_scenario: scenarios/xxx.yaml（原封包現有劇本），或 generator: {duration_s, config}（gen-scenario）
 variation:                                     # 選填，預設兩台相機 × nominal × 3 個模型雜訊 seed
   cameras: [dash_right, steering_column]

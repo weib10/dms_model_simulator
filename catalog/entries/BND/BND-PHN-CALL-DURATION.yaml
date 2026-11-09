@@ -4,6 +4,7 @@ summary: "手機貼耳（兩台相機都看得到），通話時間由短到長�
 status: ready
 source: written
 tags: [phone, call, duration]
+behaviors: [V08]
 params:
   call_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 6.0]}
 template:

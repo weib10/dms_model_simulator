@@ -4,4 +4,5 @@ summary: "現有劇本 scenarios/phone_distraction.yaml 原封包。大腿上的
 status: ready
 source: written
 tags: [phone, call, existing]
+behaviors: [V09, V08, V01]
 from_scenario: scenarios/phone_distraction.yaml

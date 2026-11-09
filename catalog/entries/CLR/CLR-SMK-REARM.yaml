@@ -4,6 +4,7 @@ summary: "手在方向盤，菸含在嘴上。看菸拿掉後有沒有解除、�
 status: ready
 source: written
 tags: [smoking, clear, rearm]
+behaviors: [V10]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

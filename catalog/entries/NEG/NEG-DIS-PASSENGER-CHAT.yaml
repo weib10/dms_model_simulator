@@ -1,0 +1,20 @@
+id: NEG-DIS-PASSENGER-CHAT
+title: "跟乘客聊天：反覆看乘客一眼（每次 0.5 / 0.8 / 1.2 s）"
+summary: "對照門檻：VATS（30 s 內累計 10 s）與單次長分心 3 s。累計 small 3 × 0.5 = 1.5 s、medium 5 × 0.8 = 4 s、
+  large 7 × 1.2 = 8.4 s；每次之間回前方 3 s，large 共約 30 s。"
+status: ready
+source: written
+tags: [glance, head_turn, passenger]
+behaviors: [N07]
+params:
+  glance_s: {levels: {small: 0.5, medium: 0.8, large: 1.2}}
+  n: {levels: {small: 3, medium: 5, large: 7}}
+template:
+  behavior: {transition_head_s: 0.25}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${n}"
+      segments:
+        - {target: passenger,  duration: "${glance_s}", mouth_openness: 0.3}
+        - {target: road_ahead, duration: 3.0, mouth_openness: 0.3}
+    - {target: road_ahead, duration: 2.0}

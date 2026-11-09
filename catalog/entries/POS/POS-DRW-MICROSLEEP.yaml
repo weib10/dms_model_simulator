@@ -4,6 +4,7 @@ summary: "一次 2 s 的閉眼。"
 status: ready
 source: written
 tags: [closure, microsleep]
+behaviors: [V05]
 template:
   segments:
     - {target: road_ahead, duration: 8.0}

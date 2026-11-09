@@ -4,6 +4,7 @@ summary: "low_conf 讓手機框的分數落在常見輸出門檻附近，套用�
 status: ready
 source: written
 tags: [robustness, phone, conf]
+behaviors: [V08, C03]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

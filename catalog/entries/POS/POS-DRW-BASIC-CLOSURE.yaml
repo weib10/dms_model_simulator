@@ -4,6 +4,7 @@ summary: "疲勞家族的基本款：一次明確的長閉眼，睜眼後恢復�
 status: ready
 source: written
 tags: [basic, closure]
+behaviors: [V05]
 template:
   segments:
     - {target: road_ahead, duration: 8.0}

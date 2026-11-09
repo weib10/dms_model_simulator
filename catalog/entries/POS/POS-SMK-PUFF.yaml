@@ -4,6 +4,7 @@ summary: "手遮住嘴，嘴框可能偵測不到。"
 status: ready
 source: written
 tags: [smoking, puff, occlusion]
+behaviors: [V10]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

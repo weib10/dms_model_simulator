@@ -4,6 +4,7 @@ summary: "60 s 正常開車，模擬模型把睜眼報成閉眼（eye_flip_0p5s 
 status: ready
 source: written
 tags: [robustness, class_flip]
+behaviors: [C03, N01, V05]
 template:
   behavior: {blink: {rate_per_min: 2}}
   segments:

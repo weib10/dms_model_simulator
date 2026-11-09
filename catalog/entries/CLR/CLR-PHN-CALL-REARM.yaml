@@ -4,6 +4,7 @@ summary: "兩通明確的電話，中間放下夠久（和 BND-PHN-CALL-GAP 的�
 status: ready
 source: written
 tags: [phone, call, clear, rearm]
+behaviors: [V08]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

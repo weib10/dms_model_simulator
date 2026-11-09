@@ -1,0 +1,23 @@
+id: NEG-DRW-SNEEZE
+title: "打噴嚏、咳嗽：短閉眼＋頭往前點＋嘴張開"
+summary: "對照門檻：閉眼（開合度 < 0.2，BND-DRW-SINGLE-CLOSURE 從 0.3 s 起掃）。每次閉眼 small 0.3 s、medium 0.45 s、large 0.6 s，
+  同時低頭 5 / 10 / 20°、嘴張到 0.5；small 1 次、medium 2 次、large 3 次（連續噴嚏），中間回正 1.5 s。"
+status: ready
+source: written
+tags: [look_down, mouth, sneeze]
+behaviors: [N14]
+params:
+  close_s: {levels: {small: 0.3, medium: 0.45, large: 0.6}}
+  nod: {levels: {small: -5, medium: -10, large: -20}}
+  n: {levels: {small: 1, medium: 2, large: 3}}
+template:
+  behavior: {transition_head_s: 0.15}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${n}"
+      segments:
+        - {target: road_ahead, duration: 0.3, mouth_openness: 0.35}
+        - {target: road_ahead, duration: "${close_s}", eye_openness: 0.05, mouth_openness: 0.5,
+           head_pose: [0, "${nod}", 0]}
+        - {target: road_ahead, duration: 1.5}
+    - {target: road_ahead, duration: 2.0}

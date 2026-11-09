@@ -4,6 +4,7 @@ summary: "安全帶家族的基本款：手在方向盤、不擋安全帶。"
 status: ready
 source: written
 tags: [basic, seatbelt]
+behaviors: [V11]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

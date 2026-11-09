@@ -39,6 +39,7 @@ held: none                   # none | cup | bottle: an object at the lips (drink
 # Per-frame behaviour labels, derived from the script (never from model output). See dms_model_simulator/events.py.
 events:
   on_road_targets: [road_ahead, road_left, road_right]   # scripted targets that count as eyes on road
+  gaze_miss_min_s: 0.3             # scripted road target but the gaze outside the road box this long => off road
   closed_openness_threshold: 0.2   # mean scripted eye openness strictly below this counts as eyes closed
   phone_states: [lap, call]        # phone states that count as phone use
   phone_hand_states: [phone, call] # hand states that count as phone use

@@ -4,6 +4,7 @@ summary: "分心家族的基本款：角度大、時間長，回正後恢復正�
 status: ready
 source: written
 tags: [basic, head_turn]
+behaviors: [V01]
 template:
   behavior: {transition_head_s: 0.1}
   segments:

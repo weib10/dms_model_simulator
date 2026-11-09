@@ -4,13 +4,17 @@ summary: "兩次明確的轉頭，中間回正夠久。看第一次回正後有�
 status: ready
 source: written
 tags: [head_turn, clear, rearm]
+behaviors: [V01]
 template:
+  cabin:
+    targets:                        # 3 m away in the head's direction: the eyes follow the head
+      head_-60: [1.500, -2.598, 0.0]
   behavior: {transition_head_s: 0.1}
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: "head_-60", duration: 6.0, head_pose: [-60, 0, 0]}
     - {target: road_ahead, duration: 4.0}
-    - {target: road_ahead, duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: "head_-60", duration: 6.0, head_pose: [-60, 0, 0]}
     - {target: road_ahead, duration: 4.0}
 variation:
   cameras: [dash_right]

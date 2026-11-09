@@ -4,6 +4,7 @@ summary: "閉眼 0.5 s、睜眼 open_s，重複 6 次；閉眼比例 = 0.5 / (0.
 status: ready
 source: written
 tags: [closure, perclos]
+behaviors: [V05]
 params:
   open_s: {grid: [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]}
 template:

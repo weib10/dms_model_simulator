@@ -5,3 +5,4 @@ status: planned
 needs: [camera_ahead_of_the_phone]
 source: written
 tags: [phone, ncap]
+behaviors: [V09]

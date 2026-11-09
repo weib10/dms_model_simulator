@@ -4,6 +4,7 @@ summary: "只用 dash_right。視線目標 passenger 只會讓頭轉約 30°，�
 status: ready
 source: written
 tags: [head_turn, passenger]
+behaviors: [V01]
 template:
   behavior: {transition_head_s: 0.1}
   segments:

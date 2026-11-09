@@ -4,6 +4,7 @@ summary: "前 7 s 正常，閉眼一次，再睜眼 4 s。看閉眼多久開始�
 status: ready
 source: written
 tags: [closure, duration]
+behaviors: [V05]
 params:
   closure_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]}
 template:

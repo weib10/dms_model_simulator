@@ -4,6 +4,7 @@ summary: "手在臉旁只會遮住臉或嘴，這條是遮擋版；有假手機�
 status: ready
 source: written
 tags: [phone, hand_near_face, occlusion]
+behaviors: [N20]
 params:
   hold_s: {grid: [3.0, 6.0]}
 template:

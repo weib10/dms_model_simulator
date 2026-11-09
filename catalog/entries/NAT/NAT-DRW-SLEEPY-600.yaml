@@ -4,6 +4,7 @@ summary: "長時間、反覆出現的疲勞片段。看疲勞相關的輸出被�
 status: ready
 source: generated
 tags: [natural, drowsy]
+behaviors: [V05, V07, V03, V01, N01, N02, N03]
 generator:
   duration_s: 600
   config:

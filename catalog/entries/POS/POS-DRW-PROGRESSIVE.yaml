@@ -4,4 +4,5 @@ summary: "現有劇本 scenarios/drowsy.yaml 原封包。"
 status: ready
 source: written
 tags: [drowsy, progressive, existing]
+behaviors: [V05, V07, V03]
 from_scenario: scenarios/drowsy.yaml

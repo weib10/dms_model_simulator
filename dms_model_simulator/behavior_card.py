@@ -121,7 +121,8 @@ def card(sim, row: dict | None = None) -> dict:
     fps = float(sim.behavior.fps)
     return {
         "row_id": row.get("row_id"), "entry": row.get("entry"), "title": row.get("title", ""),
-        "summary": row.get("summary", ""), "params": row.get("params", {}), "profile": row.get("profile"),
+        "summary": row.get("summary", ""), "params": row.get("params", {}), "level": row.get("level"),
+        "profile": row.get("profile"),
         "scenario": sim.scenario["name"], "description": sim.scenario.get("description", ""),
         "camera": sim.camera.name, "fps": fps, "frames": len(sim.records),
         "duration_s": round(len(sim.records) / fps, 3), "seed": sim.seed, "emulator_seed": sim.emulator_seed,
@@ -146,6 +147,7 @@ def markdown(c: dict) -> str:
     L = [f"# 行為卡：{c['row_id'] or c['scenario']}", ""]
     if c.get("entry"):
         L += [f"- 情境：`{c['entry']}` {c['title']}", f"- 說明：{c['summary']}" if c.get("summary") else None,
+              f"- 難度：`{c['level']}`" if c.get("level") else None,
               f"- 參數：`{json.dumps(c['params'], ensure_ascii=False)}`"]
     if c.get("profile"):
         L.append(f"- 誤差等級：`{c['profile']}`")

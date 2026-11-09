@@ -4,6 +4,7 @@ summary: "scenarios/smoking.yaml 前段改成模板（最後的未繫安全帶�
 status: ready
 source: written
 tags: [smoking, existing]
+behaviors: [V10]
 params:
   puff_s: {grid: [3.0]}
 template:

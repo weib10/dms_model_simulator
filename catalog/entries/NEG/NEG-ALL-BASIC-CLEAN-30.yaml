@@ -4,6 +4,7 @@ summary: "全家族的乾淨基準，和其他 basic 條目成對：那幾條有
 status: ready
 source: written
 tags: [basic, baseline]
+behaviors: [N01]
 template:
   segments:
     - {target: road_ahead, duration: 30.0}

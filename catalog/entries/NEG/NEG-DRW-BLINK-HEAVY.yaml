@@ -4,6 +4,7 @@ summary: "閉眼類別頻繁出現，但都是正常眨眼，不是疲勞。"
 status: ready
 source: written
 tags: [blink]
+behaviors: [N10]
 params:
   rate: {grid: [30, 40]}
 template:

@@ -4,6 +4,7 @@ summary: "有菸，但離臉很遠，沒有在抽。"
 status: ready
 source: written
 tags: [smoking]
+behaviors: [N23]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

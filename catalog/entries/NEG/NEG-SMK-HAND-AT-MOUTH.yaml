@@ -4,6 +4,7 @@ summary: "遮擋版（同 NEG-PHN-HAND-AT-EAR）；有假香菸框的版本是 N
 status: ready
 source: written
 tags: [smoking, hand_near_face, occlusion]
+behaviors: [N21]
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

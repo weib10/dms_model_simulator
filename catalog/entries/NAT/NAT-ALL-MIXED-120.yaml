@@ -4,4 +4,5 @@ summary: "現有劇本 scenarios/random_120s.yaml（gen-scenario seed 1）。適
 status: ready
 source: generated
 tags: [natural, existing]
+behaviors: [N01, N02, N03, V08, V09, V03, V01, V05, V07, V10]
 from_scenario: scenarios/random_120s.yaml

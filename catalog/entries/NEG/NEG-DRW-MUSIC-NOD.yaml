@@ -1,0 +1,20 @@
+id: NEG-DRW-MUSIC-NOD
+title: "跟著音樂點頭：頭規律地上下點，眼睛一直看路"
+summary: "對照：微睡時的低頭、垂頭（V05、V06）。每拍頭往下 small 5°、medium 10°、large 15° 再回正，一拍 0.5 s，
+  持續 small 8 s、medium 12 s、large 16 s。眼睛睜開、視線在路上。"
+status: ready
+source: written
+tags: [look_down, head_nod]
+behaviors: [N27]
+params:
+  nod: {levels: {small: -5, medium: -10, large: -15}}
+  beats: {levels: {small: 16, medium: 24, large: 32}}
+template:
+  behavior: {transition_head_s: 0.15}
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${beats}"
+      segments:
+        - {target: road_ahead, duration: 0.25, head_pose: [0, "${nod}", 0]}
+        - {target: road_ahead, duration: 0.25, head_pose: [0, 0, 0]}
+    - {target: road_ahead, duration: 3.0}

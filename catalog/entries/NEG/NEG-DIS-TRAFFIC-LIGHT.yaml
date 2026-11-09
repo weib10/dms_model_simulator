@@ -1,0 +1,26 @@
+id: NEG-DIS-TRAFFIC-LIGHT
+title: "抬頭看紅綠燈：仰頭 10° / 20° / 30°，1 / 2 / 3 s"
+summary: "紅綠燈在擋風玻璃上緣外，看它仍算在看路（這條把 tl_* 加進 on_road_targets，真值全程在路上）。
+  對照：頭姿往上偏、視線離開正前方，像分心；仰角與時長越大越像。"
+status: ready
+source: written
+tags: [look_up, traffic_light]
+behaviors: [N08]
+params:
+  pitch: {levels: {small: 10, medium: 20, large: 30}}
+  look_s: {levels: {small: 1.0, medium: 2.0, large: 3.0}}
+template:
+  behavior:
+    events:
+      on_road_targets: [road_ahead, road_left, road_right, tl_10, tl_20, tl_30]
+  cabin:
+    targets:                       # 12 m 前方、略偏右，仰角 10 / 20 / 30 度
+      tl_10: [11.818, -0.50, 2.084]
+      tl_20: [11.276, -0.50, 4.104]
+      tl_30: [10.392, -0.50, 6.000]
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: "tl_${pitch}", duration: "${look_s}"}
+    - {target: road_ahead, duration: 3.0}
+    - {target: "tl_${pitch}", duration: "${look_s}"}
+    - {target: road_ahead, duration: 3.0}

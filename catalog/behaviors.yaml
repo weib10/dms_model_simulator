@@ -1,0 +1,93 @@
+# 行為清單：每個行為類別一個編號。條目用 `behaviors: [V08, N21]` 指到這裡（第一個是主行為）。
+#
+# kind:       violation（後處理該報）| normal（不該報）| condition（外觀條件，不是行為）
+# common:     often 常見 | sometimes 偶爾 | rare 少見          —— 估計值，沒有實測資料，有真實案例再改
+# separable:  easy 好分 | medium 普通 | hard 難分             —— 只看模型輸出（框、分數、頭姿、視線、開合度）時，跟搞混對象分不分得開
+# confused_with: 最容易搞混的編號
+# core = common often 且 separable easy：一定不能出問題。tests/test_behaviors.py 對每個 core 行為檢查：
+#   至少一條 ready 條目；條目的真值符合 expect（violation 在 small 難度也要觸發；normal 在 large 難度也不能越界）。
+# expect（真值期望，檢查用）：
+#   label: 這個違規行為會讓哪個真值標籤成立（至少一幀）
+#   max_s: {off_road_s | closed_s: 秒}  正常行為時這些連續秒數的上限
+#   never: [標籤]  正常行為時這些標籤一幀都不能成立
+#   （同一條目裡另有違規行為時，那個違規的標籤不算）
+
+behaviors:
+  # ---- 違規 ----------------------------------------------------------------------------------------
+  V01: {name: 轉頭長分心（看乘客、窗外）, kind: violation, family: DIS, common: often, separable: easy,
+        confused_with: [N02, N04, N05, N07], expect: {label: eyes_off_road},
+        note: "頭轉大角度又久；跟看鏡子、盲點、聊天的差別在時長與角度"}
+  V02: {name: 只動眼睛的長分心（lizard）, kind: violation, family: DIS, common: often, separable: hard,
+        confused_with: [N09, N03], expect: {label: eyes_off_road},
+        note: "頭不動，只能靠視線估計；視線誤差大時跟看儀表分不開"}
+  V03: {name: 低頭長分心（看大腿、腳踏區）, kind: violation, family: DIS, common: often, separable: medium,
+        confused_with: [N03, N12, N14], expect: {label: eyes_off_road},
+        note: "低頭時眼睛看起來像閉著（V05 也會被牽連）"}
+  V04: {name: 短分心累計（VATS）, kind: violation, family: DIS, common: often, separable: hard,
+        confused_with: [N06, N07, N03], expect: {label: eyes_off_road},
+        note: "每次都短，要靠累計；東張西望、聊天在門檻下"}
+  V05: {name: 閉眼、微睡, kind: violation, family: DRW, common: sometimes, separable: medium,
+        confused_with: [N10, N11, N12, N13, N14, N17], expect: {label: eyes_closed},
+        note: "跟眨眼的差別只在時長；瞇眼、大笑、低頭都會讓開合度變小"}
+  V06: {name: 睡著、無反應（閉眼＋垂頭）, kind: violation, family: DRW, common: rare, separable: easy,
+        confused_with: [V03, N27], expect: {label: eyes_closed}}
+  V07: {name: 打哈欠, kind: violation, family: YWN, common: often, separable: medium,
+        confused_with: [N15, N16, N17, N19], expect: {label: yawning},
+        note: "嘴的開合度與時長；講話、唱歌、大笑、吃東西都會張嘴。真值 yawning 目前只有 yawn 事件會設（待查）"}
+  V08: {name: 講電話（手機貼耳）, kind: violation, family: PHN, common: often, separable: easy,
+        confused_with: [N20], expect: {label: phone_use},
+        note: "有手機框在耳邊；手摸耳朵沒有手機框"}
+  V09: {name: 手拿手機看或打字, kind: violation, family: PHN, common: often, separable: medium,
+        confused_with: [N28, N19], expect: {label: phone_use},
+        note: "手機在臉前或大腿；車架上的手機也有框"}
+  V10: {name: 抽菸, kind: violation, family: SMK, common: sometimes, separable: medium,
+        confused_with: [N21, N22, N19, N23], expect: {label: smoking},
+        note: "菸框小又細；手在嘴邊、叼吸管牙籤、喝東西都像"}
+  V11: {name: 沒繫安全帶, kind: violation, family: SBT, common: often, separable: easy,
+        confused_with: [N29], expect: {label: seatbelt_off},
+        note: "整段沒有安全帶框；手擋住時只是一小段看不到"}
+
+  # ---- 正常 ----------------------------------------------------------------------------------------
+  N01: {name: 專心看前方、正常眨眼, kind: normal, family: ALL, common: often, separable: easy, confused_with: [],
+        expect: {max_s: {off_road_s: 0.0, closed_s: 0.5}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N02: {name: 看後照鏡、側鏡, kind: normal, family: DIS, common: often, separable: easy, confused_with: [V01, V04],
+        expect: {max_s: {off_road_s: 1.5}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N03: {name: 看儀表、中控（短瞥）, kind: normal, family: DIS, common: often, separable: easy, confused_with: [V03, V04],
+        expect: {max_s: {off_road_s: 2.0}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N04: {name: 盲點檢查（轉頭看後方側邊）, kind: normal, family: DIS, common: often, separable: medium, confused_with: [V01]}
+  N05: {name: 路口左右張望（視線仍在路上）, kind: normal, family: DIS, common: often, separable: easy, confused_with: [V01],
+        expect: {max_s: {off_road_s: 0.0}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N06: {name: 東張西望（視線快速在多處跳）, kind: normal, family: DIS, common: often, separable: medium, confused_with: [V04, V01]}
+  N07: {name: 聊天時看乘客一眼, kind: normal, family: DIS, common: often, separable: medium, confused_with: [V01, V04]}
+  N08: {name: 抬頭看紅綠燈, kind: normal, family: DIS, common: often, separable: easy, confused_with: [V01],
+        expect: {max_s: {off_road_s: 0.0}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N09: {name: 只動眼睛的短瞥, kind: normal, family: DIS, common: often, separable: hard, confused_with: [V02, V04]}
+  N10: {name: 頻繁眨眼, kind: normal, family: DRW, common: often, separable: easy, confused_with: [V05],
+        expect: {max_s: {closed_s: 0.5}, never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N11: {name: 瞇眼（陽光、習慣）, kind: normal, family: DRW, common: sometimes, separable: medium, confused_with: [V05]}
+  N12: {name: 低頭但眼睛睜開, kind: normal, family: DRW, common: often, separable: medium, confused_with: [V05, V03]}
+  N13: {name: 揉眼睛、推眼鏡, kind: normal, family: DRW, common: often, separable: medium, confused_with: [V05]}
+  N14: {name: 打噴嚏、咳嗽, kind: normal, family: DRW, common: sometimes, separable: hard, confused_with: [V05, V03]}
+  N15: {name: 講話, kind: normal, family: YWN, common: often, separable: easy, confused_with: [V07],
+        expect: {never: [phone_use, smoking, yawning, seatbelt_off]}}
+  N16: {name: 唱歌, kind: normal, family: YWN, common: often, separable: medium, confused_with: [V07]}
+  N17: {name: 大笑, kind: normal, family: ALL, common: often, separable: hard, confused_with: [V07, V05]}
+  N18: {name: 嚼口香糖, kind: normal, family: YWN, common: sometimes, separable: easy, confused_with: [V07]}
+  N19: {name: 喝水、吃東西, kind: normal, family: ALL, common: often, separable: medium, confused_with: [V07, V10, V09]}
+  N20: {name: 手摸耳朵、撐頭（沒拿手機）, kind: normal, family: PHN, common: often, separable: medium, confused_with: [V08]}
+  N21: {name: 手摸嘴、托下巴、抓鼻子（沒拿菸）, kind: normal, family: SMK, common: often, separable: medium, confused_with: [V10]}
+  N22: {name: 叼吸管、牙籤、筆、棒棒糖, kind: normal, family: SMK, common: sometimes, separable: hard, confused_with: [V10]}
+  N23: {name: 菸拿在手上沒在抽, kind: normal, family: SMK, common: rare, separable: hard, confused_with: [V10]}
+  N24: {name: 調冷氣、音響（手伸到中控）, kind: normal, family: DIS, common: often, separable: medium, confused_with: [V03, V09]}
+  N25: {name: 調後照鏡, kind: normal, family: DIS, common: sometimes, separable: medium, confused_with: [V01]}
+  N26: {name: 轉彎交叉換手（手擋住方向盤柱相機）, kind: normal, family: ALL, common: often, separable: medium, confused_with: [V05]}
+  N27: {name: 跟音樂點頭, kind: normal, family: DRW, common: sometimes, separable: medium, confused_with: [V05, V06]}
+  N28: {name: 手機放車架（沒用手拿）, kind: normal, family: PHN, common: often, separable: medium, confused_with: [V09]}
+  N29: {name: 有繫安全帶但手擋住一段, kind: normal, family: SBT, common: often, separable: medium, confused_with: [V11]}
+  N30: {name: 手擋陽光、翻遮陽板, kind: normal, family: ALL, common: sometimes, separable: hard, confused_with: [V05],
+        note: "不常見又難分，先列著不做"}
+
+  # ---- 外觀條件 ------------------------------------------------------------------------------------
+  C01: {name: 戴墨鏡（眼框看不到）, kind: condition, family: DRW, common: often, separable: hard, confused_with: [V05]}
+  C02: {name: 戴口罩（嘴框看不到）, kind: condition, family: YWN, common: sometimes, separable: hard, confused_with: [V07, V10]}
+  C03: {name: 模型輸出變差（漏框、掉幀、延遲、抖動）, kind: condition, family: ALL, common: often, separable: medium, confused_with: []}

@@ -11,7 +11,7 @@ PR = {"nominal": {}}
 
 
 def _entry(**kw):
-    e = {"id": "BND-PHN-TEST", "title": "t", "summary": "call of call_s seconds", "status": "ready",
+    e = {"id": "BND-PHN-TEST", "title": "t", "summary": "call of call_s seconds", "status": "ready", "behaviors": ["V08"],
          "params": {"call_s": {"grid": [1.0, 2.0, 3.0]}},
          "template": {"segments": [{"target": "road_ahead", "duration": 2.0},
                                    {"target": "road_ahead", "duration": "${call_s}", "hand": "call", "phone": "call"},
@@ -195,7 +195,7 @@ def test_index_markdown_lists_entries():
     es = [_entry(tags=["phone"]), _entry(id="POS-DRW-A", title="閉眼", status="planned", needs=["睡姿"])]
     md = C.index_markdown(es)
     assert "共 2 條：ready 1、planned 1。" in md
-    assert "| `BND-PHN-TEST` | t | phone | ready |" in md and "planned：睡姿" in md
+    assert "| `BND-PHN-TEST` | t | V08 | phone |  | ready |" in md and "planned：睡姿" in md
 
 
 # ---- profiles ------------------------------------------------------------------------------------------
@@ -353,3 +353,104 @@ def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     assert Path(t["card"]).name == "card.md" and Path(t["card"]).exists()
     cli.main(["catalog", "index", "--out", str(tmp_path / "INDEX.md")])
     assert "BND-PHN-TEST" in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
+
+
+# ---- difficulty levels, repeat blocks, parameter overrides --------------------------------------------------
+def _lv_entry(**kw):
+    """call_s and gap_s follow the row's level; side is an ordinary choice."""
+    base = dict(params={"call_s": {"levels": {"small": 0.5, "medium": 1.0, "large": 2.0}},
+                        "gap_s": {"levels": {"small": 2.0, "medium": 1.0, "large": 0.5}},
+                        "side": {"choice": ["a", "b"]}},
+                template={"segments": [{"target": "road_ahead", "duration": "${gap_s}"},
+                                       {"target": "road_ahead", "duration": "${call_s}", "hand": "call",
+                                        "phone": "call"}]})
+    return _entry(**{**base, **kw})
+
+
+def test_levels_are_one_axis_not_a_product():
+    rng = np.random.default_rng(0)
+    e = _lv_entry()
+    assert C.has_levels(e) and not C.has_levels(_entry())
+    ps = C.expand_params(e, "boundary", rng)
+    assert [(p["level"], p["call_s"], p["gap_s"]) for p in ps] == [("small", 0.5, 2.0), ("medium", 1.0, 1.0),
+                                                                   ("large", 2.0, 0.5)]
+    assert len(C.expand_params(e, "grid", rng)) == 3 * 2                  # levels x side choice
+    assert [p["level"] for p in C.expand_params(e, "boundary", rng, levels=["large"])] == ["large"]
+    rnd = C.expand_params(e, "random", rng, n=30, levels=["small", "large"])
+    assert {p["level"] for p in rnd} <= {"small", "large"}
+    assert all(p["call_s"] == {"small": 0.5, "large": 2.0}[p["level"]] for p in rnd)
+    with pytest.raises(C.CatalogError):
+        C.expand_params(e, "boundary", rng, levels=["huge"])
+    assert "level" not in C.expand_params(_entry(), "boundary", rng)[0]   # entries without levels: no level key
+
+
+def test_param_overrides_fix_values_levels_or_not():
+    rng = np.random.default_rng(0)
+    ps = C.expand_params(_lv_entry(), "boundary", rng, overrides={"call_s": 0.75, "nope": 1})
+    assert [p["call_s"] for p in ps] == [0.75] * 3 and [p["gap_s"] for p in ps] == [2.0, 1.0, 0.5]
+    ps = C.expand_params(_entry(), "boundary", rng, overrides={"call_s": 1.5})
+    assert ps == [{"call_s": 1.5}]
+
+
+def test_validate_levels_and_reserved_names():
+    assert C.validate(_lv_entry(), PR) == []
+    bad = _lv_entry(params={"call_s": {"levels": {"small": 0.5, "large": 2.0}}})
+    assert any("levels needs exactly" in m for m in C.validate(bad, PR))
+    res = _entry(params={"call_s": {"grid": [1.0]}, "level": {"fixed": 1}})
+    assert any("reserved" in m for m in C.validate(res, PR))
+    off = _lv_entry(params={"call_s": {"levels": {"small": 0.5, "medium": 1.03, "large": 2.0}},
+                            "gap_s": {"fixed": 1.0}, "side": {"fixed": "a"}})
+    assert any("whole number of frames" in m for m in C.validate(off, PR))   # every level is checked
+
+
+def test_repeat_blocks_expand_and_validate():
+    segs = [{"target": "road_ahead", "duration": 1.0},
+            {"repeat": 2, "segments": [{"target": "passenger", "duration": 0.5},
+                                       {"repeat": 2, "segments": [{"target": "road_ahead", "duration": 0.25}]}]}]
+    out = C.expand_repeats(segs)
+    assert [s["target"] for s in out] == ["road_ahead"] + ["passenger", "road_ahead", "road_ahead"] * 2
+    assert C.expand_repeats([{"repeat": 0, "segments": [{"target": "x", "duration": 1}]}]) == []
+    for bad in ({"repeat": 1.5, "segments": []}, {"repeat": -1, "segments": []}, {"repeat": 2},
+                {"repeat": 2, "segments": [], "target": "x"}):
+        with pytest.raises(C.CatalogError):
+            C.expand_repeats([bad])
+    e = _entry(params={"n": {"levels": {"small": 1, "medium": 2, "large": 3}}},
+               template={"segments": [{"target": "road_ahead", "duration": 1.0},
+                                      {"repeat": "${n}", "segments": [{"target": "passenger", "duration": 0.5},
+                                                                      {"target": "road_ahead", "duration": 1.0}]}]})
+    assert C.validate(e, PR) == []
+    sc = C.build_scenario(e, {"n": 3, "level": "large"}, "s")
+    assert len(sc["segments"]) == 1 + 2 * 3 and e["template"]["segments"][1]["repeat"] == "${n}"
+
+
+def test_expand_rows_carry_level_and_card_shows_it(tmp_path):
+    man = C.expand([_lv_entry()], tmp_path, profiles=PR, levels=["small", "large"], overrides={"side": "b"})
+    assert {r["level"] for r in man["rows"]} == {"small", "large"}
+    assert all(f"__{r['level']}__" in r["row_id"] and r["params"]["side"] == "b" for r in man["rows"])
+    assert man["levels"] == ["small", "large"] and man["overrides"] == {"side": "b"}
+    from dms_model_simulator.behavior_card import markdown
+    c = {"row_id": "x", "scenario": "s", "entry": "E", "title": "t", "summary": "", "params": {"level": "large"},
+         "level": "large", "profile": None, "camera": "dash_right", "fps": 20.0, "frames": 1, "duration_s": 0.05,
+         "seed": 0, "emulator_seed": 0, "timeline": [],
+         "errors": {"frames": 1, "latency_frames": 0, "dropped": [], "missed": {}, "class_flip": {}, "jump": {},
+                    "false_positive": {}}}
+    assert "- 難度：`large`" in markdown(c)
+
+
+def test_index_marks_entries_with_levels():
+    md = C.index_markdown([_lv_entry(id="NEG-PHN-LV"), _entry()])
+    assert "| `NEG-PHN-LV` | t | V08 |  | 三段 | ready |" in md and "| `BND-PHN-TEST` | t | V08 |  |  | ready |" in md
+
+
+def test_cli_param_overrides(tmp_path, monkeypatch, capsys):
+    from dms_model_simulator import cli
+    assert cli.parse_param_overrides(["a=1.5", "b=[1, 2]", "c={yaw: 30}", "d=x"]) == \
+        {"a": 1.5, "b": [1, 2], "c": {"yaw": 30}, "d": "x"}
+    with pytest.raises(SystemExit):
+        cli.parse_param_overrides(["novalue"])
+    monkeypatch.setattr(C, "load_entries", lambda root=None: [_lv_entry()])
+    cli.main(["catalog", "expand", "--out", str(tmp_path / "a"), "--level", "medium", "--param", "call_s=0.25"])
+    man = json.loads((tmp_path / "a" / "manifest.json").read_text(encoding="utf-8"))
+    assert {r["level"] for r in man["rows"]} == {"medium"} and {r["params"]["call_s"] for r in man["rows"]} == {0.25}
+    with pytest.raises(SystemExit):
+        cli.main(["catalog", "expand", "--out", str(tmp_path / "b"), "--param", "nope=1"])

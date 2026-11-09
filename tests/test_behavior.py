@@ -299,3 +299,19 @@ def test_held_object_follows_the_segment_and_needs_the_hand_at_the_mouth():
         _frames({"name": "t", "segments": [{"target": "road_ahead", "duration": 1.0, "hand": "lap", "held": "cup"}]})
     with pytest.raises(ValueError, match="mug"):
         _frames({"name": "t", "segments": [{"target": "road_ahead", "duration": 1.0, "hand": "at_mouth", "held": "mug"}]})
+
+
+def test_head_turned_beyond_the_eyes_reach_is_off_road_even_with_a_road_target():
+    # head 60 deg right, scripted target road_ahead: the eyes stop at the eye-in-head limit, the gaze leaves the
+    # road box (for longer than gaze_miss_min_s) -> eyes_off_road; a 20 deg turn keeps the gaze on the road
+    def run(yaw):
+        sc = {"name": "t", "behavior": {"transition_head_s": 0.1},
+              "segments": [{"target": "road_ahead", "duration": 2.0},
+                           {"target": "road_ahead", "duration": 2.0, "head_pose": [yaw, 0, 0]},
+                           {"target": "road_ahead", "duration": 2.0}]}
+        cabin, beh, frames = _frames(sc)
+        return label_events(frames, cabin, beh.cfg), label_events(frames, None, beh.cfg)
+    geo, named = run(-90)
+    assert max(e["off_road_s"] for e in geo) > 1.5 and not any(e["eyes_off_road"] for e in named)
+    geo, _ = run(-20)
+    assert not any(e["eyes_off_road"] for e in geo)

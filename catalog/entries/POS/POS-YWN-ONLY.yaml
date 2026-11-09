@@ -4,6 +4,7 @@ summary: "嘴巴開合度 0.9 持續 4 s，沒有閉眼。"
 status: ready
 source: written
 tags: [yawn]
+behaviors: [V07]
 template:
   segments:
     - {target: road_ahead, duration: 4.0}

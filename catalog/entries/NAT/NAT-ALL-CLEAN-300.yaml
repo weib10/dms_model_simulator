@@ -4,6 +4,7 @@ summary: "誤報率的基準線。用 gen-scenario 產生，四種片段的頻�
 status: ready
 source: generated
 tags: [natural, false_alarm]
+behaviors: [N01, N02, N03]
 generator:
   duration_s: 300
   config:

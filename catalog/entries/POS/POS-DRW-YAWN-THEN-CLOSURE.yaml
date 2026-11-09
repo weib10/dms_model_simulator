@@ -4,6 +4,7 @@ summary: "哈欠和閉眼接連出現。"
 status: ready
 source: written
 tags: [sleepiness, yawn, closure, interaction]
+behaviors: [V05, V07]
 template:
   behavior: {blink: {rate_per_min: 6}}
   segments:

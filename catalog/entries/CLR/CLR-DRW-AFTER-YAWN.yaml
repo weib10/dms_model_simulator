@@ -4,6 +4,7 @@ summary: "只有一次哈欠，之後 15 s 眼睛、嘴巴都正常。"
 status: ready
 source: written
 tags: [sleepiness, yawn, decay]
+behaviors: [V07]
 template:
   segments:
     - {target: road_ahead, duration: 4.0}

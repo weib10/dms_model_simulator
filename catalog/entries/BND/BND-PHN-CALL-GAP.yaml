@@ -4,6 +4,7 @@ summary: "中間放下手機的時間很短。看後處理把它當成一通還�
 status: ready
 source: written
 tags: [phone, call, gap]
+behaviors: [V08]
 params:
   gap_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0]}
 template:

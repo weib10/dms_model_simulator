@@ -4,6 +4,7 @@ summary: "頭會往下、往右轉。低頭的部分在臉框的水平變化上�
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, look_down, blind_spot]
+behaviors: [V03]
 params:
   zone:
     grid:

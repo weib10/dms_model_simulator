@@ -4,6 +4,7 @@ summary: "臉側轉時眼框變小、比較難判開閉。先轉頭 1 s（眼睛
 status: ready
 source: written
 tags: [closure, head_turn, interaction]
+behaviors: [V05]
 template:
   behavior: {transition_head_s: 0.1, blink: {rate_per_min: 6}}
   segments:

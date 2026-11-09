@@ -4,6 +4,7 @@ summary: "手在方向盤、不擋安全帶，只改變沒繫的時間長短。"
 status: ready
 source: written
 tags: [seatbelt, duration]
+behaviors: [V11]
 params:
   off_s: {grid: [0.5, 1.0, 2.0, 4.0, 6.0, 10.0]}
 template:

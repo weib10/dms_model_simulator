@@ -1,0 +1,21 @@
+id: NEG-YWN-SINGING
+title: "唱歌：嘴巴一開一合"
+summary: "對照：打哈欠（嘴張到 0.9、持續數秒）與模型的嘴開合判斷門檻（約 0.55）。嘴峰值 small 0.35、medium 0.45、large 0.5，
+  每次張開 0.4 / 0.7 / 1.0 s、合上 0.4 / 0.5 / 0.5 s，持續約 10 / 19 / 30 s。"
+status: ready
+source: written
+tags: [mouth, singing]
+behaviors: [N16]
+params:
+  peak: {levels: {small: 0.35, medium: 0.45, large: 0.5}}
+  open_s: {levels: {small: 0.4, medium: 0.7, large: 1.0}}
+  close_s: {levels: {small: 0.4, medium: 0.5, large: 0.5}}
+  n: {levels: {small: 12, medium: 16, large: 20}}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${n}"
+      segments:
+        - {target: road_ahead, duration: "${open_s}", mouth_openness: "${peak}"}
+        - {target: road_ahead, duration: "${close_s}", mouth_openness: 0.1}
+    - {target: road_ahead, duration: 3.0}
