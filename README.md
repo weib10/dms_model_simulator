@@ -1,30 +1,32 @@
 # dms_model_simulator
 
-Simulates what the object-detection model of a driver monitoring system (DMS) outputs, frame by frame, for a
-scripted driver in a car cabin, including the errors a real model makes: missed boxes (also in bursts), box
-jitter and jumps, open / closed eye and mouth classes reported wrong, false positives, dropped frames, latency.
+Simulates the frame-by-frame output of a driver monitoring system (DMS) object-detection model for a scripted
+driver in a car cabin. The output includes the errors a real model makes:
 
-The purpose is to **tune post-processing**: feed the simulated output to your alert logic (tracking, time windows,
-hysteresis) and see how it copes with realistic model errors. The simulator does not contain or judge any alert
-logic. Each run comes with a **behaviour card** that says what the driver did when and which model errors were
-injected where, so whoever checks the post-processing can compare its alerts with what really happened.
+- missed boxes (also in bursts)
+- box jitter and jumps
+- open / closed eye and mouth classes reported wrong
+- false positives
+- dropped frames and latency
 
-It does not need to match one particular model: the error levels are tunable and graded (see "Error profiles").
+**Purpose: tune post-processing.** Feed the simulated output to your alert logic (tracking, time windows,
+hysteresis) and see how it copes with realistic model errors.
 
-## What it produces
+- The simulator contains no alert logic and does not judge yours.
+- Each run comes with a **behaviour card**: what the driver did when, and which model errors were injected where.
+  Compare your alerts with it.
+- It does not try to match one particular model: error levels are tunable and graded (see [Error profiles](#error-profiles)).
 
-Per frame, for one camera:
+## Contents
 
-- **model output**: OD boxes `face`, `left_eye`, `right_eye`, `mouth`, `hand`, `phone`, `cigarette`, `seatbelt`
-  with scores (optionally mapped to your own classes, e.g. open / closed eye), plus head pose, gaze and eye /
-  mouth openness;
-- **ground truth**: exact boxes, landmarks, head pose, gaze, openness, hand / phone / cigarette / seatbelt states and
-  behaviour labels (`eyes_off_road`, `off_road_s`, `eyes_closed`, `closed_s`, `phone_use`, `phone_use_visible`,
-  `yawning`, `smoking`, `seatbelt_off`), all from the script, never from the model;
-- **files**: pipeline JSONL (model output), truth JSONL, full JSONL (both side by side, with error flags), a
-  packed binary log (`dms.bin`, layout in YAML) or one YAML per frame (`frame_yaml`);
-- **behaviour card** (`card.md`, `card.json`): timeline of what the driver does plus the injected errors;
-- **pictures**: wireframe camera view, cabin plot, timeline plot, GIFs.
+- [Quick start](#quick-start)
+- [What it produces](#what-it-produces)
+- [Checking a post-processing program](#checking-a-post-processing-program)
+- [Scenarios](#scenarios)
+- [Model errors](#model-errors)
+- [Outputs](#outputs)
+- [Conventions](#conventions)
+- [Known limitations](#known-limitations)
 
 ## Quick start
 
@@ -49,79 +51,158 @@ dms-sim catalog list                                                            
 python -m pytest -q tests                                                         # several minutes
 ```
 
-Common options: `--seed` (same seed = identical output and the same behaviour on every camera),
-`--emulator-seed` (same behaviour, different model errors), `--profile` (error profile, see below), `--fps`
-(default 30; the export / catalog default is 20), `--variant N` (driver and camera-mount variant from
-`configs/variation.yaml`), `--layout` (binary / class layout, default `configs/binlog.yaml`), `--labels sim|mapped`
-(pipeline JSONL labels: simulator classes, or the classes of the layout's `class_map`), `--include-face` /
-`--no-face`.
+### Common options
+
+| option | meaning |
+|---|---|
+| `--seed` | same seed = identical output, and the same behaviour on every camera |
+| `--emulator-seed` | same behaviour, different model errors |
+| `--profile` | error profile (see [Error profiles](#error-profiles)) |
+| `--fps` | default 30; the `export` / `catalog` default is 20 |
+| `--variant N` | driver and camera-mount variant from `configs/variation.yaml` |
+| `--layout` | binary / class layout, default `configs/binlog.yaml` |
+| `--labels sim\|mapped` | pipeline JSONL labels: simulator classes, or the classes of the layout's `class_map` |
+| `--include-face` / `--no-face` | include or leave out the face box |
+
+## What it produces
+
+Per frame, for one camera:
+
+- **Model output**
+  - OD boxes with scores: `face`, `left_eye`, `right_eye`, `mouth`, `hand`, `phone`, `cigarette`, `seatbelt`
+    (optionally mapped to your own classes, e.g. open / closed eye)
+  - head pose, gaze, eye / mouth openness
+- **Ground truth**, always from the script, never from the model
+  - exact boxes, landmarks, head pose, gaze, openness
+  - hand / phone / cigarette / seatbelt states
+  - behaviour labels: `eyes_off_road`, `off_road_s`, `eyes_closed`, `closed_s`, `phone_use`, `phone_use_visible`,
+    `yawning`, `smoking`, `seatbelt_off`
+- **Files**: pipeline JSONL (model output), truth JSONL, full JSONL (both side by side, with error flags), a packed
+  binary log (`dms.bin`, layout in YAML) or one YAML per frame (`frame_yaml`). Details in [Outputs](#outputs).
+- **Behaviour card** (`card.md`, `card.json`): timeline of what the driver does, plus the injected errors.
+- **Pictures**: wireframe camera view, cabin plot, timeline plot, GIFs.
 
 ## Checking a post-processing program
 
-1. Export the runs: `dms-sim export ...` for one scenario, or `dms-sim catalog expand ... && dms-sim catalog run ...`
+1. **Export the runs.** `dms-sim export ...` for one scenario, or `dms-sim catalog expand ... && dms-sim catalog run ...`
    for many (`rows.tsv` lists every row's frames, truth and card).
-2. Run the post-processing on the exported model output (`frame_yaml` labels directory, `dms.bin`, or the pipeline
-   JSONL through `dms_model_simulator.replay`).
-3. Compare its alerts with the behaviour card: the timeline says what the driver did when; the error list says
-   where the model output was degraded on purpose (an alert that drops during a burst of missed face boxes is a
-   different finding from one that never fires).
+2. **Run your post-processing** on the exported model output: the `frame_yaml` labels directory, `dms.bin`, or the
+   pipeline JSONL through `dms_model_simulator.replay`:
 
-```python
-from dms_model_simulator.replay import iter_pipeline
-for rec in iter_pipeline("out/x/phone_distraction__dash_right.pipeline.jsonl"):
-    my_logic.step(rec)              # rec: frame_id, timestamp_ms, od [{label, bbox, score}], head_pose, gaze, ...
-```
+   ```python
+   from dms_model_simulator.replay import iter_pipeline
+   for rec in iter_pipeline("out/x/phone_distraction__dash_right.pipeline.jsonl"):
+       my_logic.step(rec)              # rec: frame_id, timestamp_ms, od [{label, bbox, score}], head_pose, gaze, ...
+   ```
+
+3. **Compare its alerts with the behaviour card.** The timeline says what the driver did when; the error list says
+   where the model output was degraded on purpose. An alert that drops during a burst of missed face boxes is a
+   different finding from one that never fires.
 
 ## Scenarios
 
-`scenarios/*.yaml` (`mirror_check`, `phone_distraction`, `drowsy`, `smoking`, `hand_to_face`, `random_120s`) are
-lists of segments with `target` (a gaze target from `configs/cabin.yaml`) and `duration` (s), plus optional
-`head_pose`, `eye_openness`, `closure`, `blink`, `mouth_openness`, `yawn`, `hand` (wheel | lap | phone | call |
-smoke | at_ear | at_mouth), `phone` (none | lap | call), `cigarette` (none | mouth | hand), `seatbelt` (on | off),
-`held` (none | cup | bottle, with `hand: at_mouth`). Defaults are in `configs/behavior.yaml`. `gen-scenario` draws
-a Markov chain over the targets with phone, drowsiness, smoking and seatbelt-off episodes
-(`configs/scenario_gen.yaml`).
+### Scenario files
 
-The **catalog** (`catalog/`, see `catalog/README.md` and `catalog/INDEX.md`) holds ~70 parameterised scenarios:
-behaviours that should be noticed, look-alikes that should not, duration sweeps, stop-and-repeat, degraded
-detection, long natural drives, and Euro NCAP style cases.
+`scenarios/*.yaml`: `mirror_check`, `phone_distraction`, `drowsy`, `smoking`, `hand_to_face`, `random_120s`.
+
+A scenario is a list of segments. Each segment needs `target` (a gaze target from `configs/cabin.yaml`) and
+`duration` (s). Optional fields (defaults in `configs/behavior.yaml`):
+
+| field | values |
+|---|---|
+| `head_pose`, `eye_openness`, `closure`, `blink`, `mouth_openness`, `yawn` | see `configs/behavior.yaml` |
+| `hand` | `wheel` \| `lap` \| `phone` \| `call` \| `smoke` \| `at_ear` \| `at_mouth` |
+| `phone` | `none` \| `lap` \| `call` |
+| `cigarette` | `none` \| `mouth` \| `hand` |
+| `seatbelt` | `on` \| `off` |
+| `held` | `none` \| `cup` \| `bottle` (with `hand: at_mouth`) |
+
+`gen-scenario` draws a Markov chain over the gaze targets, with phone, drowsiness, smoking and seatbelt-off
+episodes (`configs/scenario_gen.yaml`).
+
+### Catalog
+
+`catalog/` holds ~70 parameterised scenarios (see `catalog/README.md` and `catalog/INDEX.md`):
+
+- behaviours that should be noticed, and look-alikes that should not
+- duration sweeps, stop-and-repeat
+- degraded detection
+- long natural drives
+- Euro NCAP style cases
+
+### Cameras and variants
 
 Camera presets (`configs/cameras.yaml`): `steering_column`, `cluster`, `rearview_mirror`, `a_pillar_left`,
-`center_stack`, `overhead_console`, `dash_right` (Full-HD, wide lens). A scenario may carry `cabin:` (driver
-position / size) and `camera:` (mount error) blocks; `--variant N` draws them from `configs/variation.yaml`.
+`center_stack`, `overhead_console`, `dash_right` (Full-HD, wide lens).
+
+A scenario may carry a `cabin:` block (driver position / size) and a `camera:` block (mount error);
+`--variant N` draws them from `configs/variation.yaml`.
 
 ## Model errors
 
-`configs/emulator.yaml` holds the error model: detection probability vs box size / head yaw / occlusion, box and
-score noise, head pose / gaze / openness noise, dropped frames and latency. Optional modes (off by default):
-burst misses (`detection.<class>.mean_miss_frames`), burst drops, eye / mouth open-closed class flips
-(`eye_state_flip`, `mouth_state_flip`), context-dependent false positives (hand at the ear reported as a phone,
-hand at the mouth as a cigarette, a bottle at the lips as a phone), box jumps (`box_jump`) and view-dependent
-jitter (`box_conditions`). Each is a two-state Markov chain with a long-run share and a mean run length.
+`configs/emulator.yaml` holds the error model. Always on:
 
-**Error profiles** (`catalog/profiles.yaml`) are named overrides, graded per dimension and stackable with `+`:
-`jit1..3` (box jitter), `jmp1..3` (box jumps), `mis1..3` (burst misses), `drp1..3` (dropped frames), `lat1..2`
-(latency), `cnf1..2` (scores near typical thresholds), `flp1..2` (class flips), `fp1..2` (false positives), and
-the bundles `bad`, `worst`. Use them as `--profile jit2+jmp2+mis1`, in `catalog expand --profile`, or in an entry's
-`variation.profiles`. The levels are deliberately rough: they show how much model error a post-processing
-tolerates, not what one particular model does.
+- detection probability vs box size / head yaw / occlusion
+- box and score noise
+- head pose / gaze / openness noise
+- dropped frames and latency
+
+Optional modes, off by default. Each is a two-state Markov chain with a long-run share and a mean run length.
+
+| mode | config key |
+|---|---|
+| burst misses | `detection.<class>.mean_miss_frames` |
+| burst drops | `pipeline.drop_mean_frames` |
+| eye / mouth open-closed class flips | `eye_state_flip`, `mouth_state_flip` |
+| context-dependent false positives: hand at the ear → phone, hand at the mouth → cigarette, bottle at the lips → phone | `contextual_false_positives` |
+| box jumps | `box_jump` |
+| view-dependent jitter | `box_conditions` |
+
+### Error profiles
+
+`catalog/profiles.yaml` holds named overrides, graded per dimension:
+
+| profile | dimension |
+|---|---|
+| `jit1..3` | box jitter |
+| `jmp1..3` | box jumps |
+| `mis1..3` | burst misses |
+| `drp1..3` | dropped frames |
+| `lat1..2` | latency |
+| `cnf1..2` | scores near typical thresholds |
+| `flp1..2` | class flips |
+| `fp1..2` | false positives |
+| `bad`, `worst` | bundles |
+
+Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
+or in a catalog entry's `variation.profiles`.
+
+The levels are deliberately rough: they show how much model error a post-processing tolerates, not what one
+particular model does.
 
 ## Outputs
 
-`dms-sim run --format full|pipeline|both|all|dmsbin` writes `<scenario>__<camera>` + `.jsonl` (full),
-`.pipeline.jsonl` + `.truth.jsonl`, `.dms.bin`, plus `__camera.json` and `__metrics.json`. All share `frame_id`;
-`timestamp_ms` = frame / fps. Field contract in `docs/SPEC.md`.
+`dms-sim run --format full|pipeline|both|all|dmsbin` writes files named `<scenario>__<camera>` plus:
+
+| suffix | content |
+|---|---|
+| `.jsonl` | full JSONL |
+| `.pipeline.jsonl` + `.truth.jsonl` | model output + ground truth |
+| `.dms.bin` | packed binary log |
+| `__camera.json`, `__metrics.json` | camera parameters, metrics |
+
+All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is in [`docs/SPEC.md`](docs/SPEC.md).
 
 - **Pipeline JSONL**: `frame_id`, `timestamp_ms`, `camera_id`, `od` [`{label, bbox [x1,y1,x2,y2], score}`],
   `head_pose`, `gaze`, `eye_openness`, `mouth_openness`. A dropped frame has an empty `od` and null fields.
-- **Truth JSONL**: exact values and the behaviour labels under `events`.
-- **Full JSONL**: `{frame, t, camera, truth, pred}` with diagnostics; `pred` carries the error flags `dropped`,
+- **Truth JSONL**: exact values, and the behaviour labels under `events`.
+- **Full JSONL**: `{frame, t, camera, truth, pred}` with diagnostics. `pred` carries the error flags `dropped`,
   `latency_fill`, `source_frame`, per-box `jump` / `false_positive` / `p_detect`, and `class_flip`.
-- **dms.bin**: packed binary log, one header + N object records per frame; every field, class id, class map,
-  per-class score threshold and the box format come from a YAML layout (`configs/binlog.yaml` documents the
-  syntax). Header fields other than timestamp / frame index / size / object count are written as 0.
+- **dms.bin**: one header + N object records per frame. Every field, class id, class map, per-class score threshold
+  and the box format come from a YAML layout (`configs/binlog.yaml` documents the syntax). Header fields other than
+  timestamp / frame index / size / object count are written as 0.
 - **frame_yaml**: `<stem>.frames/labels/<frame>.yaml` with `detections` (class_id, confidence, left, top, width,
-  height, class_name) and `timestamp_msec`; `--image render` adds the camera view per frame.
+  height, class_name) and `timestamp_msec`. `--image render` adds the camera view per frame.
 
 ## Conventions
 
@@ -132,11 +213,12 @@ tolerates, not what one particular model does.
 | camera (OpenCV) | x right, y down, z forward | `R_cam_from_vehicle` in `<run>__camera.json` |
 | camera "face frame" | forward = reversed optical axis, left = image right, up = image up | head pose / gaze `*_camera` are 0 when parallel to the reversed optical axis; yaw>0 = subject's own left, pitch>0 = up |
 
-Vehicle-frame yaw>0 = left, pitch>0 = up; head pose = `Rz(yaw) Ry(-pitch) Rx(roll)`. Boxes are `[x1, y1, x2, y2]`
-pixels in the full image, scores 0..1. Box extents follow a labelling convention (`box_style: annotation` in
-`configs/cabin.yaml`): the face box follows the face contour from forehead to chin without the ears, the eye box
-covers the whole eye socket (open / closed is a class, not the box height). Rendering is a schematic wireframe:
-truth boxes green, model boxes red.
+- **Angles**: vehicle-frame yaw>0 = left, pitch>0 = up; head pose = `Rz(yaw) Ry(-pitch) Rx(roll)`.
+- **Boxes**: `[x1, y1, x2, y2]` pixels in the full image; scores 0..1.
+- **Box extents** follow a labelling convention (`box_style: annotation` in `configs/cabin.yaml`):
+  - the face box follows the face contour from forehead to chin, without the ears;
+  - the eye box covers the whole eye socket (open / closed is a class, not the box height).
+- **Rendering** is a schematic wireframe: truth boxes green, model boxes red.
 
 ## Known limitations
 
@@ -144,10 +226,11 @@ truth boxes green, model boxes red.
 - The `dash_right` optical axis does not point at the eye point, so the viewing angle the error model uses is
   smaller than the true one for that camera.
 - Landmarks outside the image count as visible; the far eye can reappear after a large head turn.
-- At full mouth opening the upper lip leaves the mouth box; `head_scale` does not scale the cigarette or held
-  objects.
-- Burst misses do not keep their configured long-run share when the detection probability changes with the view;
-  the `ideal` profile still misses some boxes; a box that jumps out of the image is dropped (counted as a miss).
+- At full mouth opening the upper lip leaves the mouth box.
+- `head_scale` does not scale the cigarette or held objects.
+- Burst misses do not keep their configured long-run share when the detection probability changes with the view.
+- The `ideal` profile still misses some boxes.
+- A box that jumps out of the image is dropped (counted as a miss).
 
 ## License
 
