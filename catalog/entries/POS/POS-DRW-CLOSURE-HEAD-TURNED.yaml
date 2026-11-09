@@ -1,14 +1,18 @@
 id: POS-DRW-CLOSURE-HEAD-TURNED
-title: "頭向右轉 40° 時閉眼 3 s"
-summary: "臉側轉時眼框變小、比較難判開閉。先轉頭 1 s（眼睛睜開），再閉眼。"
+title: "頭向右轉 40° 時閉眼 3 s（20 / 40 / 50°，4 / 3 / 1.5 s）"
+summary: "臉側轉時眼框變小、比較難判開閉。先轉頭 1 s（眼睛睜開），再閉眼。
+  對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。small 頭轉 20°、閉 4 s；medium 40°、3 s；large 50°、1.5 s（眼框更小、閉眼剛過門檻）。"
 status: ready
 source: written
 tags: [closure, head_turn, interaction]
 behaviors: [V05]
+params:
+  close_s: {levels: {small: 4.0, medium: 3.0, large: 1.5}}
+  yaw: {levels: {small: -20, medium: -40, large: -50}}
 template:
   behavior: {transition_head_s: 0.1, blink: {rate_per_min: 6}}
   segments:
     - {target: road_ahead, duration: 7.0}
-    - {target: road_ahead, duration: 1.0, head_pose: [-40, 0, 0]}
-    - {target: road_ahead, duration: 3.0, head_pose: [-40, 0, 0], eye_openness: 0.05}
+    - {target: road_ahead, duration: 1.0, head_pose: ["${yaw}", 0, 0]}
+    - {target: road_ahead, duration: "${close_s}", head_pose: ["${yaw}", 0, 0], eye_openness: 0.05}
     - {target: road_ahead, duration: 4.0}

@@ -1,12 +1,15 @@
 id: POS-SBT-UNBUCKLE-MID
-title: "開車中解開安全帶 10 s 再繫回"
-summary: "一次明確的未繫，之後繫回。"
+title: "開車中解開安全帶 12 / 10 / 3 s 再繫回"
+summary: "一次明確的未繫，之後繫回。
+  對照：沒繫安全帶的真值沒有時長門檻，解開就成立。small 12 s、medium 10 s、large 3 s。"
 status: ready
 source: written
 tags: [seatbelt]
 behaviors: [V11]
+params:
+  off_s: {levels: {small: 12.0, medium: 10.0, large: 3.0}}
 template:
   segments:
     - {target: road_ahead, duration: 5.0}
-    - {target: road_ahead, duration: 10.0, seatbelt: "off"}
+    - {target: road_ahead, duration: "${off_s}", seatbelt: "off"}
     - {target: road_ahead, duration: 5.0}

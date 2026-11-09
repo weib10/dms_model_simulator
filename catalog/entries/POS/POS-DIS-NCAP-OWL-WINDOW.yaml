@@ -1,17 +1,19 @@
 id: POS-DIS-NCAP-OWL-WINDOW
-title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗 4 s，角度 30°–75°"
-summary: "dash_right 在駕駛右前方，往左轉是背向相機：臉框的變化在約 30° 最明顯，角度再大反而變小。"
+title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗 5 / 4 / 3.5 s，角度 30°–75°"
+summary: "dash_right 在駕駛右前方，往左轉是背向相機：臉框的變化在約 30° 最明顯，角度再大反而變小。
+  對照門檻：Euro NCAP 長分心，連續離開路面 3 s。角度掃描照舊（每個角度各一列）；看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。"
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, blind_spot]
 behaviors: [V01]
 params:
   yaw_deg: {grid: [30, 45, 60, 75]}
+  look_s: {levels: {small: 5.0, medium: 4.0, large: 3.5}}
 template:
   behavior: {transition_head_s: 0.3}
   segments:
     - {target: road_ahead,  duration: 3.0}
-    - {target: left_mirror, duration: 4.0, head_pose: ["${yaw_deg}", 0, 0]}
+    - {target: left_mirror, duration: "${look_s}", head_pose: ["${yaw_deg}", 0, 0]}
     - {target: road_ahead,  duration: 4.0}
 variation:
   cameras: [dash_right]

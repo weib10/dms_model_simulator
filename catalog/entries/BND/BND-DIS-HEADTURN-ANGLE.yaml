@@ -1,6 +1,6 @@
 id: BND-DIS-HEADTURN-ANGLE
 title: "頭轉 4 s，角度從 ±15° 掃到 ±60°"
-summary: "同一段轉頭換不同角度，兩台相機、左右分開。看轉多大角度開始被當成分心；角度換成框的變化要看相機位置。"
+summary: "同一段轉頭換不同角度，兩台相機、左右分開。看轉多大角度開始被當成分心；角度換成框的變化要看相機位置。眼睛跟著頭看過去；±15°、±20° 的視線還在路面範圍內（road_left / road_right 約 ±22°），真值算在路上，±30° 起算離開路面。"
 status: ready
 source: written
 tags: [head_turn, angle]
@@ -22,7 +22,10 @@ template:
       head_40: [2.298, 1.928, 0.0]
       head_50: [1.928, 2.298, 0.0]
       head_60: [1.500, 2.598, 0.0]
-  behavior: {transition_head_s: 0.1}
+  behavior:
+    transition_head_s: 0.1
+    events:
+      on_road_targets: [road_ahead, road_left, road_right, head_15, head_-15, head_20, head_-20]
   segments:
     - {target: road_ahead, duration: 3.0}
     - {target: "head_${yaw_deg}", duration: 4.0, head_pose: ["${yaw_deg}", 0, 0]}

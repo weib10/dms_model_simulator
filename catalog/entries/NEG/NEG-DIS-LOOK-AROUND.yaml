@@ -1,8 +1,8 @@
 id: NEG-DIS-LOOK-AROUND
 title: "東張西望：視線在左鏡、右前路面、右側窗、左前路面之間快速跳，每次很短就回前方"
 summary: "對照門檻：Euro NCAP VATS（30 s 內離開路面累計 10 s）。每輪看 4 個地方，其中 2 個離開路面（左鏡、右側窗），2 個還在路上（左前、右前路面）。
-  離開路面的累計：small 3 輪 × 2 × 0.4 s = 2.4 s（約 14 s 內）；medium 5 輪 × 2 × 0.6 s = 6 s（約 23 s 內）；
-  large 6 輪 × 2 × 0.8 s = 9.6 s（約 31 s 內，任何 30 s 視窗都在 10 s 以下）。每次回前方 1.2 s。"
+  每次回前方 0.5 s，一輪 4 ×（停留 + 0.5）s。離開路面的累計：small 3 輪 × 2 × 0.4 s = 2.4 s（10.8 s 內）；
+  medium 5 輪 × 2 × 0.6 s = 6 s（22 s 內）；large 6 輪 × 2 × 0.8 s = 9.6 s（31.2 s 內，任何 30 s 視窗都在 10 s 以下）。"
 status: ready
 source: written
 tags: [glance, head_turn, look_around]
@@ -10,7 +10,7 @@ behaviors: [N06, N02, N05]
 params:
   dwell_s: {levels: {small: 0.4, medium: 0.6, large: 0.8}}
   rounds: {levels: {small: 3, medium: 5, large: 6}}
-  back_s: {fixed: 1.2}
+  back_s: {fixed: 0.5}
 template:
   behavior: {transition_head_s: 0.2}
   cabin:

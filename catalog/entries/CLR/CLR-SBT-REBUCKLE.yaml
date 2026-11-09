@@ -1,16 +1,20 @@
 id: CLR-SBT-REBUCKLE
-title: "解開安全帶 8 s、繫回 8 s、再解開 8 s"
-summary: "看繫回後有沒有解除、第二次解開有沒有再觸發。"
+title: "解開安全帶 10 / 8 / 3 s、繫回 10 / 8 / 3 s、再解開一次"
+summary: "看繫回後有沒有解除、第二次解開有沒有再觸發。
+  對照：沒繫安全帶的真值沒有時長門檻。每次解開 small 10 s、medium 8 s、large 3 s；中間繫回 small 10 s、medium 8 s、large 3 s（最短，但仍明確繫上）。"
 status: ready
 source: written
 tags: [seatbelt, clear, rearm]
 behaviors: [V11]
+params:
+  off_s: {levels: {small: 10.0, medium: 8.0, large: 3.0}}
+  gap_s: {levels: {small: 10.0, medium: 8.0, large: 3.0}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
-    - {target: road_ahead, duration: 8.0}
-    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: "${off_s}", seatbelt: "off"}
+    - {target: road_ahead, duration: "${gap_s}"}
+    - {target: road_ahead, duration: "${off_s}", seatbelt: "off"}
     - {target: road_ahead, duration: 6.0}
 variation:
   profiles: [ideal, nominal]

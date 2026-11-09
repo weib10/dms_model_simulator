@@ -1,7 +1,7 @@
 id: NEG-DIS-ADJUST-HVAC
 title: "調冷氣、音響：右手伸到中控台，視線在中控與路面之間來回"
-summary: "對照門檻：Euro NCAP 長分心 3 s。手離開方向盤（像拿手機），視線單次看中控 small 0.8 s、medium 1.5 s、large 2.5 s，
-  共 2 / 3 / 4 次，中間回路面 1.5 s，手一直在中控台上。
+summary: "對照門檻：Euro NCAP 長分心 3 s、VATS（30 s 內累計 10 s）。手離開方向盤（像拿手機），視線單次看中控 small 0.8 s、
+  medium 1.5 s、large 2.5 s，共 2 / 3 / 3 次（累計 1.6 / 4.5 / 7.5 s），中間回路面 1.5 s，手一直在中控台上。
   中控台上的手每台相機都拍不到；拍得到方向盤的相機（steering_column、overhead_console）看到的是手從方向盤上消失。"
 status: ready
 source: written
@@ -9,7 +9,7 @@ tags: [hand_off_wheel, glance, hvac]
 behaviors: [N24]
 params:
   look_s: {levels: {small: 0.8, medium: 1.5, large: 2.5}}
-  n: {levels: {small: 2, medium: 3, large: 4}}
+  n: {levels: {small: 2, medium: 3, large: 3}}
 template:
   cabin:
     hands:

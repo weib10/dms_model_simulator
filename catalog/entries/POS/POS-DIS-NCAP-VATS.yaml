@@ -1,37 +1,24 @@
 id: POS-DIS-NCAP-VATS
-title: "Euro NCAP 短分心（VATS）：30 s 內反覆看乘客側 1.5 s、回路面 1 s，累計 18 s"
-summary: "VATS（visual attention time sharing）是每次都很短、但 30 s 內累計離開路面超過 10 s 的反覆瞥視。頭轉 60°。"
+title: "Euro NCAP 短分心（VATS）：30 s 內反覆看乘客側 2 / 1.5 / 1 s、回路面 0.5 / 1 / 1.5 s，累計 24 / 18 / 12 s"
+summary: "VATS（visual attention time sharing）是每次都很短、但 30 s 內累計離開路面超過 10 s 的反覆瞥視。
+  對照門檻：30 s 內累計離開路面 10 s，單次在長分心 3 s 以下。12 次瞥視、每輪 2.5 s：small 每次 2 s、回路面 0.5 s、頭轉 60°（累計 24 s）；
+  medium 1.5 s、1 s、60°（18 s）；large 1 s、1.5 s、45°（12 s，剛過門檻）。"
 status: ready
 source: written
 tags: [ncap, short_distraction, glance, accumulation]
 behaviors: [V04]
+params:
+  glance_s: {levels: {small: 2.0, medium: 1.5, large: 1.0}}
+  road_s: {levels: {small: 0.5, medium: 1.0, large: 1.5}}
+  yaw: {levels: {small: -60, medium: -60, large: -45}}
 template:
   behavior: {transition_head_s: 0.2}
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 1.0}
-    - {target: passenger,  duration: 1.5, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 4.0}
+    - repeat: 12
+      segments:
+        - {target: passenger,  duration: "${glance_s}", head_pose: ["${yaw}", 0, 0]}
+        - {target: road_ahead, duration: "${road_s}"}
+    - {target: road_ahead, duration: 3.0}
 variation:
   cameras: [dash_right]

@@ -1,14 +1,18 @@
 id: POS-DRW-NCAP-SLEEP
-title: "Euro NCAP 睡著（sleep）：閉眼 6 s、頭慢慢往前點"
-summary: "Euro NCAP 把閉眼 3 s 以上算睡著（1–3 s 是微睡，見 POS-DRW-MICROSLEEP）。"
+title: "Euro NCAP 睡著（sleep）：閉眼 8 / 6 / 3.5 s、頭慢慢往前點"
+summary: "Euro NCAP 把閉眼 3 s 以上算睡著（1–3 s 是微睡，見 POS-DRW-MICROSLEEP）。
+  對照門檻：連續閉眼 3 s。medium 閉 6 s、頭往前點 20°；small 8 s、25°；large 3.5 s、10°（剛過睡著門檻）。"
 status: ready
 source: written
 tags: [ncap, closure, sleep]
 behaviors: [V06]
+params:
+  close_s: {levels: {small: 8.0, medium: 6.0, large: 3.5}}
+  nod: {levels: {small: -25, medium: -20, large: -10}}
 template:
   segments:
     - {target: road_ahead, duration: 8.0}
-    - {target: road_ahead, duration: 6.0, eye_openness: 0.05, head_pose: [0, -20, 0]}
+    - {target: road_ahead, duration: "${close_s}", eye_openness: 0.05, head_pose: [0, "${nod}", 0]}
     - {target: road_ahead, duration: 4.0}
 variation:
   profiles: [ideal, nominal]

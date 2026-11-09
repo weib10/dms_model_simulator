@@ -1,16 +1,20 @@
 id: CLR-PHN-CALL-REARM
-title: "講電話 4 s、放下 6 s、再講 4 s"
-summary: "兩通明確的電話，中間放下夠久（和 BND-PHN-CALL-GAP 的短間隔不同）。看放下後有沒有解除、第二通有沒有再觸發。"
+title: "講電話 5 / 4 / 2 s、放下 8 / 6 / 3 s、再講一次"
+summary: "兩通明確的電話，中間放下（和 BND-PHN-CALL-GAP 的短間隔不同）。看放下後有沒有解除、第二通有沒有再觸發。
+  對照：講電話的真值沒有時長門檻。每通 small 5 s、medium 4 s、large 2 s；中間放下 small 8 s、medium 6 s、large 3 s（最短，但仍明確放下）。"
 status: ready
 source: written
 tags: [phone, call, clear, rearm]
 behaviors: [V08]
+params:
+  call_s: {levels: {small: 5.0, medium: 4.0, large: 2.0}}
+  gap_s: {levels: {small: 8.0, medium: 6.0, large: 3.0}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 4.0, hand: call, phone: call}
-    - {target: road_ahead, duration: 6.0}
-    - {target: road_ahead, duration: 4.0, hand: call, phone: call}
+    - {target: road_ahead, duration: "${call_s}", hand: call, phone: call}
+    - {target: road_ahead, duration: "${gap_s}"}
+    - {target: road_ahead, duration: "${call_s}", hand: call, phone: call}
     - {target: road_ahead, duration: 6.0}
 variation:
   profiles: [ideal, nominal]

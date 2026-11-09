@@ -1,12 +1,16 @@
 id: POS-YWN-ONLY
-title: "眼睛正常，只打一次大哈欠（嘴張大 4 s）"
-summary: "嘴巴開合度 0.9 持續 4 s，沒有閉眼。"
+title: "眼睛正常，只打一次大哈欠（嘴張大 6 / 4 / 2.5 s）"
+summary: "只有嘴，沒有閉眼。
+  對照：哈欠嘴張到約 0.9、持續數秒（一般 3–6 s）；模型的嘴開合判斷門檻約 0.55。small 開合度 0.95、6 s；medium 0.9、4 s；large 0.8、2.5 s。"
 status: ready
 source: written
 tags: [yawn]
 behaviors: [V07]
+params:
+  yawn_s: {levels: {small: 6.0, medium: 4.0, large: 2.5}}
+  mouth: {levels: {small: 0.95, medium: 0.9, large: 0.8}}
 template:
   segments:
     - {target: road_ahead, duration: 4.0}
-    - {target: road_ahead, duration: 4.0, mouth_openness: 0.9}
+    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: "${mouth}"}
     - {target: road_ahead, duration: 4.0}

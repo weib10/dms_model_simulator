@@ -1,12 +1,14 @@
 id: POS-SMK-MOUTH-HAND
 title: "抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上、再抽一次"
-summary: "scenarios/smoking.yaml 前段改成模板（最後的未繫安全帶拆到 SBT 條目）。"
+summary: "scenarios/smoking.yaml 前段改成模板（最後的未繫安全帶拆到 SBT 條目）。
+  對照：抽菸的真值沒有時長門檻，菸在嘴上或手上就成立。手到嘴抽的兩段 small 4 s / 3 s、medium 3 s / 2 s、large 1.5 s / 1 s，其他段不變。"
 status: ready
 source: written
 tags: [smoking, existing]
-behaviors: [V10]
+behaviors: [V10, N02]
 params:
-  puff_s: {grid: [3.0]}
+  puff_s: {levels: {small: 4.0, medium: 3.0, large: 1.5}}
+  puff2_s: {levels: {small: 3.0, medium: 2.0, large: 1.0}}
 template:
   behavior: {}
   segments:
@@ -15,5 +17,5 @@ template:
     - {target: road_ahead,  duration: 2.0, hand: wheel, cigarette: mouth}
     - {target: left_mirror, duration: 1.0, hand: wheel, cigarette: hand}
     - {target: road_ahead,  duration: 2.0, hand: wheel, cigarette: hand}
-    - {target: road_ahead,  duration: 2.0, hand: smoke, cigarette: mouth}
+    - {target: road_ahead,  duration: "${puff2_s}", hand: smoke, cigarette: mouth}
     - {target: road_ahead,  duration: 3.0}

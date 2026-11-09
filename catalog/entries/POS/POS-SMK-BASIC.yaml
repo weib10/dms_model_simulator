@@ -1,14 +1,17 @@
 id: POS-SMK-BASIC
-title: "基本款：菸含在嘴上、雙手在方向盤 5 s，再拿掉"
-summary: "抽菸家族的基本款：手不在臉前，嘴與菸都沒被遮。"
+title: "基本款：菸含在嘴上、雙手在方向盤 6 / 5 / 2 s，再拿掉"
+summary: "抽菸家族的基本款：手不在臉前，嘴與菸都沒被遮。
+  對照：抽菸的真值沒有時長門檻，菸在嘴上就成立。small 6 s、medium 5 s、large 2 s（短但仍明確叼著）。"
 status: ready
 source: written
 tags: [basic, smoking]
 behaviors: [V10]
+params:
+  smoke_s: {levels: {small: 6.0, medium: 5.0, large: 2.0}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 5.0, hand: wheel, cigarette: mouth}
+    - {target: road_ahead, duration: "${smoke_s}", hand: wheel, cigarette: mouth}
     - {target: road_ahead, duration: 5.0}
 variation:
   profiles: [ideal, nominal]

@@ -1,14 +1,17 @@
 id: POS-SBT-BASIC
-title: "基本款：沒繫安全帶 8 s，再繫回"
-summary: "安全帶家族的基本款：手在方向盤、不擋安全帶。"
+title: "基本款：沒繫安全帶 10 / 8 / 3 s，再繫回"
+summary: "安全帶家族的基本款：手在方向盤、不擋安全帶。
+  對照：沒繫安全帶的真值沒有時長門檻，解開就成立。small 10 s、medium 8 s、large 3 s（短但仍明確解開）。"
 status: ready
 source: written
 tags: [basic, seatbelt]
 behaviors: [V11]
+params:
+  off_s: {levels: {small: 10.0, medium: 8.0, large: 3.0}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 8.0, seatbelt: "off"}
+    - {target: road_ahead, duration: "${off_s}", seatbelt: "off"}
     - {target: road_ahead, duration: 5.0}
 variation:
   profiles: [ideal, nominal]

@@ -4,7 +4,7 @@ summary: "和 ROB-ALL-ERROR-PROFILES 同一串行為，再加一段轉頭。low_
 status: ready
 source: written
 tags: [robustness, burst_miss]
-behaviors: [C03]
+behaviors: [C03, V08, V10, V05, V11, V01]
 template:
   behavior: {transition_head_s: 0.1}
   segments:

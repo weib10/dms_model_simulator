@@ -1,6 +1,6 @@
 id: NEG-DRW-SNEEZE
 title: "打噴嚏、咳嗽：短閉眼＋頭往前點＋嘴張開"
-summary: "對照門檻：閉眼（開合度 < 0.2，BND-DRW-SINGLE-CLOSURE 從 0.3 s 起掃）。每次閉眼 small 0.3 s、medium 0.45 s、large 0.6 s，
+summary: "對照：微睡（開合度 < 0.2、約 1 s 以上；眨眼 0.1–0.4 s）。每次閉眼 small 0.3 s、medium 0.45 s、large 0.6 s，
   同時低頭 5 / 10 / 20°、嘴張到 0.5；small 1 次、medium 2 次、large 3 次（連續噴嚏），中間回正 1.5 s。"
 status: ready
 source: written

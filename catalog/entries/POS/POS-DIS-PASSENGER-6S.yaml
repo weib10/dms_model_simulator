@@ -1,15 +1,19 @@
 id: POS-DIS-PASSENGER-6S
-title: "頭向右轉 60° 看乘客 6 s"
-summary: "只用 dash_right。視線目標 passenger 只會讓頭轉約 30°，所以直接給頭姿 −60°。"
+title: "頭向右轉 60° 看乘客 6 s（60 / 60 / 45°，8 / 6 / 3.5 s）"
+summary: "只用 dash_right。視線目標 passenger 在右約 82°，頭照預設增益會轉約 53°；這裡直接給頭姿，眼睛補剩下的角度。
+  對照門檻：長分心，連續離開路面 3 s。small 頭轉 60° 8 s、medium 60° 6 s、large 45° 3.5 s（剛過門檻）。"
 status: ready
 source: written
 tags: [head_turn, passenger]
 behaviors: [V01]
+params:
+  look_s: {levels: {small: 8.0, medium: 6.0, large: 3.5}}
+  yaw: {levels: {small: -60, medium: -60, large: -45}}
 template:
   behavior: {transition_head_s: 0.1}
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: passenger,  duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: passenger,  duration: "${look_s}", head_pose: ["${yaw}", 0, 0]}
     - {target: road_ahead, duration: 3.0}
 variation:
   cameras: [dash_right]

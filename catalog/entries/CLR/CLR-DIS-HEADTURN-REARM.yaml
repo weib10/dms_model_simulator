@@ -1,10 +1,15 @@
 id: CLR-DIS-HEADTURN-REARM
-title: "頭向右轉 6 s、回正 4 s、再轉 6 s"
-summary: "兩次明確的轉頭，中間回正夠久。看第一次回正後有沒有解除、第二次轉頭有沒有再觸發。只用 dash_right（理由見 BND-DIS-HEADTURN-DURATION）。"
+title: "頭向右轉 8 / 6 / 3.5 s、回正 8 / 4 / 2 s、再轉一次"
+summary: "兩次明確的轉頭，中間回正。看第一次回正後有沒有解除、第二次轉頭有沒有再觸發。只用 dash_right（理由見 BND-DIS-HEADTURN-DURATION）。
+  對照門檻：長分心，連續離開路面 3 s。每次轉頭 small 8 s、medium 6 s、large 3.5 s（剛過門檻）；中間回正 small 8 s、medium 4 s、
+  large 2 s（最短，但仍明確回到路面）。頭一律轉 60°（視線目標跟著頭，所以角度不變）。"
 status: ready
 source: written
 tags: [head_turn, clear, rearm]
 behaviors: [V01]
+params:
+  turn_s: {levels: {small: 8.0, medium: 6.0, large: 3.5}}
+  gap_s: {levels: {small: 8.0, medium: 4.0, large: 2.0}}
 template:
   cabin:
     targets:                        # 3 m away in the head's direction: the eyes follow the head
@@ -12,9 +17,9 @@ template:
   behavior: {transition_head_s: 0.1}
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: "head_-60", duration: 6.0, head_pose: [-60, 0, 0]}
-    - {target: road_ahead, duration: 4.0}
-    - {target: "head_-60", duration: 6.0, head_pose: [-60, 0, 0]}
+    - {target: "head_-60", duration: "${turn_s}", head_pose: [-60, 0, 0]}
+    - {target: road_ahead, duration: "${gap_s}"}
+    - {target: "head_-60", duration: "${turn_s}", head_pose: [-60, 0, 0]}
     - {target: road_ahead, duration: 4.0}
 variation:
   cameras: [dash_right]

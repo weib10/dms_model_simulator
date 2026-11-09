@@ -1,6 +1,6 @@
 id: POS-YWN-COVERED
 title: "用手遮住嘴打哈欠"
-summary: "違規真的發生，但嘴被手擋住。難度 = 多難認出來：small 嘴張大 4 s、medium 3 s、large 2 s，手一直在嘴前。
+summary: "違規真的發生，但嘴被手擋住。對照：哈欠嘴張到約 0.9、持續數秒（一般 3–6 s）。難度 = 多難認出來：small 嘴張大 4 s、medium 3 s、large 2 s，手一直在嘴前。
   真值 yawning 目前只有 yawn 事件會設（見 catalog/behaviors.yaml V07 的說明，待查）。"
 status: ready
 source: written
