@@ -103,31 +103,31 @@
 |---|---|---|---|---|---|
 | `NEG-DIS-ADJUST-HVAC` | 調冷氣、音響：右手伸到中控台，視線在中控與路面之間來回 | N24 | hand_off_wheel, glance, hvac | 三段 | ready |
 | `NEG-DIS-EYES-ONLY-GLANCE` | 只動眼睛的短瞥：頭不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照） | N09, N03 | glance, gaze_only | 三段 | ready |
-| `NEG-DIS-INTERSECTION-SCAN` | 路口左右張望：看左前、右前路面各 2.5 s | N05 | head_turn, intersection |  | ready |
+| `NEG-DIS-INTERSECTION-SCAN` | 路口左右張望：看左前、右前路面各 1.0 / 2.0 / 2.8 s | N05 | head_turn, intersection | 三段 | ready |
 | `NEG-DIS-LOOK-AROUND` | 東張西望：視線在左鏡、右前路面、右側窗、左前路面之間快速跳，每次很短就回前方 | N06, N02, N05 | glance, head_turn, look_around | 三段 | ready |
-| `NEG-DIS-LOOKDOWN-CENTER` | 看中控或儀表 1.0–1.5 s，連續 6 次 | N03 | glance, center_display, blind_spot |  | ready |
-| `NEG-DIS-MIRROR-CHECK` | 正常開車，短暫看左右鏡、後照鏡、儀表（每次 0.6–0.9 s） | N02, N03 | mirror, glance, existing |  | ready |
+| `NEG-DIS-LOOKDOWN-CENTER` | 看中控（或排檔）與儀表，每次 0.8 / 1.2 / 1.8 s | N03 | glance, center_display, blind_spot | 三段 | ready |
+| `NEG-DIS-MIRROR-CHECK` | 正常開車，短暫看左右鏡、後照鏡、儀表（看鏡子每次 0.5 / 0.7–0.9 / 1.4 s） | N02, N03 | mirror, glance, existing | 三段 | ready |
 | `NEG-DIS-PASSENGER-CHAT` | 跟乘客聊天：反覆看乘客一眼（每次 0.5 / 0.8 / 1.2 s） | N07 | glance, head_turn, passenger | 三段 | ready |
-| `NEG-DIS-SHOULDER-CHECK` | 變換車道前快速轉頭看盲點 0.8 s，重複 3 次 | N04 | head_turn, shoulder_check |  | ready |
+| `NEG-DIS-SHOULDER-CHECK` | 變換車道前快速轉頭看盲點 0.5 / 0.8 / 2.0 s，重複 3 次 | N04 | head_turn, shoulder_check | 三段 | ready |
 | `NEG-DIS-TRAFFIC-LIGHT` | 抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1 / 2 / 3 s | N08 | look_up, traffic_light | 三段 | ready |
 | `NEG-DRW-ALERT-30` | 30 s 專心開車（正常眨眼） | N01 | sleepiness, baseline |  | ready |
-| `NEG-DRW-BLINK-HEAVY` | 很常眨眼（每分鐘 30–40 次），每次都正常長度 | N10 | blink |  | ready |
-| `NEG-DRW-LOOKDOWN-EYES-OPEN` | 低頭看大腿 3 s，眼睛是睜開的 | N12 | look_down, class_flip |  | ready |
+| `NEG-DRW-BLINK-HEAVY` | 很常眨眼（每分鐘 20 / 35 / 50 次），每次都正常長度 | N10 | blink | 三段 | ready |
+| `NEG-DRW-LOOKDOWN-EYES-OPEN` | 低頭看大腿 1.0 / 1.8 / 2.6 s，眼睛是睜開的 | N12 | look_down, class_flip | 三段 | ready |
 | `NEG-DRW-MUSIC-NOD` | 跟著音樂點頭：頭規律地上下點，眼睛一直看路 | N27 | look_down, head_nod | 三段 | ready |
 | `NEG-DRW-SNEEZE` | 打噴嚏、咳嗽：短閉眼＋頭往前點＋嘴張開 | N14 | look_down, mouth, sneeze | 三段 | ready |
-| `NEG-DRW-SQUINT` | 瞇眼（陽光或習慣）：開合度 0.3–0.4，持續 15 s | N11 | squint |  | ready |
+| `NEG-DRW-SQUINT` | 瞇眼（陽光或習慣）：開合度 0.5 / 0.35 / 0.25，持續 15 s | N11 | squint | 三段 | ready |
 | `NEG-YWN-CHEWING` | 嚼口香糖：嘴小幅度規律開合 | N18 | mouth, chewing | 三段 | ready |
 | `NEG-YWN-SINGING` | 唱歌：嘴巴一開一合 | N16 | mouth, singing | 三段 | ready |
-| `NEG-YWN-TALKING` | 講話：嘴巴微開（開合度 0.3–0.45）持續 10 s | N15 | talking, mouth |  | ready |
-| `NEG-PHN-HAND-AT-EAR` | 手摸耳朵或撐頭，沒拿手機 | N20 | phone, hand_near_face, occlusion |  | ready |
-| `NEG-PHN-HAND-AT-EAR-FP` | 手摸耳朵，模擬模型在手的位置成段報出假手機框 | N20, C03 | phone, hand_near_face, false_positive |  | ready |
+| `NEG-YWN-TALKING` | 講話：嘴巴微開（開合度 0.3 / 0.4 / 0.5）持續 5 / 10 / 15 s | N15 | talking, mouth | 三段 | ready |
+| `NEG-PHN-HAND-AT-EAR` | 手摸耳朵或撐頭，沒拿手機（1.5 / 4 / 8 s） | N20 | phone, hand_near_face, occlusion | 三段 | ready |
+| `NEG-PHN-HAND-AT-EAR-FP` | 手摸耳朵，模擬模型在手的位置成段報出假手機框（每次 1 / 3 / 6 s，1 / 2 / 3 次） | N20, C03 | phone, hand_near_face, false_positive | 三段 | ready |
 | `NEG-PHN-PHONE-MOUNT` | 手機放在儀表板的手機架上（導航），手在方向盤上，偶爾看一眼 | N28 | phone, glance | 三段 | ready |
-| `NEG-SMK-CIG-IN-LAP` | 菸夾在手上、手放在大腿（沒在抽） | N23 | smoking |  | ready |
-| `NEG-SMK-HAND-AT-MOUTH` | 手摸嘴或托下巴，沒有菸 | N21 | smoking, hand_near_face, occlusion |  | ready |
-| `NEG-SMK-HAND-AT-MOUTH-FP` | 手摸嘴或托下巴，模擬模型在嘴前成段報出假香菸框 | N21, C03 | smoking, hand_near_face, false_positive |  | ready |
-| `NEG-SBT-HAND-ACROSS-CHEST` | 安全帶有繫，手摸耳朵、摸嘴、講電話時擋到一段安全帶 | N29, V08, N20, N21 | seatbelt, occlusion, hand_near_face |  | ready |
+| `NEG-SMK-CIG-IN-LAP` | 菸夾在手上、手放在大腿（沒在抽）：2 / 5 / 10 s | N23 | smoking | 三段 | ready |
+| `NEG-SMK-HAND-AT-MOUTH` | 手摸嘴或托下巴，沒有菸（每次 1.5 / 3 / 4 s，1 / 2 / 3 次） | N21 | smoking, hand_near_face, occlusion | 三段 | ready |
+| `NEG-SMK-HAND-AT-MOUTH-FP` | 手摸嘴或托下巴，模擬模型在嘴前成段報出假香菸框（每次 1 / 3 / 6 s，1 / 2 / 3 次） | N21, C03 | smoking, hand_near_face, false_positive | 三段 | ready |
+| `NEG-SBT-HAND-ACROSS-CHEST` | 安全帶有繫，手摸耳朵、摸嘴、講電話時擋到一段安全帶（每次 1.5 / 4 / 8 s） | N29, V08, N20, N21 | seatbelt, occlusion, hand_near_face | 三段 | ready |
 | `NEG-ALL-BASIC-CLEAN-30` | 基本款：30 s 只看前方、正常眨眼 | N01 | basic, baseline |  | ready |
-| `NEG-ALL-DRINK-EAT` | 喝水、吃東西（手拿東西到嘴邊） | N19 | hand_near_face, drinking, eating, occlusion |  | ready |
+| `NEG-ALL-DRINK-EAT` | 喝水、吃東西（手拿東西到嘴邊）：每口喝 1.5 / 3 / 5 s，吃東西 1 / 2 / 4 口 | N19 | hand_near_face, drinking, eating, occlusion | 三段 | ready |
 | `NEG-ALL-LAUGH` | 大笑：嘴張開、眼睛瞇起 | N17 | yawn, closure, mouth, squint, laugh | 三段 | ready |
 
 ## BND：時長掃描：同一個行為從短到長成對排開

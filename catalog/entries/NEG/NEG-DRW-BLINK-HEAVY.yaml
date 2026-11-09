@@ -1,13 +1,15 @@
 id: NEG-DRW-BLINK-HEAVY
-title: "很常眨眼（每分鐘 30–40 次），每次都正常長度"
-summary: "閉眼類別頻繁出現，但都是正常眨眼，不是疲勞。"
+title: "很常眨眼（每分鐘 20 / 35 / 50 次），每次都正常長度"
+summary: "對照：微睡（開合度 < 0.2、約 1 s 以上）與 N10 的上限（連續閉眼 0.5 s）。閉眼類別頻繁出現，但都是正常眨眼，不是疲勞。
+  每分鐘 small 20 次、medium 35 次、large 50 次，每次眨眼 0.15 / 0.25 / 0.4 s（開合度低於 0.2 的部分約 0.05 / 0.15 / 0.2 s），共 20 s。"
 status: ready
 source: written
 tags: [blink]
 behaviors: [N10]
 params:
-  rate: {grid: [30, 40]}
+  rate: {levels: {small: 20, medium: 35, large: 50}}
+  blink_s: {levels: {small: 0.15, medium: 0.25, large: 0.4}}
 template:
-  behavior: {blink: {rate_per_min: "${rate}", duration_s: 0.25}}
+  behavior: {blink: {rate_per_min: "${rate}", duration_s: "${blink_s}"}}
   segments:
     - {target: road_ahead, duration: 20.0}

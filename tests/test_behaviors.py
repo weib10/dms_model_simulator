@@ -86,3 +86,36 @@ def test_core_entries_produce_the_expected_truth(entry):
                     assert worst <= lim + 1e-6, f"{entry['id']} {params}: {k} reaches {worst:.2f} s > {lim} s"
     missing = [lab for lab, ok in fired.items() if not ok]
     assert not missing, f"{entry['id']}: no parameter set sets {missing}"
+
+
+# ---- every NEG entry stays on the normal side of the violation thresholds, at its hardest level -------------
+NEG_LIMITS = {"off_road_s": 3.0, "closed_s": 1.0}      # Euro NCAP long distraction 3 s; microsleep ~1 s
+VATS_WINDOW_S, VATS_LIMIT_S = 30.0, 10.0                # accumulated off road within any 30 s window
+UNDECIDED = {   # known conflicts waiting for a decision (catalog/behaviors.yaml notes); strict: fails once resolved
+    "NEG-SMK-CIG-IN-LAP": "N23: the truth counts a cigarette in the hand as smoking (smoking_cigarette_states has hand)",
+}
+NEG_ENTRIES = [pytest.param(e, id=e["id"], marks=[pytest.mark.xfail(reason=UNDECIDED[e["id"]], strict=True)]
+                            if e["id"] in UNDECIDED else []) for e in ENTRIES if C.category(e) == "NEG"]
+
+
+@pytest.mark.parametrize("entry", NEG_ENTRIES)
+def test_neg_entries_stay_below_violation_thresholds_at_large(entry):
+    listed = [BEHAVIORS[b] for b in entry["behaviors"]]
+    allowed = {b["expect"]["label"] for b in listed if b["kind"] == "violation" and b.get("expect")}
+    fps = float(entry.get("fps", C.DEFAULT_FPS))
+    win = int(round(VATS_WINDOW_S * fps))
+    for params in _param_sets(entry, "large"):
+        ev = _labels(entry, params)
+        for k, lim in NEG_LIMITS.items():
+            if MAX_S_LABEL[k] in allowed:
+                continue
+            worst = max(f[k] for f in ev)
+            assert worst < lim, f"{entry['id']} {params}: {k} reaches {worst:.2f} s (threshold {lim} s)"
+        if "eyes_off_road" not in allowed:
+            off = np.array([f["eyes_off_road"] for f in ev], float)
+            acc = np.convolve(off, np.ones(win), "valid").max() / fps if len(off) >= win else off.sum() / fps
+            assert acc < VATS_LIMIT_S, f"{entry['id']} {params}: {acc:.2f} s off road within {VATS_WINDOW_S:g} s"
+        for lab in ("phone_use", "smoking", "seatbelt_off"):
+            if lab not in allowed:
+                hit = [i for i, f in enumerate(ev) if f[lab]]
+                assert not hit, f"{entry['id']} {params}: {lab} set at frame {hit[0]}"

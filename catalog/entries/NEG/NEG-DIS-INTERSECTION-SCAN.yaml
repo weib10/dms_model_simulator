@@ -1,16 +1,20 @@
 id: NEG-DIS-INTERSECTION-SCAN
-title: "路口左右張望：看左前、右前路面各 2.5 s"
-summary: "視線還在路面上（road_left / road_right），不是分心，但頭轉的角度不小。"
+title: "路口左右張望：看左前、右前路面各 1.0 / 2.0 / 2.8 s"
+summary: "對照門檻：長分心 3 s（只看頭姿或臉框的後處理會把轉頭當分心）。視線還在路面上（road_left / road_right，約 ±22°），
+  真值不是分心，但頭轉的角度不小。左、右、左各看一次，每次 small 1.0 s、medium 2.0 s、large 2.8 s（頭轉著接近 3 s 但不超過，
+  只看頭轉角度時最像長分心；真值一直在路上），中間回前方 1 s。"
 status: ready
 source: written
 tags: [head_turn, intersection]
 behaviors: [N05]
+params:
+  dwell_s: {levels: {small: 1.0, medium: 2.0, large: 2.8}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_left,  duration: 2.5}
+    - {target: road_left,  duration: "${dwell_s}"}
     - {target: road_ahead, duration: 1.0}
-    - {target: road_right, duration: 2.5}
+    - {target: road_right, duration: "${dwell_s}"}
     - {target: road_ahead, duration: 1.0}
-    - {target: road_left,  duration: 2.5}
+    - {target: road_left,  duration: "${dwell_s}"}
     - {target: road_ahead, duration: 3.0}

@@ -1,12 +1,13 @@
 id: NEG-DRW-SQUINT
-title: "瞇眼（陽光或習慣）：開合度 0.3–0.4，持續 15 s"
-summary: "開合度在模擬器的閉眼門檻（0.2）之上，眼睛是睜開的，只是比較小。"
+title: "瞇眼（陽光或習慣）：開合度 0.5 / 0.35 / 0.25，持續 15 s"
+summary: "對照門檻：模擬器的閉眼門檻（開合度 < 0.2）。眼睛是睜開的，只是比較小：開合度 small 0.5、medium 0.35、large 0.25
+  （貼著 0.2 但在上面），持續 15 s，期間照常眨眼。"
 status: ready
 source: written
 tags: [squint]
 behaviors: [N11]
 params:
-  openness: {grid: [0.3, 0.4]}
+  openness: {levels: {small: 0.5, medium: 0.35, large: 0.25}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}

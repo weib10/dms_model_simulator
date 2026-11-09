@@ -1,12 +1,14 @@
 id: NEG-DIS-SHOULDER-CHECK
-title: "變換車道前快速轉頭看盲點 0.8 s，重複 3 次"
-summary: "大角度但很短的轉頭，是正常駕駛動作。眼睛跟著頭看過去（head_±60 目標），真值會短暫離開路面。"
+title: "變換車道前快速轉頭看盲點 0.5 / 0.8 / 2.0 s，重複 3 次"
+summary: "對照門檻：長分心 3 s、VATS（30 s 內累計 10 s）。大角度（±60°）但很短的轉頭，是正常駕駛動作。
+  眼睛跟著頭看過去（head_±60 目標），真值會短暫離開路面。每次 small 0.5 s、medium 0.8 s、large 2.0 s（猶豫著併線，
+  仍在 3 s 以下），共 3 次（累計 1.5 / 2.4 / 6 s），中間回前方 3 s。"
 status: ready
 source: written
 tags: [head_turn, shoulder_check]
 behaviors: [N04]
 params:
-  look_s: {grid: [0.6, 0.8, 1.0]}
+  look_s: {levels: {small: 0.5, medium: 0.8, large: 2.0}}
 template:
   behavior: {transition_head_s: 0.15}
   cabin:

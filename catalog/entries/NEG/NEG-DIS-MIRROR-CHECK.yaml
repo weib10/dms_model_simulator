@@ -1,8 +1,27 @@
 id: NEG-DIS-MIRROR-CHECK
-title: "正常開車，短暫看左右鏡、後照鏡、儀表（每次 0.6–0.9 s）"
-summary: "現有劇本 scenarios/mirror_check.yaml 原封包。看鏡子是正常駕駛，但會有短暫轉頭。"
+title: "正常開車，短暫看左右鏡、後照鏡、儀表（看鏡子每次 0.5 / 0.7–0.9 / 1.4 s）"
+summary: "對照門檻：看鏡子的正常上限 1.5 s（N02）、短瞥上限 2 s（N03）、長分心 3 s。由 scenarios/mirror_check.yaml 改寫成模板，
+  medium 就是原劇本（左鏡 0.8、後照鏡 0.7、儀表 0.6、右鏡 0.9 s）。看鏡子每次 small 0.5 s、large 1.4 s，
+  看儀表 small 0.4 s、large 1.8 s；中間回前方 small 2.0 s、medium 1.5 s、large 1.0 s（large 離開路面累計 6 s，在 9 s 內）。
+  看鏡子是正常駕駛，但會有短暫轉頭。"
 status: ready
 source: written
 tags: [mirror, glance, existing]
 behaviors: [N02, N03]
-from_scenario: scenarios/mirror_check.yaml
+params:
+  left_s: {levels: {small: 0.5, medium: 0.8, large: 1.4}}
+  rear_s: {levels: {small: 0.5, medium: 0.7, large: 1.4}}
+  cluster_s: {levels: {small: 0.4, medium: 0.6, large: 1.8}}
+  right_s: {levels: {small: 0.5, medium: 0.9, large: 1.4}}
+  back_s: {levels: {small: 2.0, medium: 1.5, large: 1.0}}
+template:
+  segments:
+    - {target: road_ahead,      duration: 2.0}
+    - {target: left_mirror,     duration: "${left_s}"}
+    - {target: road_ahead,      duration: "${back_s}"}
+    - {target: rearview_mirror, duration: "${rear_s}"}
+    - {target: road_ahead,      duration: "${back_s}"}
+    - {target: cluster,         duration: "${cluster_s}"}
+    - {target: road_ahead,      duration: "${back_s}"}
+    - {target: right_mirror,    duration: "${right_s}"}
+    - {target: road_ahead,      duration: 2.0}

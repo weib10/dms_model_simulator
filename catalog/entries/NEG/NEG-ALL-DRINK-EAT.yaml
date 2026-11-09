@@ -1,22 +1,31 @@
 id: NEG-ALL-DRINK-EAT
-title: "喝水、吃東西（手拿東西到嘴邊）"
-summary: "杯子、瓶子貼在嘴上（held，手在 at_mouth），仰頭 10–15° 喝；吃東西 = 手到嘴、沒拿東西。杯子、瓶子只遮住嘴和下半臉（從方向盤柱的低角度可能擋到一隻眼）。ctx_fp 讓模擬模型在手到嘴邊時報假香菸框、瓶子貼嘴時報假手機框（configs/emulator.yaml contextual_false_positives）。"
+title: "喝水、吃東西（手拿東西到嘴邊）：每口喝 1.5 / 3 / 5 s，吃東西 1 / 2 / 4 口"
+summary: "對照：打哈欠（嘴張大 3–6 s，喝東西時嘴被杯子擋住）、抽菸（手反覆到嘴邊）、講電話（瓶子貼臉）。
+  杯子、瓶子貼在嘴上（held，手在 at_mouth）仰頭喝，每口 small 1.5 s、medium 3 s、large 5 s，仰頭杯子 5 / 10 / 15°、瓶子 10 / 15 / 20°；
+  吃東西 = 手到嘴、沒拿東西，small 1 口 1 s、medium 2 口 1.5 s、large 4 口 2 s（像抽菸的節奏），每口之間 2 s。
+  杯子、瓶子只遮住嘴和下半臉（從方向盤柱的低角度可能擋到一隻眼）。ctx_fp 讓模擬模型在手到嘴邊時報假香菸框、
+  瓶子貼嘴時報假手機框（configs/emulator.yaml contextual_false_positives）。"
 status: ready
 source: written
 tags: [hand_near_face, drinking, eating, occlusion]
 behaviors: [N19]
 params:
-  drink_s: {grid: [2.0, 4.0]}
+  drink_s: {levels: {small: 1.5, medium: 3.0, large: 5.0}}
+  cup_pitch: {levels: {small: 5, medium: 10, large: 15}}
+  bottle_pitch: {levels: {small: 10, medium: 15, large: 20}}
+  bite_s: {levels: {small: 1.0, medium: 1.5, large: 2.0}}
+  bites: {levels: {small: 1, medium: 2, large: 4}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: cup, head_pose: [0, 10, 0]}
+    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: cup, head_pose: [0, "${cup_pitch}", 0]}
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: bottle, head_pose: [0, 15, 0]}
+    - {target: road_ahead, duration: "${drink_s}", hand: at_mouth, held: bottle, head_pose: [0, "${bottle_pitch}", 0]}
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: 1.5, hand: at_mouth}
-    - {target: road_ahead, duration: 2.0}
-    - {target: road_ahead, duration: 1.5, hand: at_mouth}
-    - {target: road_ahead, duration: 3.0}
+    - repeat: "${bites}"
+      segments:
+        - {target: road_ahead, duration: "${bite_s}", hand: at_mouth}
+        - {target: road_ahead, duration: 2.0}
+    - {target: road_ahead, duration: 1.0}
 variation:
   profiles: [nominal, ctx_fp]

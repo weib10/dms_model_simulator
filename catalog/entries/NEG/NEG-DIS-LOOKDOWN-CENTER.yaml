@@ -1,24 +1,27 @@
 id: NEG-DIS-LOOKDOWN-CENTER
-title: "看中控或儀表 1.0–1.5 s，連續 6 次"
-summary: "每次都很短的低頭。低頭時臉框的水平變化很小，從框上不太看得出來。"
+title: "看中控（或排檔）與儀表，每次 0.8 / 1.2 / 1.8 s"
+summary: "對照門檻：短瞥上限 2 s（N03）、長分心 3 s、VATS（30 s 內累計 10 s）。一輪 = 低頭看中控或排檔一次、看儀表一次，
+  每次之後回前方 2 s。每次 small 0.8 s、medium 1.2 s、large 1.8 s；small、medium 3 輪（累計 4.8 / 7.2 s），
+  large 2 輪（累計 7.2 s，避開 VATS）。低頭目標兩種各一列：中控螢幕（center_display）、排檔桿（gear_shift，兩座之間偏低）。
+  低頭時臉框的水平變化很小，從框上不太看得出來。"
 status: ready
 source: written
 tags: [glance, center_display, blind_spot]
 behaviors: [N03]
 params:
-  glance_s: {grid: [1.0, 1.5]}
+  glance_s: {levels: {small: 0.8, medium: 1.2, large: 1.8}}
+  rounds: {levels: {small: 3, medium: 3, large: 2}}
+  low_target: {grid: [center_display, gear_shift]}
 template:
+  cabin:
+    targets:
+      gear_shift: [0.30, -0.30, -0.55]   # 排檔桿：兩座之間、偏低
   segments:
-    - {target: road_ahead,     duration: 3.0}
-    - {target: center_display, duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 2.0}
-    - {target: cluster,        duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 2.0}
-    - {target: center_display, duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 2.0}
-    - {target: cluster,        duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 2.0}
-    - {target: center_display, duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 2.0}
-    - {target: cluster,        duration: "${glance_s}"}
-    - {target: road_ahead,     duration: 3.0}
+    - {target: road_ahead, duration: 3.0}
+    - repeat: "${rounds}"
+      segments:
+        - {target: "${low_target}", duration: "${glance_s}"}
+        - {target: road_ahead,      duration: 2.0}
+        - {target: cluster,         duration: "${glance_s}"}
+        - {target: road_ahead,      duration: 2.0}
+    - {target: road_ahead, duration: 1.0}
