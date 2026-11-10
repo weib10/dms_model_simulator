@@ -1,4 +1,5 @@
 id: POS-DRW-NCAP-SLEEP
+number: 26
 title: "Euro NCAP 睡著（sleep）：閉眼 8 / 6 / 3.5 s、頭花 1.2 s 慢慢往前點"
 summary: "Euro NCAP 把閉眼 3 s 以上算睡著（1–3 s 是微睡，見 POS-DRW-MICROSLEEP）。眼睛一開始就閉上，頭在 1.2 s 內慢慢垂下（醒來抬頭也是 1.2 s）。
   對照門檻：連續閉眼 3 s。medium 閉 6 s、頭往前點 20°；small 8 s、25°；large 3.5 s、10°（剛過睡著門檻）。"

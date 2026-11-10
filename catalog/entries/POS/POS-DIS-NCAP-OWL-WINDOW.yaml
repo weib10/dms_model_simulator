@@ -1,4 +1,5 @@
 id: POS-DIS-NCAP-OWL-WINDOW
+number: 5
 title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗（左約 73°）5 / 4 / 3.5 s，頭轉 30°–75°"
 summary: "視線目標 driver_window 在左約 73°（看左側鏡是正常行為 N02，見 NEG-DIS-MIRROR-CHECK）。角度掃描的是頭轉多少、其餘由眼睛補：30° 時眼睛補約 43°，75° 頭轉滿、眼睛幾乎不動；轉頭 0.35 s。
   dash_right 在駕駛右前方，往左轉是背向相機：30° 起左眼框就看不到，75° 連嘴框也沒了。steering_column 在正前方當對照：60° 起左眼框看不到。

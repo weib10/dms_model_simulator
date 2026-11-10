@@ -1,4 +1,5 @@
 id: CLR-PHN-CALL-REARM
+number: 61
 title: "講電話 5 / 4 / 2 s、放下 8 / 6 / 3 s、再講一次"
 summary: "兩通明確的電話，中間放下（和 BND-PHN-CALL-GAP 的短間隔不同）。看放下後有沒有解除、第二通有沒有再觸發。
   對照：講電話的真值沒有時長門檻。每通 small 5 s、medium 4 s、large 2 s；中間放下 small 8 s、medium 6 s、large 3 s（最短，但仍明確放下）。"

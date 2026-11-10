@@ -1,4 +1,5 @@
 id: NEG-SBT-HAND-ACROSS-CHEST
+number: 74
 title: "安全帶有繫，右手跨過胸口（抓左肩、整理衣服）擋住一段安全帶（每次 1.5 / 4 / 8 s，2 / 2 / 3 次）"
 summary: "對照：沒繫安全帶（V11）。安全帶其實一直繫著，但右手跨到左胸、擋在肩帶前面（手部狀態 chest_left）。
   實測：dash_right 擋住約 1/3 的肩帶、模型偵測到安全帶的幀從約 95% 降到約 60%；overhead_console 擋住約 4 成；steering_column 從下往上看擋不到（對照用）。

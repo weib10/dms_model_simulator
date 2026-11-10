@@ -1,4 +1,5 @@
 id: BND-PHN-CALL-DURATION
+number: 59
 title: "講電話的時間從 0.25 s 掃到 6 s"
 summary: "手機貼耳（兩台相機都看得到），通話時間由短到長。看講多久開始被當成講手機。"
 status: ready

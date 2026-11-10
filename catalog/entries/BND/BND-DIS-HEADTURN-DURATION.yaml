@@ -1,4 +1,5 @@
 id: BND-DIS-HEADTURN-DURATION
+number: 20
 title: "頭向右轉 60°，持續時間從 0.5 s 掃到 8 s（3 s 門檻兩側加密）"
 summary: "前 10 s 看前方，接著頭向右轉 60° 一段時間，再回正 3 s。頭轉入轉出各 0.1 s，讓轉頭時間接近段長。只用 dash_right：從這台相機看右轉時臉的變化最明顯；角度的影響看 BND-DIS-HEADTURN-ANGLE。
   對照門檻：長分心，連續離開路面 3 s；2.5、2.95、3.0、3.05、3.5 s 夾住門檻（前後各差一幀）。同一個劇本的 15 fps 版是 ROB-DIS-LOW-FPS。"

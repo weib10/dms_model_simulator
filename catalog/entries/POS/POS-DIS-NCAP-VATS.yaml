@@ -1,4 +1,5 @@
 id: POS-DIS-NCAP-VATS
+number: 6
 title: "Euro NCAP 短分心（VATS）：反覆看中控 2 / 1.5 / 1 s、回路面 1 / 1 / 1.5 s，任一 30 s 內累計離開路面 20 / 18 / 12 s"
 summary: "VATS（visual attention time sharing）是每次都很短、但 30 s 內累計離開路面超過 10 s 的反覆瞥視。看中控（右下約 33°），頭照預設增益轉約 21°、低約 10°，轉頭 0.35 s；
   回路面至少 1 s，頭來得及回正、視線真的回到路上。

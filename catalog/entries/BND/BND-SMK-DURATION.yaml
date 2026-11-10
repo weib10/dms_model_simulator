@@ -1,4 +1,5 @@
 id: BND-SMK-DURATION
+number: 70
 title: "菸含在嘴上（手在方向盤）的時間從 0.25 s 掃到 5 s"
 summary: "嘴與菸都沒被遮，只改變含菸的時間長短。"
 status: ready

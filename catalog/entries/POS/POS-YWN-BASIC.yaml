@@ -1,4 +1,5 @@
 id: POS-YWN-BASIC
+number: 43
 title: "基本款：打一次哈欠（6 / 5 / 3.5 s，嘴最大 0.95 / 0.85 / 0.7）"
 summary: "哈欠的基本款：眼睛正常。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照：哈欠一般 3–10 s（文獻 5.9 ± 1.9 s，Provine 1986）；模型的嘴開合判斷門檻約 0.55。

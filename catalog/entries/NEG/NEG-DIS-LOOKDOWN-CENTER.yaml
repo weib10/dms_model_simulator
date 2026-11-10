@@ -1,4 +1,5 @@
 id: NEG-DIS-LOOKDOWN-CENTER
+number: 13
 title: "看中控（或排檔）與儀表，每次 0.8 / 1.2 / 1.8 s"
 summary: "對照門檻：短瞥上限 2 s（N03）、長分心 3 s、VATS（30 s 內累計 10 s）。一輪 = 低頭看中控或排檔一次、看儀表一次，
   每次之後回前方 2 s。每次 small 0.8 s、medium 1.2 s、large 1.8 s；small、medium 3 輪（累計 4.8 / 7.2 s），

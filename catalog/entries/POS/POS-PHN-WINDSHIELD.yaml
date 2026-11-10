@@ -1,4 +1,5 @@
 id: POS-PHN-WINDSHIELD
+number: 55
 title: "手機舉在擋風玻璃前（Euro NCAP advanced）"
 summary: "dash_right 在儀表板（x = 0.43）往後看，比它更前面的東西在鏡頭後方，這台相機拍不到；要換相機位置才寫得出來。"
 status: planned

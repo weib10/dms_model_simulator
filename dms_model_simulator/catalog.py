@@ -46,7 +46,7 @@ SEGMENT_KEYS = {"target", "duration", "head_pose", "eye_openness", "closure", "y
 DEFAULT_VARIATION = {"cameras": ["dash_right", "steering_column"], "variants": 0, "nominal": True, "seeds": [0],
                      "emulator_seeds": [0, 1, 2], "profiles": ["nominal"]}
 DEFAULT_FPS = 20.0          # model output rate
-ENTRY_KEYS = {"id", "title", "summary", "status", "needs", "source", "tags", "behaviors", "params", "template",
+ENTRY_KEYS = {"id", "number", "title", "summary", "status", "needs", "source", "tags", "behaviors", "params", "template",
               "from_scenario", "generator", "variation", "fps", "_path"}
 VAR_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 
@@ -146,6 +146,10 @@ def load_entries(root=None) -> list[dict]:
     dup = sorted({i for i in ids if ids.count(i) > 1})
     if dup:
         raise CatalogError(f"duplicate entry ids: {dup}")
+    nums = [e.get("number") for e in out if e.get("number") is not None]   # a missing number is validate's job
+    dup = sorted({n for n in nums if nums.count(n) > 1}, key=str)
+    if dup:
+        raise CatalogError(f"duplicate entry numbers: {dup}")
     return sorted(out, key=lambda e: str(e.get("id")))
 
 
@@ -155,6 +159,13 @@ def category(entry: dict) -> str:
 
 def family(entry: dict) -> str:
     return str(entry["id"]).split("-")[1]
+
+
+def entry_no(entry: dict) -> str:
+    """The entry's fixed number as shown to people: `#045` ("" when it has none, e.g. an entry known only from a
+    manifest). The number never changes and is never reused; a new entry takes the largest + 1."""
+    n = entry.get("number")
+    return f"#{n:03d}" if isinstance(n, int) and not isinstance(n, bool) else ""
 
 
 def select(entries: list[dict], selectors: list[str] | None = None, status: str | None = None,
@@ -325,7 +336,11 @@ def validate(entry: dict, profiles: dict, cfgs: dict | None = None) -> list[str]
         for k in ("title", "status"):
             if k not in entry:
                 errs.append(f"missing {k}")
-        errs += [f"unknown key {k!r}" for k in sorted(set(entry) - ENTRY_KEYS)]
+        if "number" not in entry:
+            errs.append("missing number (the entry's fixed number; a new entry takes the largest + 1)")
+        elif not isinstance(entry["number"], int) or isinstance(entry["number"], bool) or entry["number"] < 1:
+            errs.append(f"number must be a whole number >= 1, got {entry['number']!r}")
+        errs += [f"unknown key {k!r}" for k in sorted(set(entry) - ENTRY_KEYS, key=str)]
         if entry.get("status", "ready") not in STATUSES:
             errs.append(f"status must be one of {STATUSES}")
         beh_ids = entry.get("behaviors")
@@ -591,7 +606,8 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
 def index_markdown(entries: list[dict]) -> str:
     """catalog/INDEX.md: entries grouped by category, then family."""
     L = ["# 情境目錄索引", "",
-         "由 `dms-sim catalog index` 產生，不要手改。id = `<類別>-<行為家族>-<主題>`，說明見 [README.md](README.md)。", ""]
+         "由 `dms-sim catalog index` 產生，不要手改。id = `<類別>-<行為家族>-<主題>`，說明見 [README.md](README.md)。"
+         "編號是每條固定的號碼（條目的 `number`），跟總覽頁一致。", ""]
     ready = sum(e.get("status") == "ready" for e in entries)
     L += [f"共 {len(entries)} 條：ready {ready}、planned {len(entries) - ready}。", ""]
     L += ["| 類別 | 內容 | 條數 |", "|---|---|---|"]
@@ -614,14 +630,14 @@ def index_markdown(entries: list[dict]) -> str:
         if not es:
             L.append("（還沒有條目）")
             continue
-        L += ["| id | 情境 | 行為 | 標籤 | 難度 | 狀態 |", "|---|---|---|---|---|---|"]
+        L += ["| 編號 | id | 情境 | 行為 | 標籤 | 難度 | 狀態 |", "|---|---|---|---|---|---|---|"]
         for f in FAMILIES:
             for e in (x for x in es if family(x) == f):
                 st = e.get("status", "ready")
                 if st == "planned":
                     st = "planned：" + "、".join(map(str, e.get("needs") or []))
                 lv = "三段" if has_levels(e) else ""
-                L.append(f"| `{e['id']}` | {e.get('title', '')} | {', '.join(e.get('behaviors') or [])} | "
+                L.append(f"| {entry_no(e)} | `{e['id']}` | {e.get('title', '')} | {', '.join(e.get('behaviors') or [])} | "
                          f"{', '.join(e.get('tags') or [])} | {lv} | {st} |")
     return "\n".join(L) + "\n"
 

@@ -1,4 +1,5 @@
 id: CLR-SMK-REARM
+number: 71
 title: "叼菸 5 / 4 / 2 s、拿掉 8 / 6 / 3 s、再叼一次"
 summary: "手在方向盤，菸含在嘴上。看菸拿掉後有沒有解除、第二次有沒有再觸發。
   對照：抽菸的真值沒有時長門檻。每次叼菸 small 5 s、medium 4 s、large 2 s；中間拿掉 small 8 s、medium 6 s、large 3 s（最短，但仍明確拿掉）。"

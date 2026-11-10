@@ -11,7 +11,7 @@ PR = {"nominal": {}}
 
 
 def _entry(**kw):
-    e = {"id": "BND-PHN-TEST", "title": "t", "summary": "call of call_s seconds", "status": "ready", "behaviors": ["V08"],
+    e = {"id": "BND-PHN-TEST", "number": 1, "title": "t", "summary": "call of call_s seconds", "status": "ready", "behaviors": ["V08"],
          "params": {"call_s": {"grid": [1.0, 2.0, 3.0]}},
          "template": {"segments": [{"target": "road_ahead", "duration": 2.0},
                                    {"target": "road_ahead", "duration": "${call_s}", "hand": "call", "phone": "call"},
@@ -37,6 +37,8 @@ def test_repo_entries_valid():
     assert not {k: v for k, v in bad.items() if v}
     assert len(entries) >= 30
     assert all(e.get("title") for e in entries)
+    nums = [e.get("number") for e in entries]
+    assert all(isinstance(n, int) and n >= 1 for n in nums) and len(set(nums)) == len(nums)
 
 
 def test_repo_index_current():
@@ -74,6 +76,25 @@ def test_validate_catches_mistakes():
     assert any("unknown camera" in x for x in C.validate(_entry(variation={"cameras": ["roof"]}), PR))
     assert any("exactly one of template" in x for x in
                C.validate(_entry(from_scenario="scenarios/drowsy.yaml"), PR))
+
+
+def test_validate_entry_number():
+    assert C.validate(_entry(number=88), PR) == []
+    e = _entry()
+    del e["number"]
+    assert any("missing number" in x for x in C.validate(e, PR))
+    for bad in (0, -3, 1.0, "45", True, None):
+        assert any("number must be a whole number" in x for x in C.validate(_entry(number=bad), PR)), bad
+
+
+def test_load_entries_reads_numbers_and_rejects_duplicates(tmp_path):
+    (tmp_path / "BND").mkdir()
+    for n, num in (("a", 7), ("b", 8)):
+        (tmp_path / "BND" / f"{n}.yaml").write_text(f"id: BND-PHN-{n.upper()}\nnumber: {num}\ntitle: t\n", encoding="utf-8")
+    assert [e["number"] for e in C.load_entries(tmp_path)] == [7, 8]
+    (tmp_path / "BND" / "b.yaml").write_text("id: BND-PHN-B\nnumber: 7\ntitle: t\n", encoding="utf-8")
+    with pytest.raises(C.CatalogError, match="duplicate entry numbers"):
+        C.load_entries(tmp_path)
 
 
 def test_validate_segments():
@@ -192,10 +213,11 @@ def test_load_entries_rejects_duplicate_ids(tmp_path):
 
 
 def test_index_markdown_lists_entries():
-    es = [_entry(tags=["phone"]), _entry(id="POS-DRW-A", title="閉眼", status="planned", needs=["睡姿"])]
+    es = [_entry(tags=["phone"]), _entry(id="POS-DRW-A", number=45, title="閉眼", status="planned", needs=["睡姿"])]
     md = C.index_markdown(es)
     assert "共 2 條：ready 1、planned 1。" in md
-    assert "| `BND-PHN-TEST` | t | V08 | phone |  | ready |" in md and "planned：睡姿" in md
+    assert "| #001 | `BND-PHN-TEST` | t | V08 | phone |  | ready |" in md and "| #045 | `POS-DRW-A` | 閉眼 |" in md
+    assert "planned：睡姿" in md
 
 
 # ---- profiles ------------------------------------------------------------------------------------------
@@ -350,8 +372,8 @@ def test_run_pictures_are_optional_and_change_no_other_file(tmp_path):
 
 def test_gallery_lists_the_whole_catalog_with_the_pictures_of_the_run(tmp_path):
     from dms_model_simulator import gallery as G
-    ran, other = _short(), _short(id="POS-PHN-TEST", title="not <run>", tags=["x"])
-    planned = _short(id="NEG-DIS-TEST", status="planned", needs=["a thing"])
+    ran, other = _short(), _short(id="POS-PHN-TEST", number=2, title="not <run>", tags=["x"])
+    planned = _short(id="NEG-DIS-TEST", number=3, status="planned", needs=["a thing"])
     man = C.expand([ran], tmp_path, "boundary", profiles=PR)
     (rid,) = [r["row_id"] for r in man["rows"]]
     page = G.gallery_html(tmp_path, entries=[ran, other, planned])           # before `catalog run`
@@ -371,12 +393,57 @@ def test_gallery_lists_the_whole_catalog_with_the_pictures_of_the_run(tmp_path):
     assert "not &lt;run&gt;" in page and "這次的 run 沒有選這一條" in page and "缺 a thing" in page
     assert "call_s=0.5" in page and "看 road_ahead" in page                   # the row's parameters and script
     # the map: behaviour family x category, a count per cell; one list per family; reading order = family, category
-    assert '<td class="n"><a href="#g/PHN/BND">1</a></td>' in page and '<a href="#g/DIS/NEG">1</a>' in page
+    assert '<td class="n"><a href="#g/PHN/BND"><b>1</b><span class="rg">#1</span></a></td>' in page
+    assert '<a href="#g/DIS/NEG"><b>1</b><span class="rg">#3</span></a>' in page
     assert 'id="g-PHN"' in page and 'id="g-PHN-POS"' in page and 'id="g-DIS-NEG"' in page
     assert [page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST")] == sorted(
         page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST"))
     assert "目錄有 3 條情境" in page and "這次的 run 跑了 1 條、1 列，1 列有圖" in page
     assert page.count('class="view') == 1 + 2 + 3                             # home, two families, three entries
+
+
+def test_gallery_numbers_position_star_and_sources(tmp_path):
+    from dms_model_simulator import gallery as G
+    assert G._ranges([48, 45, 46, 47]) == "#45–48" and G._ranges([45, 46, 47, 90]) == "#45–47, 90"
+    assert G._ranges([3]) == "#3" and G._ranges([1, 3, 4]) == "#1, 3–4" and G._ranges([]) == ""
+    es = [_short(id="POS-PHN-A", number=45), _short(id="POS-PHN-B", number=46, behaviors=["N20"]),
+          _short(id="BND-PHN-C", number=90, source="generated", behaviors=["N20"]),
+          _short(id="NEG-DIS-D", number=3, behaviors=["N20"])]
+    C.expand(es[:1], tmp_path, "boundary", profiles=PR)
+    page = G.gallery_html(tmp_path, entries=es)
+    sec = lambda i: page[page.index(f'id="{i}"'):].split("</section>")[0]
+    # map: codes next to the names, numbers under the counts (contiguous ones merged)
+    assert '<span class="code">POS</span></th>' in page and '手機</a><span class="code">PHN</span></th>' in page
+    assert '<a href="#g/PHN/POS"><b>2</b><span class="rg">#45–46</span></a>' in page
+    assert '<a href="#g/PHN"><b>3</b><span class="rg">#45–46, 90</span></a>' in page
+    # family list: the number first; the star only on entries whose main behaviour is must-test
+    assert '<a href="#e/POS-PHN-A" data-e="POS-PHN-A"><span class="no">#045</span><span class="t">★ t</span>' in sec("g-PHN")
+    assert '<span class="no">#046</span><span class="t">t</span>' in sec("g-PHN")
+    n_core = sum(C.is_core(b) for b in C.load_behaviors().values())
+    star = f"<code>must_test: true</code> 的 {n_core} 個行為。這是本專案自己訂的清單，不是法規要求。"
+    assert star in sec("g-PHN") and "★" not in sec("g-DIS")        # the note only where a star is shown
+    assert star in sec("home") and "目錄裡 1 條標了 ★" in sec("home")
+    # entry: number by the title, place in the family, previous / next with numbers, source in words
+    a, c = sec("e-POS-PHN-A"), sec("e-BND-PHN-C")
+    assert '<h1><span class="no">#045</span> t</h1>' in a and "› #045，這一家族第 1／3 條" in a
+    assert "› #090，這一家族第 3／3 條" in c and "來源：隨機產生" in c and "來源：手寫劇本" in a
+    assert '<a class="prev" href="#e/NEG-DIS-D">← #003 t</a>' in a
+    assert '<a class="next" href="#e/POS-PHN-B" style="text-align:right">#046 t →</a>' in a
+    # one family column per family (not one per entry); the bar marks families for the script
+    assert page.count('<nav class="fam"') == 2 and 'id="s-PHN"' in page and 'id="s-DIS"' in page
+    assert all(page.count(f'data-e="{e["id"]}"') == 2 for e in es)    # its list line + its family column
+    assert 'data-f=""' in page and '<a href="#g/PHN" data-f="PHN">' in page
+    # where the cases come from: counted from the catalog
+    assert ("手寫劇本（人照行為逐段寫的劇本）3 條、隨機產生（隨機產生器排出的長段駕駛）1 條、"
+            "真錄影整理（從真實錄影整理出的劇本）0 條") in sec("home")
+    assert "目前沒有逐條對應到法規或標準條文" in sec("home") and "每條的門檻與時長" in sec("home")
+    # search index: [id, label, text, number]
+    index = json.loads(page.split("const INDEX=")[1].split(";\ndocument")[0])
+    assert ["POS-PHN-A", "#045 t"] == index[1][:2] and index[1][3] == 45 and index[0][3] == 3
+    # an entry known only from the manifest has no number: listed without one
+    page = G.gallery_html(tmp_path, entries=es[1:])
+    orphan = page[page.index('id="e-POS-PHN-A"'):].split("</section>")[0]
+    assert "#045" not in orphan and "這一家族第 2／3 條" in orphan and '<span class="rg">#46, 90</span>' in page
 
 
 def test_partial_run_lists_rows_of_the_current_manifest(tmp_path):
@@ -417,7 +484,7 @@ def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(C, "load_entries", lambda root=None: [_short()])
     capsys.readouterr()
     cli.main(["catalog", "list"])
-    assert "BND-PHN-TEST" in capsys.readouterr().out
+    assert "#001  BND-PHN-TEST" in capsys.readouterr().out
     cli.main(["catalog", "validate", "BND"])
     assert "BND-PHN-TEST: ok" in capsys.readouterr().out
     cli.main(["catalog", "expand", "BND", "--out", str(tmp_path), "--profile", "nominal"])
@@ -520,8 +587,9 @@ def test_expand_rows_carry_level_and_card_shows_it(tmp_path):
 
 
 def test_index_marks_entries_with_levels():
-    md = C.index_markdown([_lv_entry(id="NEG-PHN-LV"), _entry()])
-    assert "| `NEG-PHN-LV` | t | V08 |  | 三段 | ready |" in md and "| `BND-PHN-TEST` | t | V08 |  |  | ready |" in md
+    md = C.index_markdown([_lv_entry(id="NEG-PHN-LV", number=2), _entry()])
+    assert "| #002 | `NEG-PHN-LV` | t | V08 |  | 三段 | ready |" in md
+    assert "| #001 | `BND-PHN-TEST` | t | V08 |  |  | ready |" in md
 
 
 def test_cli_param_overrides(tmp_path, monkeypatch, capsys):

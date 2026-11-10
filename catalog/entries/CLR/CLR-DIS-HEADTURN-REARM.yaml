@@ -1,4 +1,5 @@
 id: CLR-DIS-HEADTURN-REARM
+number: 21
 title: "頭向右轉 8 / 6 / 3.5 s、回正 8 / 4 / 2 s、再轉一次"
 summary: "兩次明確的轉頭，中間回正。看第一次回正後有沒有解除、第二次轉頭有沒有再觸發。只用 dash_right（理由見 BND-DIS-HEADTURN-DURATION）。
   對照門檻：長分心，連續離開路面 3 s。每次轉頭 small 8 s、medium 6 s、large 3.5 s（剛過門檻）；中間回正 small 8 s、medium 4 s、

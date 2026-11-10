@@ -1,4 +1,5 @@
 id: NEG-DIS-PASSENGER-CHAT
+number: 15
 title: "跟乘客聊天：邊講話邊反覆看乘客一眼（每次 0.6 / 1.2 / 1.8 s，3 / 5 / 6 次）"
 summary: "對照門檻：VATS（30 s 內累計 10 s）與單次長分心 3 s。每次看乘客 small 0.6 s、medium 1.2 s、large 1.8 s，
   共 3 / 5 / 6 次，每次之間回前方 4.5 s：累計 1.8 / 6 / 10.8 s，任一 30 s 內最多 1.8 / 6 / 9 s（large 貼著 10 s）。

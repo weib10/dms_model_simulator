@@ -277,9 +277,13 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   `preview.gif` (the camera view, truth boxes green, model boxes red). They are drawn from the row's own
   simulation, change no other file and are left out of `catalog verify`. A GIF of a 5-minute row is about 20 MB.
 - **Overview page** (`dms-sim catalog gallery RUN`): `RUN/index.html`, to browse a run one thing at a time: a map
-  (behaviour family x category, a count per cell), the list of one family, then one entry with one of its rows
-  (script, camera view, timeline) and previous / next. The page text is in Chinese, like the catalog.
-  `catalog/README.md` has the commands that build it for the whole catalog.
+  (behaviour family x category, a count and the entry numbers per cell), the list of one family, then one entry with
+  one of its rows (script, camera view, timeline) and previous / next. Every entry has a fixed number (`number: 45` in
+  its YAML, shown as `#045` on the page, in `catalog/INDEX.md` and in `catalog list`; never changed or reused, a new
+  entry takes the largest + 1), and the search box finds it by number. The bar on top stays on screen and marks the
+  current family; on a wide screen an entry page also lists its family on the left. The home page says what ★
+  means and where the entries come from (their `source`, counted from the catalog). The page text is in Chinese,
+  like the catalog. `catalog/README.md` has the commands that build it for the whole catalog.
 
 ## Reproducibility
 

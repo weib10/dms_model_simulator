@@ -1,4 +1,5 @@
 id: POS-YWN-COVERED
+number: 44
 title: "用手遮住嘴打哈欠（5 / 4 / 3 s）"
 summary: "違規真的發生，但嘴被手擋住。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照：哈欠一般 3–10 s（文獻 5.9 ± 1.9 s）。難度 = 多難認出來：small 5 s、medium 4 s、large 3 s，手一直在嘴前。

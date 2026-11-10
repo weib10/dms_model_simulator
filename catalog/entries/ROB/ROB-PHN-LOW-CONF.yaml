@@ -1,4 +1,5 @@
 id: ROB-PHN-LOW-CONF
+number: 62
 title: "手機框分數偏低，講電話 6 s"
 summary: "low_conf 讓手機框的分數落在常見輸出門檻附近，套用門檻時部分幀的手機框會消失。"
 status: ready

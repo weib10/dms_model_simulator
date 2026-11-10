@@ -1,4 +1,5 @@
 id: ROB-ALL-NCAP-FACE-MASK
+number: 85
 title: "Euro NCAP 遮擋（口罩）：嘴框完全偵測不到"
 summary: "模擬器沒有口罩幾何，用 profile no_mouth（嘴框偵測率 0）近似；同一串行為含閉眼、轉頭、哈欠（劇本哈欠 4 s，真值 yawning 為真）。這只近似「嘴的輸出缺失」，沒有模擬口罩對臉框、頭姿的影響。"
 status: ready

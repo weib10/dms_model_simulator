@@ -1,4 +1,5 @@
 id: NAT-ALL-NORMAL-HABITS-300
+number: 88
 title: "300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤"
 summary: "量每小時誤報數用的長段。沒有任何違規（沒有手機、疲勞、抽菸、未繫，也不看大腿），只有看路、看鏡子、看儀表、偶爾看乘客，
   加上 configs/scenario_gen.yaml 的 habit_episodes（各種正常習慣，各有自己的時長）。這條的難度是習慣出現的頻率：

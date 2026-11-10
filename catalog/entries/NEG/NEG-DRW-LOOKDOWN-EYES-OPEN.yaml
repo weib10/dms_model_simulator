@@ -1,4 +1,5 @@
 id: NEG-DRW-LOOKDOWN-EYES-OPEN
+number: 32
 title: "低頭看大腿 1.0 / 1.8 / 2.6 s，眼睛是睜開的"
 summary: "對照門檻：低頭長分心 3 s（V03），以及閉眼（低頭時眼框變小）。低頭一次 small 1.0 s、medium 1.8 s、large 2.6 s，
   都在 3 s 以下，是正常的短暫低頭。低頭時眼框變小，真實模型常把睜眼認成閉眼。eye_flip 讓模擬模型在低頭、

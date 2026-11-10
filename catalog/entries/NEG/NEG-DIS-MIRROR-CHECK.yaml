@@ -1,4 +1,5 @@
 id: NEG-DIS-MIRROR-CHECK
+number: 14
 title: "正常開車，短暫看左右鏡、後照鏡、儀表（看鏡子每次 0.5 / 0.7–0.9 / 1.4 s）"
 summary: "對照門檻：看鏡子的正常上限 1.5 s（N02）、短瞥上限 2 s（N03）、長分心 3 s。由 scenarios/mirror_check.yaml 改寫成模板，
   medium 就是原劇本（左鏡 0.8、後照鏡 0.7、儀表 0.6、右鏡 0.9 s）。看鏡子每次 small 0.5 s、large 1.4 s，

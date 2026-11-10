@@ -1,4 +1,5 @@
 id: NEG-SMK-HAND-AT-MOUTH
+number: 67
 title: "手摸嘴或托下巴，沒有菸（每次 1.5 / 3 / 4 s，1 / 2 / 3 次）"
 summary: "對照：抽菸（V10）的真值沒有時長門檻，看的是香菸框；抽菸是手反覆到嘴邊，次數越多、每次越久越像。
   手在嘴前（hand: at_mouth，跟抽菸同一個手勢、手裡沒有菸）每次 small 1.5 s、medium 3 s、large 4 s，共 1 / 2 / 3 次，中間放下 3 s。

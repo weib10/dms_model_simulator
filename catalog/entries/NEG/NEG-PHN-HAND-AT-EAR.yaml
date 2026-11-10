@@ -1,4 +1,5 @@
 id: NEG-PHN-HAND-AT-EAR
+number: 56
 title: "手摸耳朵或撐頭，沒拿手機（1.5 / 4 / 8 s）"
 summary: "對照：講電話（V08）的真值沒有時長門檻，看的是手機框；手貼在耳邊、遮住半邊臉的時間越久越像講電話。
   手在耳邊（hand: at_ear，跟講電話同一個手勢、手裡沒有手機）small 1.5 s、medium 4 s、large 8 s。

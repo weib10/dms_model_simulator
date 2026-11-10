@@ -9,7 +9,7 @@ PR = {"nominal": {}}
 
 
 def _entry():
-    return {"id": "BND-PHN-REPRO", "title": "t", "status": "ready", "behaviors": ["V08"],
+    return {"id": "BND-PHN-REPRO", "number": 1, "title": "t", "status": "ready", "behaviors": ["V08"],
             "params": {"call_s": {"levels": {"small": 0.5, "medium": 0.5, "large": 0.5}}},
             "template": {"segments": [{"target": "road_ahead", "duration": 0.5},
                                       {"target": "road_ahead", "duration": "${call_s}", "hand": "call", "phone": "call"}]},

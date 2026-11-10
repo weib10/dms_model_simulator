@@ -1,4 +1,5 @@
 id: NEG-DRW-HAND-AT-EYE
+number: 31
 title: "揉眼睛、推眼鏡：右手指節擋住右眼（0.7 / 1.5 / 2.5 s，1 / 2 / 3 次）"
 summary: "對照門檻：閉眼約 1 s（眼框不見或變扁）。眼睛其實是睜開的（真值不閉眼，所以再久也不會越過閉眼門檻），但右眼被手擋住：
   dash_right、steering_column 都偵測不到右眼，dash_right 的左眼與臉也會被擋掉一部分（擋多少看 hand_scale）。

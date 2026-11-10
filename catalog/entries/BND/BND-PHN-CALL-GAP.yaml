@@ -1,4 +1,5 @@
 id: BND-PHN-CALL-GAP
+number: 60
 title: "講電話 3 s、中間停 0.3–3 s（手機放下，或還拿在手上放到大腿）、再講 3 s"
 summary: "中間停一下的時間很短。看後處理把它當成一通還是兩通、停的時候有沒有解除。兩種停法各掃一遍：
   放下手機（手回方向盤、沒有手機，真值 phone_use 中斷）；手機還拿在手上、放到大腿（hand: phone、phone: lap，真值 phone_use 不中斷，

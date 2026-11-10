@@ -1,4 +1,5 @@
 id: CLR-DRW-CLOSURE-REARM
+number: 39
 title: "閉眼 3 / 2.5 / 1.5 s、睜眼 15 / 12 / 5 s、再閉眼一次"
 summary: "兩次明確的閉眼，中間睜眼。看第一次睜眼後有沒有解除、第二次閉眼有沒有再觸發。
   對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。每次閉眼 small 3 s、medium 2.5 s、large 1.5 s；中間睜眼 small 15 s、medium 12 s、large 5 s（最短，但仍明確睜開）。"

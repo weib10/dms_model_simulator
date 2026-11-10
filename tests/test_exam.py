@@ -12,17 +12,17 @@ from dms_model_simulator.simulate import Simulation
 FPS = 20
 
 
-def _entry(id_, behaviors, segments, params=None):
-    return {"id": id_, "title": id_, "status": "ready", "behaviors": behaviors, "params": params or {},
+def _entry(no, id_, behaviors, segments, params=None):
+    return {"id": id_, "number": no, "title": id_, "status": "ready", "behaviors": behaviors, "params": params or {},
             "template": {"segments": segments}, "variation": {"cameras": ["dash_right"], "emulator_seeds": [0]}}
 
 
 ROAD = {"target": "road_ahead", "duration": 1.0}
 ENTRIES = [
-    _entry("POS-PHN-TEST", ["V08"], [ROAD, {"target": "road_ahead", "duration": 3.0, "hand": "call", "phone": "call"}, ROAD]),
-    _entry("NEG-ALL-TEST", ["N01"], [{"target": "road_ahead", "duration": 3.0}]),
-    _entry("BND-PHN-TEST", ["V08"], [ROAD, {"target": "road_ahead", "duration": "${call_s}", "hand": "call",
-                                            "phone": "call"}, ROAD], {"call_s": {"grid": [0.5, 1.0, 2.0]}}),
+    _entry(1, "POS-PHN-TEST", ["V08"], [ROAD, {"target": "road_ahead", "duration": 3.0, "hand": "call", "phone": "call"}, ROAD]),
+    _entry(2, "NEG-ALL-TEST", ["N01"], [{"target": "road_ahead", "duration": 3.0}]),
+    _entry(3, "BND-PHN-TEST", ["V08"], [ROAD, {"target": "road_ahead", "duration": "${call_s}", "hand": "call",
+                                               "phone": "call"}, ROAD], {"call_s": {"grid": [0.5, 1.0, 2.0]}}),
 ]
 EXAM = {"name": "T-v1", "title": "test exam", "intent": True,
         "expand": {"profile": ["exact"], "emulator_seeds": 1, "camera": ["dash_right"]},

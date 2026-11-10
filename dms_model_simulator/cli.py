@@ -372,7 +372,7 @@ def cmd_catalog(a):
     if a.action == "list":
         sel = C.select(entries, a.select, a.status, a.tag)
         for e in sel:
-            print(f"{e['id']:<34} {e.get('status', 'ready'):<8} {', '.join(e.get('tags') or []):<36} {e.get('title', '')}")
+            print(f"{C.entry_no(e):<5} {e['id']:<34} {e.get('status', 'ready'):<8} {', '.join(e.get('tags') or []):<36} {e.get('title', '')}")
         print(f"{len(sel)} entries")
     elif a.action == "show":
         sel = C.select(entries, a.select)

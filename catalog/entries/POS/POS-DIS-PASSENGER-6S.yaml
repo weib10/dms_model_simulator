@@ -1,4 +1,5 @@
 id: POS-DIS-PASSENGER-6S
+number: 7
 title: "自然頭眼分工：看乘客 6 s，頭照預設增益轉約 53°、眼睛補到約 82°（8 / 6 / 3.5 s）"
 summary: "只用 dash_right。視線目標 passenger 在右約 82°；不給頭姿，頭照預設增益（yaw 0.65）轉約 53°，眼睛補剩下的角度，轉頭 0.35 s。
   跟直接給頭姿 60° / 45° 的 POS-DIS-BASIC-TURN、POS-DIS-NCAP-OWL-PASSENGER 對照：同一個目標、頭轉得少一點。

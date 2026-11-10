@@ -1,4 +1,5 @@
 id: NEG-DIS-ADJUST-HVAC
+number: 8
 title: "調冷氣、音響：右手伸到中控台，視線在中控與路面之間來回"
 summary: "對照門檻：Euro NCAP 長分心 3 s、VATS（30 s 內累計 10 s）。手離開方向盤（像拿手機），視線單次看中控 small 0.8 s、
   medium 1.5 s、large 2.5 s，共 2 / 3 / 3 次（累計 1.6 / 4.5 / 7.5 s），中間回路面 1.5 s，手一直在中控台上。

@@ -1,4 +1,5 @@
 id: BND-SBT-OFF-DURATION
+number: 75
 title: "沒繫安全帶的時間從 0.5 s 掃到 10 s"
 summary: "手在方向盤、不擋安全帶，只改變沒繫的時間長短。"
 status: ready

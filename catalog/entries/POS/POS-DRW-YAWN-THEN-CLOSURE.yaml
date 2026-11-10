@@ -1,4 +1,5 @@
 id: POS-DRW-YAWN-THEN-CLOSURE
+number: 29
 title: "先打哈欠，3 s 後閉眼 3 / 2.5 / 1.5 s"
 summary: "哈欠和閉眼接連出現。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照門檻：哈欠一般 3–10 s；閉眼開合度 < 0.2 約 1 s 以上。small 哈欠 5 s、閉眼 3 s；medium 4 s、2.5 s；large 3 s、1.5 s。"
