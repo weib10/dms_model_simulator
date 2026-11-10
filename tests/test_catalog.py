@@ -331,6 +331,21 @@ def test_partial_run_lists_rows_of_the_current_manifest(tmp_path):
     assert len(_rows_tsv(tmp_path)) == 2
 
 
+def test_run_with_a_layout_uses_its_classes_and_records_it(tmp_path):
+    import hashlib
+    from conftest import MAPPED_LAYOUT
+    e = _short(variation={"cameras": ["dash_right"]})
+    C.expand([e], tmp_path, "boundary")
+    d = C.run(tmp_path, log=lambda *a: None, layout=MAPPED_LAYOUT)[0]
+    assert d["layout"] == str(MAPPED_LAYOUT.resolve())
+    assert d["layout_sha256"] == hashlib.sha256(MAPPED_LAYOUT.read_bytes()).hexdigest()
+    names = {det["class_name"] for p in (Path(d["frames_dir"]) / "labels").glob("*.yaml")
+             for det in (C.load_yaml(p).get("detections") or [])}
+    assert "face_box" in names and "face" not in names
+    with pytest.raises(C.CatalogError, match="not found"):
+        C.run(tmp_path, log=lambda *a: None, layout=tmp_path / "missing.yaml")
+
+
 def test_run_needs_a_manifest(tmp_path):
     with pytest.raises(C.CatalogError, match="catalog expand"):
         C.run(tmp_path)

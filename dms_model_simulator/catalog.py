@@ -638,25 +638,39 @@ def load_manifest(run_dir) -> dict:
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def _run_row(r: dict, run_dir: str) -> dict:
+def _layout_info(layout) -> dict | None:
+    """{layout: absolute path, layout_sha256} of a layout YAML given to `run` (None = configs/export.yaml's)."""
+    if layout is None:
+        return None
+    p = Path(layout).resolve()
+    if not p.is_file():
+        raise CatalogError(f"layout {p} not found")
+    return {"layout": str(p), "layout_sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+
+
+def _run_row(r: dict, run_dir: str, layout: dict | None = None) -> dict:
     from .behavior_card import write_card
-    from .export import export_scenario
+    from .export import export_scenario, load_config
     d = _rows_dir(run_dir) / r["row_id"]
+    config = None if layout is None else {**load_config(None), "layout": layout["layout"]}
     sim, st, truth = export_scenario(r["scenario"], r["camera"], "frame_yaml", d, seed=r["seed"], fps=r["fps"],
-                                     include_face=True, variant=r["variant"],
+                                     config=config, include_face=True, variant=r["variant"],
                                      emulator_overrides=r["emulator_overrides"], emulator_seed=r["emulator_seed"],
                                      full=True)
     card = write_card(sim, d, row=r)
     info = {"row_id": r["row_id"], "frames_dir": str(st["path"]), "truth": str(truth), "frames": st["frames"],
-            "card": str(card)}
+            "card": str(card), **(layout or {})}
     (d / "row.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8", newline="\n")
     return info
 
 
-def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print) -> list[dict]:
+def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, layout=None) -> list[dict]:
     """Export every manifest row under <run>/rows/<row_id>/: frame_yaml directory, pipeline / truth / full JSONL and
-    the behaviour card (card.md, card.json); then write rows.tsv (write_row_list). jobs: parallel processes."""
+    the behaviour card (card.md, card.json); then write rows.tsv (write_row_list). jobs: parallel processes.
+    layout: frame_yaml layout YAML (class ids, per-class thresholds) instead of configs/export.yaml's; its path and
+    sha256 go into every row.json, since the layout changes what a post-processing program sees."""
     run_dir = Path(run_dir).resolve()
+    lay = _layout_info(layout)
     sel = [x.upper() for x in entries or []]
     rows = [r for r in load_manifest(run_dir)["rows"]
             if not sel or "ALL" in sel or r["entry"] in sel or r["category"] in sel or r["family"] in sel
@@ -665,12 +679,12 @@ def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print) -> 
     if jobs > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(jobs) as ex:
-            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows)):
+            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows), [lay] * len(rows)):
                 done.append(info)
                 log(f"{info['row_id']}: {info['frames']} frames")
     else:
         for r in rows:
-            info = _run_row(r, str(run_dir))
+            info = _run_row(r, str(run_dir), lay)
             done.append(info)
             log(f"{info['row_id']}: {info['frames']} frames")
     if entries:   # partial run: list every row of this manifest exported so far (not rows of an earlier one)

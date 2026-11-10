@@ -422,7 +422,7 @@ def cmd_catalog(a):
         if not res["same"]:
             raise SystemExit(1)
     elif a.action == "run":
-        done = C.run(a.run_dir, a.select, a.jobs)
+        done = C.run(a.run_dir, a.select, a.jobs, layout=a.layout)
         print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row")
 
 
@@ -610,6 +610,9 @@ def main(argv=None):
     q.add_argument("run_dir"); q.add_argument("select", nargs="*", default=None,
                                          help="only these rows: entry ids, categories, families or prefixes (as for list)")
     q.add_argument("--jobs", type=int, default=1, help="parallel processes")
+    q.add_argument("--layout", default=None,
+                   help="frame_yaml layout YAML (class ids, thresholds); default: configs/export.yaml's. Its path "
+                        "and sha256 are written to every row.json")
     q = cs.add_parser("verify", help="compare two exported runs: fingerprint (code, configs, entries), row ids, "
                                      "and every row's output (structure exact, numbers within --tol)")
     q.add_argument("run_a"); q.add_argument("run_b")

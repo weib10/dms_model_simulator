@@ -51,6 +51,7 @@ dms-sim catalog expand --tag basic --profile nominal jit2 jmp2+mis2 worst --out 
 dms-sim catalog validate                     # 檢查所有條目
 dms-sim catalog expand BND PHN --out runs/r1 # 展開成具體劇本 + runs/r1/manifest.json
 dms-sim catalog run runs/r1 --jobs 4         # 每列匯出到 runs/r1/rows/<row_id>/，並寫 rows.tsv
+dms-sim catalog run runs/r1 --layout my_layout.yaml   # frame_yaml 改用自己的類別 id 與門檻；layout 路徑與 sha256 記進每列 row.json
 dms-sim catalog expand NEG --level large --out runs/h1        # 只要最難的一級（預設三級都出，row id 帶難度）
 dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直接覆蓋參數（值用 YAML 解析；只套到有這個參數的條目）
 ```

@@ -210,6 +210,7 @@ Optional modes, off by default. Each is a two-state Markov chain with a long-run
 | `flp1..2` | class flips |
 | `fp1..2` | false positives |
 | `bad`, `worst` | bundles |
+| `ideal`, `exact` | logic tests: no dropped frames, false positives or score noise; `exact` (= `ideal+pose0`) also has no head pose / gaze noise. Box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain |
 
 Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
 or in a catalog entry's `variation.profiles`.

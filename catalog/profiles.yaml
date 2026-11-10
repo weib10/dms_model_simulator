@@ -37,6 +37,13 @@ profiles:
         false_positives: {rate_per_frame: 0.0}
       eye_openness: {noise_std: 0.0}
       mouth_openness: {noise_std: 0.0}
+  pose0:                       # head pose and gaze without noise (std 0, no bias); stack it on ideal for exact
+    emulator_overrides:
+      head_pose: {base_std_deg: 0.0, per_deg_rel_yaw: 0.0, per_px_inv_face_width: 0.0, bias_deg: [0.0, 0.0, 0.0]}
+      gaze: {base_std_deg: 0.0, per_deg_gaze_to_camera: 0.0, per_deg_rel_head_yaw: 0.0, per_px_inv_eye_width: 0.0,
+             bias_deg: [0.0, 0.0]}
+  exact:                       # logic exams: ideal + pose0. Still left: box corner noise, and misses where the view
+    compose: "ideal+pose0"     # is hard (strong head yaw, occlusion, small boxes: the detection curves of emulator.yaml)
   low_conf:                    # object scores just above typical output thresholds: with a per-class conf_threshold
     emulator_overrides:        # in the layout and the default conf noise, some frames fall below and drop out
       detection:
