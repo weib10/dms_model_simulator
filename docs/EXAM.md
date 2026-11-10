@@ -71,7 +71,8 @@ runs/A/
   model output with your class ids, thresholds and face box. None of them changes the truth.
 - `--timeline` / `--gif` add a picture of every row to `key/` and `answer_key.md` shows them under the row: the
   quickest way to explain a row to someone who will not read JSONL. They change nothing else (`--gif-every`,
-  `--gif-scale` set the GIF's frame step and size; the GIFs of a 40-row exam take a few minutes and ~50 MB).
+  `--gif-scale` set the GIF's frame step and size; with both, A-v1 builds in about a minute at `--jobs 4` and its
+  GIFs take ~40 MB).
 - `road_box` is calibration, not an answer: the range of vehicle-frame gaze yaw / pitch (degrees) that counts as
   looking at the road in this row. A few rows widen it (a traffic light above the windscreen, a junction scan).
 - `fingerprint_id` identifies the build (code version, configs, entries). An answer sheet names the build it was
