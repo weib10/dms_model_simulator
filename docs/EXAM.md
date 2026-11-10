@@ -10,15 +10,44 @@ the grader compares it with what the driver really did.
 - Everything is reproducible: the same exam definition on the same version gives the same questions and the same
   truth to anyone.
 
+Contents: [A first run](#a-first-run) · [What `build` writes](#what-build-writes) ·
+[Finding the answer](#finding-the-answer) · [The answer sheet](#the-answer-sheet) · [Observability](#observability) ·
+[What the report measures](#what-the-report-measures) · [Exam definitions](#exam-definitions) · [Limits](#limits)
+
+## A first run
+
+**1. Build the exam and check the installation.** `oracle` writes the truth itself as an answer sheet; grading it
+must give full marks.
+
 ```bash
-dms-sim exam list
-dms-sim exam build A-v1 --out runs/A --jobs 4         # questions/ + key/
-python examples/naive_reader.py runs/A answers        # an adapter: yours goes here
-dms-sim exam grade runs/A answers --out report        # report.md + report.json
+dms-sim exam list                                                   # the exams in exams/
+dms-sim exam build A-v1 --out runs/A --jobs 4                       # questions/ + key/, about a minute
+dms-sim exam oracle runs/A --out runs/A-oracle
+dms-sim exam grade runs/A runs/A-oracle --out runs/A-oracle-report
 ```
 
-`dms-sim exam oracle runs/A --out answers` writes the truth itself as an answer sheet: it must get full marks, so
-it checks an installation and shows the format.
+`runs/A-oracle-report/report.md` shows every segment detected, every delay `0.00`, and `Nothing` under
+*Where to look*.
+
+**2. See a real answer sheet.** The example adapter reads one frame at a time and raises no alerts:
+
+```bash
+python examples/naive_reader.py runs/A runs/A-naive
+dms-sim exam grade runs/A runs/A-naive --out runs/A-naive-report
+```
+
+Its report is not perfect, and says where. *Where to look* has one line, a glance `looking_away` missed in
+`NEG-ALL-HABITS-COMBO` at 6.60-7.20 s (the driver looks down at the instruments while rubbing an eye; the reader
+only follows the gaze), and the table above it shows `mouth_wide` coming on a second late (the yawn label starts
+when the mouth begins to open).
+
+**3. Write your adapter.** For every row in `runs/A/questions/`, run your program on `pipeline.jsonl` (or on
+`labels/`, see `--layout`), and write one line per frame saying which of your signals are on
+([The answer sheet](#the-answer-sheet)). `examples/naive_reader.py` is 80 lines to copy from.
+
+**4. Grade and read the report** from the top: the signals you declared, how each follows the driver
+(*Reading the driver state*, *Alerts*), then *Where to look*: every miss and every false response with its row and
+time. Look that row up in the answer key ([Finding the answer](#finding-the-answer)).
 
 ## What `build` writes
 
@@ -29,7 +58,9 @@ runs/A/
     pipeline.jsonl          model output, one record per frame (field contract: SPEC.md)
     labels/                 the same frames as one YAML per frame, only with --layout
     row.json                fps, frames, camera, image_size, road_box
-  key/                      the answer side: truth, full JSONL with error flags, behaviour cards
+  key/                      the answer side
+    answer_key.md           every row: when each behaviour is on, in seconds
+    rows/<row_id>/          truth per frame, full JSONL with error flags, behaviour card
 ```
 
 - Feed your program `questions/` only. `key/` is not secret (anyone can rebuild it), which is why an exam meant to
@@ -40,6 +71,35 @@ runs/A/
   looking at the road in this row. A few rows widen it (a traffic light above the windscreen, a junction scan).
 - `fingerprint_id` identifies the build (code version, configs, entries). An answer sheet names the build it was
   made for.
+
+## Finding the answer
+
+The answer to a row is what the driver does in it, frame by frame. Four views of the same truth:
+
+| you want | look at |
+|---|---|
+| all rows at a glance | `key/answer_key.md`: per row, the spans in seconds where each behaviour label is on, and which part of that the camera has no evidence of |
+| one row's script | `key/rows/<row_id>/card.md`: what the driver was told to do when, and the model errors injected where |
+| every frame | `key/rows/<row_id>/*.truth.jsonl`: `events` holds the six labels, `observable` what the camera can show (fields: [SPEC.md](SPEC.md)) |
+| the truth in your own format | `dms-sim exam oracle runs/A --out DIR`: `DIR/<row_id>.jsonl` has the same lines as your answer file, to compare one by one |
+
+An entry of `answer_key.md`:
+
+```
+## `POS-DRW-BASIC-CLOSURE__small__d52e4a06__dash_right__vn__e0__exact`
+
+<entry title> (22.0 s, 440 frames at 20 fps, camera `dash_right`, error profile `exact`). Built to raise an alert of `eyes_closed`.
+
+| behaviour | on (s) | of that, no evidence (s) |
+|---|---|---|
+| eyes_closed | 2.45-2.55, 3.95-4.05, 7.20-7.30, 8.00-12.00, 14.80-14.90, 21.80-21.90 | none |
+```
+
+A span runs from its first frame to the first frame after it: `8.00-12.00` at 20 fps is frames 160 to 239. The
+short spans are blinks: `eyes_closed` says the eyes are shut, not for how long.
+
+From a line of the report to the answer: *Where to look* names the row, the signal and the time; open that row in
+`answer_key.md`, then its `card.md` if the reason is not plain.
 
 ## The answer sheet
 
@@ -119,6 +179,11 @@ against it. Frames without evidence where the signal was on anyway are reported 
 
 No single score. Every table states how many rows or segments it rests on; `report.json` has every segment and
 every alert frame of every row.
+
+The last section, **Where to look**, lists every case the tables count against a signal, with its row and time: a
+behaviour a state signal missed or fell off during, a signal on with no behaviour near, an alert with none of its
+behaviour before it, and the verdicts against your own rule. Delays are not listed: they are measurements, and
+whether 1.5 s is late is yours to say.
 
 **State signals**, per truth segment that has evidence:
 

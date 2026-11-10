@@ -152,7 +152,48 @@ def build(exam, out_dir, jobs: int = 1, cameras: list[str] | None = None, layout
                          "layout_sha256": next(iter(done.values()), {}).get("layout_sha256")},
             "rows_total": len(rows), "frames_total": sum(r["frames"] for r in rows), "rows": rows}
     _write_json(out / "exam.json", meta)
+    (key / "answer_key.md").write_text(answer_key_markdown(out), encoding="utf-8", newline="\n")
     return meta
+
+
+def _spans(flags: list[bool], fps: float) -> str:
+    """Runs of true frames in seconds, "8.00-12.00, 15.50-15.60": from the time of a run's first frame to the time
+    of the first frame after it."""
+    return ", ".join(f"{s / fps:.2f}-{e / fps:.2f}" for s, e in segments(flags))
+
+
+def answer_key_markdown(exam_dir, grading=None) -> str:
+    """The truth of a built exam as a page to read (key/answer_key.md): per row, when each behaviour label is on
+    and which part of that the camera has no evidence of (by the default evidence of the grader settings)."""
+    exam = load_built(exam_dir)
+    ev = load_grading(grading)["default_evidence"]
+    L = [f"# Answer key: {exam['exam']}", "",
+         f"Exam build `{exam['fingerprint_id']}`, {exam['rows_total']} rows. What the driver does in every row, read "
+         "from the truth. Times are seconds from the start of the row; a span runs from its first frame to the first "
+         "frame after it. `eyes_closed` is on in every blink too.", "",
+         "- Frame by frame: `rows/<row_id>/*.truth.jsonl`, fields `events` (the labels) and `observable` (what the "
+         "camera can show).",
+         "- The script of a row and the model errors injected into it: `rows/<row_id>/card.md`.",
+         "- The same truth in the answer-sheet format, to compare line by line with your own: "
+         "`dms-sim exam oracle <exam dir> --out <dir>`.", "",
+         "`no evidence` = the label is on but the camera cannot show it (a phone below the image, a mouth behind a "
+         "hand): the grader does not count those frames against a signal."]
+    for r in exam["rows"]:
+        truth = load_truth(exam_dir, r["row_id"])
+        fps = float(r["fps"])
+        want = {"alert": f" Built to raise an alert of `{r['main_concept']}`.", "no_alert": " Built to raise no alert."}
+        L += ["", f"## `{r['row_id']}`", "",
+              f"{r['title']} ({r['frames'] / fps:.1f} s, {r['frames']} frames at {fps:g} fps, camera `{r['camera']}`, "
+              f"error profile `{r['profile']}`).{want.get(r['intent'], '')}", ""]
+        lines = []
+        for c in CONCEPTS:
+            t = [bool(x["events"][c]) for x in truth]
+            if any(t):
+                hidden = [t[i] and not any(x["observable"][ch] for ch in ev[c]) for i, x in enumerate(truth)]
+                lines.append(f"| {c} | {_spans(t, fps)} | {_spans(hidden, fps) or 'none'} |")
+        L += (["| behaviour | on (s) | of that, no evidence (s) |", "|---|---|---|"] + lines) if lines \
+            else ["No behaviour label is on in this row."]
+    return "\n".join(L) + "\n"
 
 
 def _one(d: Path, pattern: str) -> Path:
@@ -373,6 +414,7 @@ def grade_alert(t: list[bool], obs: list[bool], a: list[bool], fps: float, grace
         ob = [i for i in range(s, e) if obs[i]]
         segs.append({"start": s, "end": e, "first_observable": ob[0] if ob else None, "alerts": [], "delay": None})
     kinds = {"during": 0, "after": 0, "unprovoked": 0}
+    unprovoked_at = []
     for k in onsets:
         owner = next((sg for sg in reversed(segs) if sg["start"] <= k < sg["end"] + grace), None)
         if owner is not None:
@@ -382,6 +424,7 @@ def grade_alert(t: list[bool], obs: list[bool], a: list[bool], fps: float, grace
             kinds["after"] += 1
         else:
             kinds["unprovoked"] += 1
+            unprovoked_at.append(k)
     need = math.ceil(float(rule["threshold_s"]) * fps - 1e-9) if rule else None
     for sg in segs:
         f0 = sg["first_observable"]
@@ -400,7 +443,8 @@ def grade_alert(t: list[bool], obs: list[bool], a: list[bool], fps: float, grace
                 sg["verdict"] = "false" if sg["alerts"] else "silent"
             else:
                 sg["verdict"] = "borderline"
-    return {"frames": n, "truth_frames": sum(t), "onsets": onsets, **kinds, "segments": segs}
+    return {"frames": n, "truth_frames": sum(t), "onsets": onsets, **kinds, "unprovoked_at": unprovoked_at,
+            "segments": segs}
 
 
 # ---- grading an exam ----------------------------------------------------------------------------------
@@ -511,11 +555,45 @@ def _sweeps(rows: list[dict], signals: dict, graded: dict) -> list[dict]:
     return out
 
 
+RULE_FINDINGS = {"miss": "own rule: no alert", "early": "own rule: alert too early",
+                 "false": "own rule: alert in a segment shorter than the threshold"}
+
+
+def _findings(rows_out: list[dict], signals: dict) -> list[dict]:
+    """Every case the summaries count against a signal, with its row and time: {row_id, signal, what, start_s,
+    end_s (None for a single frame)}. State signals: a truth segment missed, a signal that fell off inside one, a
+    run with no behaviour near it. Alerts: an onset with none of its behaviour before it, and the miss / early /
+    false verdicts of the sheet's own rule. Delays are not listed: they are measurements."""
+    out = []
+    for r in rows_out:
+        fps = r["fps"]
+        for name, g in r["signals"].items():
+            def add(what, s, e=None):
+                out.append({"row_id": r["row_id"], "signal": name, "what": what, "start_s": s / fps,
+                            "end_s": None if e is None else e / fps})
+            if signals[name]["kind"] == "state":
+                for sg in g["segments"]:
+                    if not sg["detected"]:
+                        add("missed", sg["start"], sg["end"])
+                    elif sg["dropouts"]:
+                        add(f"fell off {sg['dropouts']} time(s) during the behaviour", sg["start"], sg["end"])
+                for sg in g["false_segments"]:
+                    add("on without the behaviour", sg["start"], sg["end"])
+            else:
+                for k in g["unprovoked_at"]:
+                    add("alert without the behaviour", k)
+                for sg in g["segments"]:
+                    if sg.get("verdict") in RULE_FINDINGS:
+                        add(RULE_FINDINGS[sg["verdict"]], sg["start"], sg["end"])
+    return out
+
+
 def grade(exam_dir, answers_dir, grading=None) -> dict:
     """Grade an answer sheet against a built exam. Returns the report (write_report writes it): the declared
     signals, per-signal summaries (overall and by category / family / level / profile), the verdicts of the
-    designed-obvious rows, the parameter sweeps, and every row's details. Rows without an answer file are listed in
-    `rows_missing` and left out; a malformed answer file raises ExamError."""
+    designed-obvious rows, the parameter sweeps, the findings (every miss and false response with its row and
+    time) and every row's details. Rows without an answer file are listed in `rows_missing` and left out; a
+    malformed answer file raises ExamError."""
     exam = load_built(exam_dir)
     g = load_grading(grading)
     signals = load_answer_header(answers_dir, exam, g)
@@ -562,7 +640,7 @@ def grade(exam_dir, answers_dir, grading=None) -> dict:
             "concepts_not_answered": sorted(set(CONCEPTS) - {s["concept"] for s in signals.values()}),
             "rows_total": len(exam["rows"]), "rows_answered": len(graded), "rows_missing": missing,
             "summary": summary, "intent": intents, "sweeps": _sweeps(exam["rows"], signals, graded),
-            "rows": rows_out}
+            "findings": _findings(rows_out, signals), "rows": rows_out}
 
 
 # ---- report -------------------------------------------------------------------------------------------
@@ -670,6 +748,20 @@ def report_markdown(rep: dict) -> str:
             sw = (f"{s['last_before']:g} .. {s['first_after']:g}" if s["changes"] == 1
                   else "none" if s["changes"] == 0 else "not monotone")
             L.append(f"| {s['entry']} | {s['level'] or ''} | {s['profile']} | `{s['signal']}` | {s['param']} | {pts} | {sw} |")
+    found, cap = rep["findings"], int(g["report_findings_max"])
+    L += ["", "## Where to look", "",
+          "Every case the tables above count against a signal, with its row and time (delays are not listed: they are "
+          "measurements). What the driver did in a row: `key/answer_key.md` in the exam directory; frame by frame: "
+          "`key/rows/<row_id>/*.truth.jsonl`; the script and the injected model errors: `key/rows/<row_id>/card.md`.", ""]
+    if found:
+        L += ["| row | signal | what | when (s) |", "|---|---|---|---|"]
+        for f in found[:cap]:
+            when = f"{f['start_s']:.2f}" + ("" if f["end_s"] is None else f"-{f['end_s']:.2f}")
+            L.append(f"| `{f['row_id']}` | `{f['signal']}` | {f['what']} | {when} |")
+        if len(found) > cap:
+            L += ["", f"{len(found) - cap} more in `report.json` (`findings`)."]
+    else:
+        L.append("Nothing: no missed or false segment, no alert without its behaviour, no verdict against an own rule.")
     L += ["", "Per-row details (every segment, every alert frame): `report.json`.", ""]
     return "\n".join(L)
 

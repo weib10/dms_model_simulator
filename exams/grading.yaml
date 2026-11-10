@@ -11,6 +11,8 @@ rule_tolerance_s: 0.25     # an answer sheet's own rule: segments within this of
                            # and an alert up to this long before the rule is met is not "early" (>= versus >, counting
                            # the current frame or not: one frame either way)
 
+report_findings_max: 50    # report.md lists at most this many cases under "Where to look"; report.json has all of them
+
 # Evidence a truth label needs before a frame counts for or against a signal: the frame counts when at least one of
 # the channels is observable (truth `observable`, docs/SPEC.md). A signal may list its own in answer.yaml
 # (`evidence: [face]` for a program that reads boxes only).

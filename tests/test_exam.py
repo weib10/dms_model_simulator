@@ -71,6 +71,23 @@ def test_build_separates_questions_from_the_key(built):
     assert [(r["params"]["call_s"], r["intent"]) for r in bnd] == [(0.5, None), (1.0, None), (2.0, None)]
 
 
+def test_build_writes_an_answer_key_to_read(built):
+    d, meta = built
+    text = (d / "key" / "answer_key.md").read_text(encoding="utf-8")
+    assert text == E.answer_key_markdown(d) and "# Answer key: T-v1" in text
+    parts = {p.split("`", 2)[1]: p for p in text.split("\n## ")[1:]}     # one section per row
+    assert list(parts) == [r["row_id"] for r in meta["rows"]]
+    truth = _truth_flags(d, meta, "phone_use")
+    for r in meta["rows"]:
+        runs = E.segments(truth[r["row_id"]])
+        line = "| phone_use | " + ", ".join(f"{s / FPS:.2f}-{e / FPS:.2f}" for s, e in runs) + " | none |"
+        assert (line in parts[r["row_id"]]) == bool(runs) == ("| phone_use |" in parts[r["row_id"]])
+    pos = next(r["row_id"] for r in meta["rows"] if r["entry"] == "POS-PHN-TEST")
+    neg = next(r["row_id"] for r in meta["rows"] if r["entry"] == "NEG-ALL-TEST")
+    assert "Built to raise an alert of `phone_use`." in parts[pos] and "Built to raise no alert." in parts[neg]
+    assert "(5.0 s, 100 frames at 20 fps, camera `dash_right`, error profile `exact`)" in parts[pos]
+
+
 def test_build_refuses_to_overwrite_and_checks_the_definition(built, tmp_path):
     d, _ = built
     with pytest.raises(E.ExamError, match="already holds an exam"):
@@ -221,6 +238,7 @@ def test_oracle_sheet_gets_full_marks(built, tmp_path):
     path = E.write_report(rep, tmp_path / "report")
     text = path.read_text(encoding="utf-8")
     assert "## Reading the driver state" in text and "## Alerts" not in text and "obvious" not in text
+    assert rep["findings"] == [] and "## Where to look" in text and "Nothing: no missed or false segment" in text
     assert json.loads((tmp_path / "report" / "report.json").read_text(encoding="utf-8"))["exam"] == "T-v1"
 
 
@@ -230,6 +248,12 @@ def test_blind_shifted_and_holed_sheets_score_as_built(built, tmp_path):
     blind = _sheet(tmp_path / "blind", d, meta, PHONE, {k: {"phone": [False] * len(v)} for k, v in truth.items()})
     o = blind["summary"]["phone"]["overall"]
     assert (o["detected"], o["segments"], o["false_segments"], o["frame_recall"]) == (0, 4, 0, 0.0)
+    want = [(r, "phone", "missed", s / FPS, e / FPS) for r, v in truth.items() for s, e in E.segments(v)]
+    assert [(f["row_id"], f["signal"], f["what"], f["start_s"], f["end_s"]) for f in blind["findings"]] == want
+    r0, _, _, s0, e0 = want[0]
+    text = E.report_markdown(blind)
+    assert f"| `{r0}` | `phone` | missed | {s0:.2f}-{e0:.2f} |" in text and "key/answer_key.md" in text
+    assert "1 more in `report.json`" in E.report_markdown({**blind, "grading": {**blind["grading"], "report_findings_max": 3}})
     k = 4
     shifted = _sheet(tmp_path / "shift", d, meta, PHONE, {r: {"phone": [False] * k + v[:-k]} for r, v in truth.items()})
     o = shifted["summary"]["phone"]["overall"]
@@ -242,6 +266,7 @@ def test_blind_shifted_and_holed_sheets_score_as_built(built, tmp_path):
         holed[pos]["phone"][i] = False
     rep = _sheet(tmp_path / "hole", d, meta, PHONE, holed)
     assert rep["summary"]["phone"]["overall"]["dropouts"] == 2 and rep["summary"]["phone"]["overall"]["fn"] == 3
+    assert [(f["row_id"], f["what"]) for f in rep["findings"]] == [(pos, "fell off 2 time(s) during the behaviour")]
     assert rep["concepts_not_answered"] == sorted(set(E.CONCEPTS) - {"phone_use"})
 
 
@@ -282,6 +307,10 @@ def test_alert_sheet_intent_rule_and_sweep(built, tmp_path):
     o = rep["summary"]["phone_alert"]["overall"]
     assert o["rows_without_behaviour_alerted"] == 1 and o["unprovoked"] == 1 and o["rule"]["miss"] == 1
     assert o["rule"]["false_outside_behaviour"] == 1
+    (s, e), = E.segments(truth[pos])
+    assert {(f["row_id"], f["what"], f["start_s"], f["end_s"]) for f in rep["findings"]} == {
+        (neg, "alert without the behaviour", 10 / FPS, None), (pos, "own rule: no alert", s / FPS, e / FPS)}
+    assert f"| `{neg}` | `phone_alert` | alert without the behaviour | 0.50 |" in E.report_markdown(rep)
     assert sorted((i["entry"], i["verdict"]) for i in rep["intent"]) == [("NEG-ALL-TEST", "fail"), ("POS-PHN-TEST", "fail")]
     assert "| `" + neg + "` | no alert | phone_alert x1 |" in E.report_markdown(rep)
     other = {"yawn_alert": {"concept": "yawning", "kind": "alert"}}

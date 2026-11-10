@@ -439,7 +439,8 @@ def cmd_exam(a):
                            include_face=a.include_face, labels=a.labels, seed=a.seed, force=a.force,
                            log=lambda *_: None)
             print(f"exam {meta['exam']} ({meta['fingerprint_id']}): {meta['rows_total']} rows, "
-                  f"{meta['frames_total']} frames -> {a.out}/questions (model output), {a.out}/key (truth)")
+                  f"{meta['frames_total']} frames -> {a.out}/questions (model output), {a.out}/key (truth; "
+                  f"to read: key/answer_key.md)")
         elif a.action == "oracle":
             print(f"wrote {E.oracle_answers(a.exam_dir, a.out)} (the truth as an answer sheet)")
         elif a.action == "grade":
@@ -671,9 +672,11 @@ def main(argv=None):
     q.add_argument("--force", action="store_true", help="replace an exam already in --out")
     q = xs.add_parser("oracle", help="write the truth as an answer sheet (full marks: checks the installation, "
                                      "shows the format)")
-    q.add_argument("exam_dir"); q.add_argument("--out", required=True, help="answers directory")
+    q.add_argument("exam_dir", help="the --out directory of `exam build`")
+    q.add_argument("--out", required=True, help="answers directory")
     q = xs.add_parser("grade", help="grade an answer sheet against the truth -> report.md + report.json")
-    q.add_argument("exam_dir"); q.add_argument("answers", help="answers directory (answer.yaml + <row_id>.jsonl)")
+    q.add_argument("exam_dir", help="the --out directory of `exam build`")
+    q.add_argument("answers", help="answers directory (answer.yaml + <row_id>.jsonl)")
     q.add_argument("--out", required=True, help="report directory")
     q.add_argument("--grading", default=None, help="grader settings (default exams/grading.yaml)")
     xg.set_defaults(fn=cmd_exam)

@@ -152,6 +152,10 @@ python examples/naive_reader.py runs/A answers      # an example adapter: replac
 dms-sim exam grade runs/A answers --out report      # report.md + report.json
 ```
 
+- The answers are in `runs/A/key/answer_key.md`: per row, when the driver does what. The report ends with every
+  miss and false response, each with its row and time, to look up there.
+- `dms-sim exam oracle runs/A --out DIR` writes the truth as an answer sheet: grading it must give full marks, which
+  checks an installation.
 - Truth frames no detector could see (a phone in the lap, a mouth behind a hand) do not count against a signal.
 - `--camera`, `--layout`, `--labels mapped` and `--include-face` build the same exam for your camera and classes.
 - `examples/naive_reader.py` reads one frame at a time and raises no alerts: a format example and a baseline, not a
