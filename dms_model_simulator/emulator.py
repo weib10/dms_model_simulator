@@ -24,6 +24,46 @@ def _clip_box(box, w: int, h: int) -> list[float] | None:
     return [x1, y1, x2, y2]
 
 
+OBSERVABLE_CHANNELS = ("face", "head_pose", "head_away", "gaze", "eyes", "mouth", "hand", "phone", "cigarette",
+                       "seatbelt_region")       # head_away is added by Simulation.truths (it needs the road box)
+
+
+def gaze_refusal(truth: dict, c: dict, face_found: bool, eye_found: dict) -> str | None:
+    """Why the gaze model gives no direction this frame (None = it gives one). c: the emulator's `gaze` config;
+    eye_found: {left_eye | right_eye: detected this frame}."""
+    if not face_found:
+        return "no_face"
+    eyes_vis = [k for k, v in truth["eye_occluded"].items() if not v and eye_found.get(k, False)]
+    if min(truth["eye_openness"]["left"], truth["eye_openness"]["right"]) < c["valid_min_openness"]:
+        return "eyes_closed"
+    if c["invalid_if_both_eyes_occluded"] and not eyes_vis:
+        return "eyes_not_visible"
+    if truth["gaze"]["gaze_to_camera_deg"] > c["max_gaze_to_camera_deg"]:
+        return "gaze_too_far_from_camera"
+    return None
+
+
+def observable(truth: dict, cfg: dict) -> dict:
+    """Per evidence channel (OBSERVABLE_CHANNELS): could a model that reports every box of the ground truth output
+    it this frame? That is what `perfect_detection` (profile `exact`) outputs, so a frame that is not observable
+    carries no evidence however good the detector is: the phone in the lap, the mouth behind a hand, the eyes of a
+    head turned away. cfg: the emulator config (requires_face and the gaze validity rules).
+    face / head_pose: the face box is in the truth; eyes / mouth / hand / phone / cigarette: that box is (eyes and
+    mouth also need the face when the class has requires_face); gaze: the gaze model gives a direction
+    (gaze_refusal); seatbelt_region: the place where a worn belt is boxed is in the image, worn or not.
+    Simulation.truths adds head_away: the head pose is there and the head itself points off the road (outside
+    the road box), so the head pose alone shows the eyes are off the road; a glance with the eyes only shows in
+    the gaze and nowhere else."""
+    present = {d["class"] for d in truth["detections"]}
+    face = "face" in present
+    with_face = lambda key: face or not cfg["detection"][key].get("requires_face")
+    eyes = {c: c in present and with_face("eye") for c in ("left_eye", "right_eye")}
+    return {"face": face, "head_pose": face, "gaze": gaze_refusal(truth, cfg["gaze"], face, eyes) is None,
+            "eyes": any(eyes.values()), "mouth": "mouth" in present and with_face("mouth"),
+            "hand": "hand" in present, "phone": "phone" in present, "cigarette": "cigarette" in present,
+            "seatbelt_region": truth.get("seatbelt_strap_bbox") is not None}
+
+
 def markov_step(state: bool | None, r: float, mean_run: float, u: float) -> bool:
     """One frame of a two-state chain for a "rare" state S (a missed detection, a flipped class, a false positive)
     with stationary probability r and mean run length mean_run frames (>= 1). state: S last frame, None = no
@@ -114,6 +154,8 @@ class Emulator:
 
     # ---- detections -----------------------------------------------------------
     def _p_detect(self, spec: dict, width_px: float, rel_yaw: float | None, occ: float) -> float:
+        if self.cfg.get("perfect_detection"):        # logic tests: every truth box is reported
+            return 1.0
         p = spec["p_max"] * sigmoid((width_px - spec["min_width_px"]) / spec["width_scale_px"])
         if rel_yaw is not None and "yaw_limit_deg" in spec:
             p *= sigmoid((spec["yaw_limit_deg"] - abs(rel_yaw)) / spec["yaw_scale_deg"])
@@ -397,35 +439,27 @@ class Emulator:
                 flipped.append("mouth")
 
         # gaze
-        gz = {"valid": False, "reason": "no_face"}
-        if face_pred:
-            c = self.cfg["gaze"]
+        c = self.cfg["gaze"]
+        reason = gaze_refusal(truth, c, face_pred is not None, eye_found)
+        gz = {"valid": False, "reason": reason}
+        if reason is None:
             tg = truth["gaze"]
-            eyes_vis = [k for k, v in truth["eye_occluded"].items() if not v and eye_found.get(k, False)]
-            openness = min(truth["eye_openness"]["left"], truth["eye_openness"]["right"])
-            if openness < c["valid_min_openness"]:
-                gz = {"valid": False, "reason": "eyes_closed"}
-            elif c["invalid_if_both_eyes_occluded"] and not eyes_vis:
-                gz = {"valid": False, "reason": "eyes_not_visible"}
-            elif tg["gaze_to_camera_deg"] > c["max_gaze_to_camera_deg"]:
-                gz = {"valid": False, "reason": "gaze_too_far_from_camera"}
-            else:
-                eye_w = max([d["width_px"] for d in truth["detections"] if d["class"].endswith("_eye")] or [1.0])
-                std = (c["base_std_deg"] + c["per_deg_gaze_to_camera"] * tg["gaze_to_camera_deg"]
-                       + c["per_deg_rel_head_yaw"] * abs(rel_yaw) + c["per_px_inv_eye_width"] / max(eye_w, 1.0))
-                n = self.gaze_noise.step(k) * std + np.array(c["bias_deg"])
-                yaw_c, pitch_c = tg["yaw_camera"] + n[0], tg["pitch_camera"] + n[1]
-                dir_cam = G.face_to_cv(G.yaw_pitch_to_dir(yaw_c, pitch_c))
-                dir_v = self.cam.dir_to_vehicle(dir_cam)
-                yaw_v, pitch_v = G.dir_to_yaw_pitch(dir_v)
-                origin = np.array(tg["origin_vehicle"])
-                zone, zerr = self.cabin.classify_zone(origin, dir_v)
-                conf = float(np.clip(c["conf_base"] - c["conf_per_deg_std"] * std, 0, 1))
-                gz = {"valid": True, "yaw_camera": float(yaw_c), "pitch_camera": float(pitch_c),
-                      "dir_camera": dir_cam.tolist(), "yaw_vehicle": float(yaw_v), "pitch_vehicle": float(pitch_v),
-                      "dir_vehicle": dir_v.tolist(), "zone": zone, "zone_angle_err_deg": float(zerr),
-                      "angular_error_deg": G.angle_between(dir_v, np.array(tg["dir_vehicle"])),
-                      "std_deg": float(std), "conf": conf}
+            eye_w = max([d["width_px"] for d in truth["detections"] if d["class"].endswith("_eye")] or [1.0])
+            std = (c["base_std_deg"] + c["per_deg_gaze_to_camera"] * tg["gaze_to_camera_deg"]
+                   + c["per_deg_rel_head_yaw"] * abs(rel_yaw) + c["per_px_inv_eye_width"] / max(eye_w, 1.0))
+            n = self.gaze_noise.step(k) * std + np.array(c["bias_deg"])
+            yaw_c, pitch_c = tg["yaw_camera"] + n[0], tg["pitch_camera"] + n[1]
+            dir_cam = G.face_to_cv(G.yaw_pitch_to_dir(yaw_c, pitch_c))
+            dir_v = self.cam.dir_to_vehicle(dir_cam)
+            yaw_v, pitch_v = G.dir_to_yaw_pitch(dir_v)
+            origin = np.array(tg["origin_vehicle"])
+            zone, zerr = self.cabin.classify_zone(origin, dir_v)
+            conf = float(np.clip(c["conf_base"] - c["conf_per_deg_std"] * std, 0, 1))
+            gz = {"valid": True, "yaw_camera": float(yaw_c), "pitch_camera": float(pitch_c),
+                  "dir_camera": dir_cam.tolist(), "yaw_vehicle": float(yaw_v), "pitch_vehicle": float(pitch_v),
+                  "dir_vehicle": dir_v.tolist(), "zone": zone, "zone_angle_err_deg": float(zerr),
+                  "angular_error_deg": G.angle_between(dir_v, np.array(tg["dir_vehicle"])),
+                  "std_deg": float(std), "conf": conf}
 
         out = {"dropped": False, "detections": dets, "head_pose_camera": hp_out, "gaze": gz, "eye_openness": eo,
                "mouth_openness": mo}

@@ -8,6 +8,11 @@
 # Noise: every `temporal_rho` is the AR(1) frame-to-frame correlation of a unit-variance process (stationary
 # from frame 0; after a gap of D frames where the quantity is not produced the correlation is rho**D).
 
+# Logic tests: true = every box of the ground truth is reported, whatever its size, the head yaw or the occlusion
+# (detection probability 1; the detection draws are still made, so no other random stream moves). The output then
+# holds exactly what the truth marks as observable (`observable`, see docs/SPEC.md).
+perfect_detection: false
+
 pipeline:
   drop_frame_prob: 0.005        # frame produces no output at all
   drop_mean_frames: null        # null = independent per frame; N = drops come in runs of N frames on average

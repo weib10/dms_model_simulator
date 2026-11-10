@@ -1,7 +1,7 @@
 # 情境目錄（scenario catalog）
 
 把「要模擬什麼駕駛行為」寫成有定義的條目，挑出要的條目自動展開成大量具體劇本，每一列匯出模型輸出、真值和一張行為卡。
-拿去測後處理的人，用行為卡對照後處理的告警；目錄本身不判對錯。
+拿去測後處理的人，用行為卡對照後處理的告警；目錄本身不判對錯。要有成績單，用考卷（`dms-sim exam`，見 [docs/EXAM.md](../docs/EXAM.md)）。
 
 - 全部條目一覽：[INDEX.md](INDEX.md)（`dms-sim catalog index` 產生）
 - 條目：`entries/<類別>/<id>.yaml`，一條一個檔
@@ -52,6 +52,7 @@ dms-sim catalog validate                     # 檢查所有條目
 dms-sim catalog expand BND PHN --out runs/r1 # 展開成具體劇本 + runs/r1/manifest.json
 dms-sim catalog run runs/r1 --jobs 4         # 每列匯出到 runs/r1/rows/<row_id>/，並寫 rows.tsv
 dms-sim catalog run runs/r1 --layout my_layout.yaml   # frame_yaml 改用自己的類別 id 與門檻；layout 路徑與 sha256 記進每列 row.json
+dms-sim catalog run runs/r1 --include-face            # pipeline JSONL 帶臉框（--labels mapped：改用 layout 的類別）
 dms-sim catalog expand NEG --level large --out runs/h1        # 只要最難的一級（預設三級都出，row id 帶難度）
 dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直接覆蓋參數（值用 YAML 解析；只套到有這個參數的條目）
 ```
@@ -61,7 +62,7 @@ dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直
 - `<stem>.frames/labels/<frame>.yaml`：每幀的模型輸出（frame_yaml）
 - `<stem>.pipeline.jsonl`、`<stem>.truth.jsonl`、`<stem>.jsonl`（真值與模型輸出並排，含誤差標記）
 - `card.md`、`card.json`：行為卡（行為時間軸＋注入的模型誤差）
-- `row.json`
+- `row.json`：路徑、幀數、`road_box`（這一列「看路」的視線範圍，車身座標的 yaw／pitch，度）
 
 `rows.tsv` 每列一行：row_id、labels 目錄、truth、card、fps。run 目錄放短路徑（如 `runs/`），Windows 的 260 字元上限會讓長路徑失敗。
 

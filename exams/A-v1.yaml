@@ -1,0 +1,46 @@
+# Exam A-v1: the must-test behaviours (catalog/behaviors.yaml, must_test) at their easiest level, without model errors.
+# The entry list is frozen: entries added to the catalog later do not join A-v1; a changed list is A-v2.
+name: A-v1
+title: "Must-test behaviours, easiest level, no model errors"
+intent: true                  # every row is far from any reasonable threshold: POS rows should raise an alert of their
+                              # main behaviour, NEG rows none (the author's design, not a specification)
+expand:                       # arguments of `dms-sim catalog expand`
+  level: [small]
+  profile: [exact]            # no dropped frames, false positives or noise on scores / openness / head pose / gaze;
+                              # every box of the truth is reported
+  emulator_seeds: 1
+  camera: [dash_right]        # `dms-sim exam build --camera` picks another one
+entries:
+  - NEG-ALL-BASIC-CLEAN-30
+  - NEG-ALL-HABITS-COMBO
+  - NEG-ALL-HAND-OVER-HAND
+  - NEG-DIS-EYES-ONLY-GLANCE
+  - NEG-DIS-INTERSECTION-SCAN
+  - NEG-DIS-LOOK-AROUND
+  - NEG-DIS-LOOKDOWN-CENTER
+  - NEG-DIS-MIRROR-CHECK
+  - NEG-DIS-TRAFFIC-LIGHT
+  - NEG-DRW-BLINK-HEAVY
+  - NEG-YWN-TALKING
+  - POS-ALL-SMOKE-AND-CALL
+  - POS-DIS-BASIC-TURN
+  - POS-DIS-NCAP-OWL-PASSENGER
+  - POS-DIS-NCAP-OWL-WINDOW
+  - POS-DIS-PASSENGER-6S
+  - POS-DRW-BASIC-CLOSURE
+  - POS-DRW-CLOSURE-HEAD-TURNED
+  - POS-DRW-MICROSLEEP
+  - POS-DRW-PROGRESSIVE
+  - POS-DRW-YAWN-THEN-CLOSURE
+  - POS-PHN-BASIC-CALL
+  - POS-PHN-HELD-UP
+  - POS-PHN-LAP-THEN-CALL
+  - POS-SBT-BASIC
+  - POS-SBT-UNBUCKLE-MID
+  - POS-SMK-BASIC
+  - POS-SMK-CIG-IN-LAP
+  - POS-SMK-MOUTH-HAND
+  - POS-SMK-PUFF
+  - POS-YWN-BASIC
+  - POS-YWN-COVERED
+  - POS-YWN-ONLY

@@ -12,7 +12,9 @@ driver in a car cabin. The output includes the errors a real model makes:
 **Purpose: tune post-processing.** Feed the simulated output to your alert logic (tracking, time windows,
 hysteresis) and see how it copes with realistic model errors.
 
-- The simulator contains no alert logic and does not judge yours.
+- The simulator contains no alert logic and no alert thresholds.
+- **Exams** grade a post-processing program: you hand in what it reported per frame, the grader compares it with
+  what the driver did ([Exams](#exams), [`docs/EXAM.md`](docs/EXAM.md)).
 - Each run comes with a **behaviour card**: what the driver did when, and which model errors were injected where.
   Compare your alerts with it.
 - It does not try to match one particular model: error levels are tunable and graded (see [Error profiles](#error-profiles)).
@@ -23,6 +25,7 @@ hysteresis) and see how it copes with realistic model errors.
 - [Quick start](#quick-start)
 - [What it produces](#what-it-produces)
 - [Checking a post-processing program](#checking-a-post-processing-program)
+- [Exams](#exams)
 - [Scenarios](#scenarios)
 - [Model errors](#model-errors)
 - [Outputs](#outputs)
@@ -113,6 +116,7 @@ Per frame, for one camera:
   - hand / phone / cigarette / seatbelt states
   - behaviour labels: `eyes_off_road`, `off_road_s`, `eyes_closed`, `closed_s`, `phone_use`, `phone_use_visible`,
     `yawning`, `smoking`, `seatbelt_off`
+  - `observable`: per evidence channel (gaze, head pose, each box), whether any detector could report it this frame
 - **Files**: pipeline JSONL (model output), truth JSONL, full JSONL (both side by side, with error flags), a packed
   binary log (`dms.bin`, layout in YAML) or one YAML per frame (`frame_yaml`). Details in [Outputs](#outputs).
 - **Behaviour card** (`card.md`, `card.json`): timeline of what the driver does, plus the injected errors.
@@ -134,6 +138,26 @@ Per frame, for one camera:
 3. **Compare its alerts with the behaviour card.** The timeline says what the driver did when; the error list says
    where the model output was degraded on purpose. An alert that drops during a burst of missed face boxes is a
    different finding from one that never fires.
+
+## Exams
+
+An exam is a frozen set of catalog rows plus a grader. You write an adapter that turns your program's output into
+an answer sheet (named signals, each tied to one behaviour label, 0 / 1 per frame); the grader reports how each
+signal follows the truth. It has no thresholds of its own: delays are measured, and what should raise an alert
+comes from the exam's design or from a rule you declare.
+
+```bash
+dms-sim exam build A-v1 --out runs/A --jobs 4       # questions/ (model output) + key/ (truth)
+python examples/naive_reader.py runs/A answers      # an example adapter: replace it with yours
+dms-sim exam grade runs/A answers --out report      # report.md + report.json
+```
+
+- Truth frames no detector could see (a phone in the lap, a mouth behind a hand) do not count against a signal.
+- `--camera`, `--layout`, `--labels mapped` and `--include-face` build the same exam for your camera and classes.
+- `examples/naive_reader.py` reads one frame at a time and raises no alerts: a format example and a baseline, not a
+  reference post-processing.
+
+The answer-sheet format and every measure of the report are in [`docs/EXAM.md`](docs/EXAM.md).
 
 ## Scenarios
 
@@ -210,7 +234,7 @@ Optional modes, off by default. Each is a two-state Markov chain with a long-run
 | `flp1..2` | class flips |
 | `fp1..2` | false positives |
 | `bad`, `worst` | bundles |
-| `ideal`, `exact` | logic tests: no dropped frames, false positives or score noise; `exact` (= `ideal+pose0`) also has no head pose / gaze noise. Box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain |
+| `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze noise, and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
 
 Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
 or in a catalog entry's `variation.profiles`.
@@ -233,7 +257,7 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
 
 - **Pipeline JSONL**: `frame_id`, `timestamp_ms`, `camera_id`, `od` [`{label, bbox [x1,y1,x2,y2], score}`],
   `head_pose`, `gaze`, `eye_openness`, `mouth_openness`. A dropped frame has an empty `od` and null fields.
-- **Truth JSONL**: exact values, and the behaviour labels under `events`.
+- **Truth JSONL**: exact values, the behaviour labels under `events`, and `observable`.
 - **Full JSONL**: `{frame, t, camera, truth, pred}` with diagnostics. `pred` carries the error flags `dropped`,
   `latency_fill`, `source_frame`, per-box `jump` / `false_positive` / `p_detect`, and `class_flip`.
 - **dms.bin**: one header + N object records per frame. Every field, class id, class map, per-class score threshold

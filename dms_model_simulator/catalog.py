@@ -648,29 +648,46 @@ def _layout_info(layout) -> dict | None:
     return {"layout": str(p), "layout_sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
 
 
-def _run_row(r: dict, run_dir: str, layout: dict | None = None) -> dict:
+def _run_row(r: dict, run_dir: str, layout: dict | None = None, pipeline: dict | None = None) -> dict:
     from .behavior_card import write_card
+    from .events import road_box
     from .export import export_scenario, load_config
     d = _rows_dir(run_dir) / r["row_id"]
-    config = None if layout is None else {**load_config(None), "layout": layout["layout"]}
+    pipeline = pipeline or {}
+    config = None
+    if layout is not None or pipeline.get("labels"):
+        config = dict(load_config(None))
+        if layout is not None:
+            config["layout"] = layout["layout"]
+        if pipeline.get("labels"):
+            config["simulation"] = {**(config.get("simulation") or {}), "labels": pipeline["labels"]}
     sim, st, truth = export_scenario(r["scenario"], r["camera"], "frame_yaml", d, seed=r["seed"], fps=r["fps"],
                                      config=config, include_face=True, variant=r["variant"],
                                      emulator_overrides=r["emulator_overrides"], emulator_seed=r["emulator_seed"],
-                                     full=True)
+                                     full=True, pipeline_face=pipeline.get("include_face"))
     card = write_card(sim, d, row=r)
+    box = road_box(sim.cabin, sim.behavior.cfg["events"]["on_road_targets"])
     info = {"row_id": r["row_id"], "frames_dir": str(st["path"]), "truth": str(truth), "frames": st["frames"],
-            "card": str(card), **(layout or {})}
+            "card": str(card),
+            # what counts as looking at the road in this row (vehicle-frame gaze angles, degrees): calibration a
+            # post-processing needs, not an answer
+            "road_box": None if box is None else {"yaw_deg": [box[0], box[1]], "pitch_deg": [box[2], box[3]]},
+            **(layout or {})}
     (d / "row.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8", newline="\n")
     return info
 
 
-def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, layout=None) -> list[dict]:
+def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, layout=None,
+        include_face: bool | None = None, labels: str | None = None) -> list[dict]:
     """Export every manifest row under <run>/rows/<row_id>/: frame_yaml directory, pipeline / truth / full JSONL and
     the behaviour card (card.md, card.json); then write rows.tsv (write_row_list). jobs: parallel processes.
     layout: frame_yaml layout YAML (class ids, per-class thresholds) instead of configs/export.yaml's; its path and
-    sha256 go into every row.json, since the layout changes what a post-processing program sees."""
+    sha256 go into every row.json, since the layout changes what a post-processing program sees.
+    include_face / labels: the pipeline JSONL's face box and label mode (as for `dms-sim run`; None = the defaults
+    of configs/export.yaml). Neither changes the truth or the row ids."""
     run_dir = Path(run_dir).resolve()
     lay = _layout_info(layout)
+    pipe = {"include_face": include_face, "labels": labels}
     sel = [x.upper() for x in entries or []]
     rows = [r for r in load_manifest(run_dir)["rows"]
             if not sel or "ALL" in sel or r["entry"] in sel or r["category"] in sel or r["family"] in sel
@@ -679,12 +696,12 @@ def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, lay
     if jobs > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(jobs) as ex:
-            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows), [lay] * len(rows)):
+            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows), [lay] * len(rows), [pipe] * len(rows)):
                 done.append(info)
                 log(f"{info['row_id']}: {info['frames']} frames")
     else:
         for r in rows:
-            info = _run_row(r, str(run_dir), lay)
+            info = _run_row(r, str(run_dir), lay, pipe)
             done.append(info)
             log(f"{info['row_id']}: {info['frames']} frames")
     if entries:   # partial run: list every row of this manifest exported so far (not rows of an earlier one)

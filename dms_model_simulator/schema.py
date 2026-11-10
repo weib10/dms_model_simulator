@@ -30,7 +30,7 @@ FIELDS: dict[str, str] = {
     # truth-only
     "blink": "blink", "closure": "closure", "hand": "hand", "phone": "phone",
     "cigarette": "cigarette", "seatbelt": "seatbelt", "held": "held", "events": "events",
-    "phone_visible": "phone_visible",
+    "phone_visible": "phone_visible", "observable": "observable",
 }
 
 # simulator detection class -> emitted OD label
@@ -215,5 +215,7 @@ def to_truth(record: dict, camera: Any = None) -> dict:
     out[F["held"]] = tr.get("held", "none")
     if "phone_visible" in tr:
         out[F["phone_visible"]] = bool(tr["phone_visible"])
+    if "observable" in tr:
+        out[F["observable"]] = {k: bool(v) for k, v in tr["observable"].items()}
     out[F["events"]] = dict(tr.get("events", {}))
     return out

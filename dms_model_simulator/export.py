@@ -188,10 +188,11 @@ def sniff_format(path) -> str:
 def export_scenario(scenario, camera: str, fmt: str, out_dir, seed: int = 0, fps: float | None = None,
                     config: dict | str | Path | None = None, include_face: bool = True, image: str = "none",
                     variant: int | None = None, emulator_overrides: dict | None = None,
-                    emulator_seed: int | None = None, full: bool = False):
+                    emulator_seed: int | None = None, full: bool = False, pipeline_face: bool | None = None):
     """Simulate and export one run: the export (<stem>.dms.bin | directory <stem>.frames) plus the pipeline /
     truth JSONL (Simulation.write, labels from `simulation.labels`; full=True also writes the full truth + pred
-    JSONL with the emulator's error flags). image: none | render (frame_yaml only). variant: driver / camera-mount
+    JSONL with the emulator's error flags; pipeline_face: the face box in the pipeline JSONL, None = the label
+    mode's default). image: none | render (frame_yaml only). variant: driver / camera-mount
     variant; emulator_overrides / emulator_seed: model-error config overrides and noise seed (Simulation).
     Returns (sim, export stats, truth path)."""
     from .simulate import Simulation
@@ -202,7 +203,7 @@ def export_scenario(scenario, camera: str, fmt: str, out_dir, seed: int = 0, fps
     sim.run()
     out = Path(out_dir).resolve()
     labels = sc.get("labels", "sim")
-    sim.write(out, fmt="both" if full else "pipeline", labels=labels,
+    sim.write(out, fmt="both" if full else "pipeline", labels=labels, include_face=pipeline_face,
               dms_layout=_layout(bc) if labels == "mapped" else None)
     stem = f"{sim.scenario['name']}__{sim.camera.name}"
     if fmt not in INPUT_FORMATS:

@@ -3,8 +3,9 @@
 ## Purpose
 Simulate the frame-by-frame output of a DMS object-detection model (plus head pose, gaze and openness) for a
 scripted driver, with realistic and tunable model errors, so that post-processing (alert logic) can be tuned
-against it. Alert logic is out of scope: the simulator writes model outputs, ground truth and a behaviour card;
-judging the alerts is done by whoever owns the post-processing. Not a goal: photoreal images, training data, or
+against it. Alert logic and alert thresholds are out of scope: the simulator writes model outputs, ground truth and
+a behaviour card. An exam (`docs/EXAM.md`) grades what a post-processing reports against the truth; what should
+raise an alert stays with whoever owns the post-processing. Not a goal: photoreal images, training data, or
 an exact copy of one particular model.
 
 ## Decisions
@@ -15,6 +16,7 @@ an exact copy of one particular model.
 | other outputs | head pose (face frame) with score; gaze yaw / pitch, unit vector, `valid`, score, vehicle-frame angles and zone; eye openness per eye and mouth openness (0..1). |
 | ground truth | exact geometry; the emulator never changes it. Truth and model output share `frame_id`. |
 | behaviour labels | derived from the script (`events.py`, `configs/behavior.yaml` `events`), never from the model, and without duration thresholds: they say what the driver does, not what an alert should decide. |
+| observability | per frame and evidence channel, whether a detector that misses nothing could report it (`observable`); the `exact` profile outputs exactly that. Exams count a truth frame only when its evidence is observable. |
 | behaviour card | per run: segment timeline (time and frame ranges, what the driver does) and the injected model errors as frame runs per kind and class (`behavior_card.py`). |
 | tunability | every geometric, behavioural, error-model and binary-layout number lives in YAML. |
 | determinism | same seed = identical output and the same behaviour on every camera; behaviour and model noise use independent random streams. |
@@ -49,7 +51,12 @@ openness, blink / closure, hand / phone / cigarette / seatbelt / held states, `p
 `eyes_off_road` (scripted target off the road, or the actual gaze outside the yaw / pitch box of the on-road
 targets widened by `zone_classifier.tolerance_deg`), `off_road_s` (current continuous off-road time), `eyes_closed` (mean scripted openness below
 `closed_openness_threshold`), `closed_s`, `phone_use` (scripted, also when the phone is out of view),
-`phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`. The full JSONL `truth` also
+`phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`; and `observable`
+(`emulator.observable`): `face` / `head_pose` (face box in the truth), `head_away` (head pose there and the head's
+facing direction outside the road box), `gaze` (the gaze model gives a direction), `eyes`, `mouth`, `hand`, `phone`,
+`cigarette` (that box in the truth; eyes and mouth need the face), `seatbelt_region` (the strap's place is in the
+image, worn or not). With `perfect_detection: true` (profile `exact`) the model output has a quantity exactly
+when its channel is observable. The full JSONL `truth` also
 has `held_bbox`: the image box of an object at the lips (`held`; no OD class of its own), the anchor of
 `anchor: held` context rules.
 

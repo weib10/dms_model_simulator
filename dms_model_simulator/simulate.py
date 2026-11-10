@@ -73,9 +73,11 @@ class Simulation:
         """Per-frame ground truth (with behaviour labels) of this run; computed once and cached. The emulator only
         reads it, so the same truths can be emulated many times (see emulate)."""
         if self._truths is None:
-            from .events import label_events
+            from .emulator import observable
+            from .events import head_points_off_road, label_events, road_box
             from .truth import compute_truth
             self.events = label_events(self.frames, self.cabin, self.behavior.cfg)
+            box = road_box(self.cabin, self.behavior.cfg["events"]["on_road_targets"])
             out = []
             for i, f in enumerate(self.frames):
                 truth = compute_truth(self.cabin, self.camera, f)
@@ -86,6 +88,9 @@ class Simulation:
                 truth["phone_visible"] = any(d["class"] == "phone" for d in truth["detections"])
                 truth["events"] = dict(self.events[i], phone_use_visible=bool(self.events[i].get("phone_use"))
                                        and truth["phone_visible"])
+                # which evidence a perfect detector could output this frame (this run's emulator config)
+                ob = truth["observable"] = observable(truth, self.cfgs["emulator"])
+                ob["head_away"] = ob["head_pose"] and head_points_off_road(f.head_yaw, f.head_pitch, box)
                 out.append(truth)
             self._truths = out
         return self._truths

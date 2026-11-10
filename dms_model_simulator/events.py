@@ -38,6 +38,12 @@ def _in_box(point, box) -> bool:
     return box[0] <= y <= box[1] and box[2] <= p <= box[3]
 
 
+def head_points_off_road(yaw: float, pitch: float, box) -> bool:
+    """The head's facing direction (vehicle-frame yaw / pitch, degrees) is outside the road box (False without a
+    box). Then the head pose alone shows the eyes are off the road, whatever the gaze output says."""
+    return box is not None and not _in_box(G.yaw_pitch_to_dir(yaw, pitch), box)
+
+
 def label_events(frames: list[DriverFrame], cabin: Cabin | None, cfg: dict) -> list[dict]:
     """One label dict per frame. ``cfg`` is the behaviour config (uses ``fps`` and ``events``).
     ``cabin`` gives the road box for the gaze check of eyes_off_road; None = scripted targets only."""

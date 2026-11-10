@@ -1,0 +1,23 @@
+# Settings of `dms-sim exam grade` (dms_model_simulator/exam.py). None of these is an alert threshold: they say how
+# an answer sheet is lined up with the truth. All four times are provisional (2026-11) until more post-processing
+# programs have been graded.
+
+edge_band_s: 0.25          # state signals: frames this close to the start or the end of a truth segment are left out
+                           # of the per-frame counts (the gaze needs 1-3 frames to move at 20 fps), and a first
+                           # response up to this long after the segment still counts as detecting it
+alert_grace_s: 2.0         # alerts: an alert up to this long after a behaviour has ended still belongs to it
+lookback_s: 30.0           # alerts: an alert with none of its behaviour in the truth this long before it is "unprovoked"
+rule_tolerance_s: 0.25     # an answer sheet's own rule: segments within this of the declared threshold are not judged,
+                           # and an alert up to this long before the rule is met is not "early" (>= versus >, counting
+                           # the current frame or not: one frame either way)
+
+# Evidence a truth label needs before a frame counts for or against a signal: the frame counts when at least one of
+# the channels is observable (truth `observable`, docs/SPEC.md). A signal may list its own in answer.yaml
+# (`evidence: [face]` for a program that reads boxes only).
+default_evidence:
+  eyes_off_road: [gaze, head_away]     # a valid gaze, or a head that itself points off the road
+  eyes_closed: [eyes]
+  phone_use: [phone]
+  yawning: [mouth]
+  smoking: [cigarette]
+  seatbelt_off: [seatbelt_region]
