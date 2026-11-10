@@ -146,8 +146,9 @@ A scenario is a list of segments. Each segment needs `target` (a gaze target fro
 
 | field | values |
 |---|---|
-| `head_pose`, `eye_openness`, `closure`, `blink`, `mouth_openness`, `yawn` | see `configs/behavior.yaml` |
-| `hand` | `wheel` \| `lap` \| `phone` \| `call` \| `smoke` \| `at_ear` \| `at_mouth` \| `at_eye` \| `mirror` \| `wheel_cross_l` / `_c` / `_r` |
+| `head_pose`, `eye_openness`, `closure`, `blink`, `mouth_openness` | see `configs/behavior.yaml` |
+| `yawn` | rate / shape overrides; `{start: true, duration_s, peak_openness}` starts one scripted yawn at the segment (sets the truth label `yawning`) |
+| `hand` | `wheel` \| `lap` \| `phone` \| `call` \| `smoke` \| `at_ear` \| `at_mouth` \| `at_eye` \| `mirror` \| `wheel_cross_l` / `_c` / `_r` \| `chest_left` |
 | `phone` | `none` \| `lap` \| `call` |
 | `cigarette` | `none` \| `mouth` \| `hand` |
 | `seatbelt` | `on` \| `off` |

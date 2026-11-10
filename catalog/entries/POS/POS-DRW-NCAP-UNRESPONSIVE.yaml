@@ -1,6 +1,7 @@
 id: POS-DRW-NCAP-UNRESPONSIVE
 title: "Euro NCAP 無反應駕駛：閉眼、頭垂到胸前 12 / 10 / 7 s 不動"
-summary: "睡著後一直沒回應。頭低 45° 時眼睛可能被眉骨擋住、甚至整張臉偵測不到，這時模型輸出裡看不到閉眼框。
+summary: "睡著後一直沒回應，頭花 1.5 s 垂下。真車上頭低 45° 時眼睛可能被眉骨擋住、甚至整張臉偵測不到；模擬器沒有這種遮擋：
+  頭垂 45° 時兩台預設相機的臉框、兩個眼框（閉眼）、嘴框照樣輸出。看不到眼框的情況要另外用 profile（例如 no_eyes）做。
   對照門檻：睡著（閉眼 3 s 以上）之後對警示約 3 s 沒反應，合計約 6 s。small 12 s、medium 10 s、large 7 s；頭一律垂 45°。"
 status: ready
 source: written

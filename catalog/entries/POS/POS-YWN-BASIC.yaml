@@ -1,18 +1,19 @@
 id: POS-YWN-BASIC
-title: "基本款：打一次哈欠（嘴張大 5 / 3 / 2.5 s）"
-summary: "哈欠的基本款：眼睛正常。
-  對照：哈欠嘴張到約 0.9、持續數秒（一般 3–6 s）；模型的嘴開合判斷門檻約 0.55。small 開合度 0.95、5 s；medium 0.9、3 s；large 0.8、2.5 s。"
+title: "基本款：打一次哈欠（6 / 5 / 3.5 s，嘴最大 0.95 / 0.85 / 0.7）"
+summary: "哈欠的基本款：眼睛正常。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  對照：哈欠一般 3–10 s（文獻 5.9 ± 1.9 s，Provine 1986）；模型的嘴開合判斷門檻約 0.55。
+  small 6 s、嘴最大 0.95；medium 5 s、0.85；large 3.5 s、0.7（短、張得小，但仍是哈欠：超過 0.55 約 1.5 s）。"
 status: ready
 source: written
 tags: [basic, yawn]
 behaviors: [V07]
 params:
-  yawn_s: {levels: {small: 5.0, medium: 3.0, large: 2.5}}
-  mouth: {levels: {small: 0.95, medium: 0.9, large: 0.8}}
+  yawn_s: {levels: {small: 6.0, medium: 5.0, large: 3.5}}
+  mouth: {levels: {small: 0.95, medium: 0.85, large: 0.7}}
 template:
   segments:
     - {target: road_ahead, duration: 4.0}
-    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: "${mouth}"}
+    - {target: road_ahead, duration: "${yawn_s}", yawn: {start: true, duration_s: "${yawn_s}", peak_openness: "${mouth}"}}
     - {target: road_ahead, duration: 5.0}
 variation:
   profiles: [ideal, nominal]

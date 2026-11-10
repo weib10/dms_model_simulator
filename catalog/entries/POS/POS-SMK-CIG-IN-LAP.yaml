@@ -1,0 +1,18 @@
+id: POS-SMK-CIG-IN-LAP
+title: "兩口之間：菸夾在手上、手放在大腿（10 / 6 / 3 s）"
+summary: "抽菸真的在進行：兩口之間菸夾在手上（文獻：每口約 1.6 s、間隔約 27 s，Krebs 2016），真值 smoking 整段為真。
+  難度 = 多難認出來：菸離臉很遠、在大腿上，菸框小又常在畫面外。small 10 s、medium 6 s、large 3 s。
+  大腿上的菸只有 overhead_console 拍得到，dash_right、steering_column 都看不到（對照用）。原本是 NEG（N23），2026-11-10 改為 POS。"
+status: ready
+source: written
+tags: [smoking]
+behaviors: [V10]
+params:
+  hold_s: {levels: {small: 10.0, medium: 6.0, large: 3.0}}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: "${hold_s}", hand: lap, cigarette: hand}
+    - {target: road_ahead, duration: 3.0}
+variation:
+  cameras: [overhead_console, dash_right, steering_column]

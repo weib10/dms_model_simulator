@@ -1,14 +1,18 @@
 id: BND-DRW-SINGLE-CLOSURE
-title: "正常開車中單次閉眼，閉眼時間從 0.3 s 掃到 6 s"
-summary: "前 7 s 正常，閉眼一次，再睜眼 4 s。看閉眼多久開始被當成疲勞、睜眼後多久解除。"
+title: "正常開車中單次閉眼，閉眼時間從 0.3 s 掃到 8 s（1 s、3 s 門檻兩側加密）"
+summary: "前 7 s 正常，閉眼一次，再睜眼 5 s。看閉眼多久開始被當成疲勞、睜眼後多久解除。眨眼降到每分鐘 6 次，少一點眨眼貼著閉眼段、把閉眼拉長。
+  對照門檻：微睡約 1 s、睡著 3 s（Euro NCAP）；0.95 / 1.0 / 1.05 s 和 2.95 / 3.0 / 3.05 s 夾住門檻（前後各差一幀）。原本的 BND-DRW-LONG-CLOSURE-ENDS（1.2 s、8 s）併進來。"
 status: ready
 source: written
-tags: [closure, duration]
+tags: [closure, duration, sleepiness]
 behaviors: [V05]
 params:
-  closure_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0]}
+  closure_s: {grid: [0.3, 0.6, 0.8, 0.95, 1.0, 1.05, 1.2, 1.5, 2.0, 2.5, 2.95, 3.0, 3.05, 4.0, 6.0, 8.0]}
 template:
+  behavior: {blink: {rate_per_min: 6}}
   segments:
     - {target: road_ahead, duration: 7.0}
     - {target: road_ahead, duration: "${closure_s}", eye_openness: 0.05}
-    - {target: road_ahead, duration: 4.0}
+    - {target: road_ahead, duration: 5.0}
+variation:
+  profiles: [ideal, nominal]

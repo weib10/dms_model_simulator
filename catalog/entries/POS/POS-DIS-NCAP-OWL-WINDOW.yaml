@@ -1,7 +1,8 @@
 id: POS-DIS-NCAP-OWL-WINDOW
-title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗 5 / 4 / 3.5 s，角度 30°–75°"
-summary: "dash_right 在駕駛右前方，往左轉是背向相機：臉框的變化在約 30° 最明顯，角度再大反而變小。
-  對照門檻：Euro NCAP 長分心，連續離開路面 3 s。角度掃描照舊（每個角度各一列）；看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。"
+title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗（左約 73°）5 / 4 / 3.5 s，頭轉 30°–75°"
+summary: "視線目標 driver_window 在左約 73°（看左側鏡是正常行為 N02，見 NEG-DIS-MIRROR-CHECK）。角度掃描的是頭轉多少、其餘由眼睛補：30° 時眼睛補約 43°，75° 頭轉滿、眼睛幾乎不動；轉頭 0.35 s。
+  dash_right 在駕駛右前方，往左轉是背向相機：30° 起左眼框就看不到，75° 連嘴框也沒了。steering_column 在正前方當對照：60° 起左眼框看不到。
+  對照門檻：Euro NCAP 長分心，連續離開路面 3 s。角度每個各一列；看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。"
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, blind_spot]
@@ -10,10 +11,12 @@ params:
   yaw_deg: {grid: [30, 45, 60, 75]}
   look_s: {levels: {small: 5.0, medium: 4.0, large: 3.5}}
 template:
-  behavior: {transition_head_s: 0.3}
+  cabin:
+    targets: {driver_window: [0.30, 1.00, 0.0]}     # driver's side window, about 73 deg left
+  behavior: {transition_head_s: 0.35}
   segments:
-    - {target: road_ahead,  duration: 3.0}
-    - {target: left_mirror, duration: "${look_s}", head_pose: ["${yaw_deg}", 0, 0]}
-    - {target: road_ahead,  duration: 4.0}
+    - {target: road_ahead,    duration: 3.0}
+    - {target: driver_window, duration: "${look_s}", head_pose: ["${yaw_deg}", 0, 0]}
+    - {target: road_ahead,    duration: 4.0}
 variation:
-  cameras: [dash_right]
+  cameras: [dash_right, steering_column]

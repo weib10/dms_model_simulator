@@ -1,21 +1,27 @@
 id: NEG-YWN-SINGING
-title: "唱歌：嘴巴一開一合"
-summary: "對照：打哈欠（嘴張到 0.9、持續數秒）與模型的嘴開合判斷門檻（約 0.55）。嘴峰值 small 0.35、medium 0.45、large 0.5，
-  每次張開 0.4 / 0.7 / 1.0 s、合上 0.4 / 0.5 / 0.5 s，持續約 10 / 19 / 30 s。"
+title: "唱歌：短音節加長音（長音嘴 0.35 / 0.6 / 0.7，拉 0.4 / 1.2 / 2.0 s）"
+summary: "對照：打哈欠（嘴張到 0.9、持續 3–6 s）與模型的嘴開合判斷門檻（約 0.55）。每句兩個短音節（各 0.3 s，嘴 small 0.25、medium 0.35、large 0.4，
+  中間合上 0.2 s）再一個長音：長音嘴 small 0.35 拉 0.4 s、medium 0.6 拉 1.2 s、large 0.7 拉 2.0 s，句尾合上 0.5 s。
+  medium、large 的長音超過 0.55，模型會報張嘴 1.2 / 2.0 s，跟哈欠的差別只剩時長（哈欠 3 s 以上）與張得沒那麼大。
+  共 5 / 7 / 8 句，持續約 9.5 / 19 / 28 s。"
 status: ready
 source: written
 tags: [mouth, singing]
 behaviors: [N16]
 params:
-  peak: {levels: {small: 0.35, medium: 0.45, large: 0.5}}
-  open_s: {levels: {small: 0.4, medium: 0.7, large: 1.0}}
-  close_s: {levels: {small: 0.4, medium: 0.5, large: 0.5}}
-  n: {levels: {small: 12, medium: 16, large: 20}}
+  syl: {levels: {small: 0.25, medium: 0.35, large: 0.4}}
+  peak: {levels: {small: 0.35, medium: 0.6, large: 0.7}}
+  note_s: {levels: {small: 0.4, medium: 1.2, large: 2.0}}
+  n: {levels: {small: 5, medium: 7, large: 8}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
     - repeat: "${n}"
       segments:
-        - {target: road_ahead, duration: "${open_s}", mouth_openness: "${peak}"}
-        - {target: road_ahead, duration: "${close_s}", mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.3, mouth_openness: "${syl}"}
+        - {target: road_ahead, duration: 0.2, mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.3, mouth_openness: "${syl}"}
+        - {target: road_ahead, duration: 0.2, mouth_openness: 0.1}
+        - {target: road_ahead, duration: "${note_s}", mouth_openness: "${peak}"}   # long note
+        - {target: road_ahead, duration: 0.5, mouth_openness: 0.1}
     - {target: road_ahead, duration: 3.0}

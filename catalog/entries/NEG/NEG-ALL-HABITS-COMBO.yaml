@@ -1,29 +1,49 @@
 id: NEG-ALL-HABITS-COMBO
 title: "兩種正常行為疊在一起：邊笑邊看乘客、揉眼時低頭看儀表、邊講話邊看左鏡"
 summary: "對照：同時像兩種違規的組合（像分心＋像打哈欠／閉眼）。三段各一次，中間回前方 3 s：
-  (1) 看乘客 small 0.6 s、medium 0.9 s、large 1.2 s，同時大笑（嘴 0.4 / 0.55 / 0.7、眼 0.6 / 0.45 / 0.3）；
-  (2) 看儀表 0.6 / 1.2 / 1.8 s，同時右手揉右眼；(3) 看左鏡 0.5 / 0.8 / 1.2 s，同時講話（嘴 0.35）。
-  每段都在各自門檻內（長分心 3 s、儀表瞥視 2 s、鏡子 1.5 s、閉眼 1 s）；medium、large 的嘴超過張嘴約 0.55，跟哈欠的差別只剩時長（1.2 s 以內）。"
+  (1) 看乘客 small 0.6 s、medium 0.9 s、large 1.2 s，同時大笑：嘴先張 0.3 s，再半合 0.15 s／張 0.15 s 交替
+  （張 0.5 / 0.6 / 0.7、半合 0.35 / 0.45 / 0.45），眼 0.6 / 0.45 / 0.3；
+  (2) 看儀表 0.6 / 1.2 / 1.8 s，同時右手揉右眼；(3) 看左鏡 0.5 / 0.8 / 1.2 s，同時講話（嘴 0.35 與 0.1 之間一開一合，每段 0.1–0.25 s），
+  回前方的 3 s 繼續講（0.3 / 0.35 的音節）。
+  每段都在各自門檻內（長分心 3 s、儀表瞥視 2 s、鏡子 1.5 s、閉眼 1 s）；medium、large 的張嘴超過約 0.55，但一段一段、總長 1.2 s 以內，不像哈欠。"
 status: ready
 source: written
 tags: [interaction, laugh, rub_eyes, glance]
 behaviors: [N17, N07, N13, N03, N15, N02]
 params:
   hand_scale: {fixed: 1.0}          # hand size (configs/cabin.yaml driver.hand_scale); --param hand_scale=0.8
-  chat_s: {levels: {small: 0.6, medium: 0.9, large: 1.2}}
-  mouth: {levels: {small: 0.4, medium: 0.55, large: 0.7}}
+  chat_k: {levels: {small: 1, medium: 2, large: 3}}             # passenger glance = 0.3 s + chat_k x 0.3 s
+  hi: {levels: {small: 0.5, medium: 0.6, large: 0.7}}
+  lo: {levels: {small: 0.35, medium: 0.45, large: 0.45}}
   eyes: {levels: {small: 0.6, medium: 0.45, large: 0.3}}
   rub_s: {levels: {small: 0.6, medium: 1.2, large: 1.8}}
-  mirror_s: {levels: {small: 0.5, medium: 0.8, large: 1.2}}
+  mirror_lead_s: {levels: {small: 0.25, medium: 0.3, large: 0.45}}  # mirror glance = lead + mirror_k x 0.25 s
+  mirror_k: {levels: {small: 1, medium: 2, large: 3}}
 template:
   cabin:
     driver: {hand_scale: "${hand_scale}"}
   behavior: {transition_head_s: 0.25}
   segments:
     - {target: road_ahead,  duration: 3.0}
-    - {target: passenger,   duration: "${chat_s}", mouth_openness: "${mouth}", eye_openness: "${eyes}"}
+    # (1) laughing glance at the passenger (the first pulse covers the head turn)
+    - {target: passenger,   duration: 0.3, mouth_openness: "${hi}", eye_openness: "${eyes}"}
+    - repeat: "${chat_k}"
+      segments:
+        - {target: passenger, duration: 0.15, mouth_openness: "${lo}", eye_openness: "${eyes}"}
+        - {target: passenger, duration: 0.15, mouth_openness: "${hi}", eye_openness: "${eyes}"}
     - {target: road_ahead,  duration: 3.0}
+    # (2) rubbing the right eye while glancing at the cluster
     - {target: cluster,     duration: "${rub_s}", hand: at_eye}
     - {target: road_ahead,  duration: 3.0}
-    - {target: left_mirror, duration: "${mirror_s}", mouth_openness: 0.35}
-    - {target: road_ahead,  duration: 3.0, mouth_openness: 0.35}
+    # (3) talking while checking the left mirror, then on talking with eyes on the road
+    - {target: left_mirror, duration: "${mirror_lead_s}", mouth_openness: 0.35}
+    - repeat: "${mirror_k}"
+      segments:
+        - {target: left_mirror, duration: 0.1,  mouth_openness: 0.1}
+        - {target: left_mirror, duration: 0.15, mouth_openness: 0.35}
+    - repeat: 5
+      segments:
+        - {target: road_ahead, duration: 0.25, mouth_openness: 0.3}
+        - {target: road_ahead, duration: 0.1,  mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.15, mouth_openness: 0.35}
+        - {target: road_ahead, duration: 0.1,  mouth_openness: 0.1}

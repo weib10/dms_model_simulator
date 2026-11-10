@@ -1,20 +1,32 @@
 id: NEG-DIS-PASSENGER-CHAT
-title: "跟乘客聊天：反覆看乘客一眼（每次 0.5 / 0.8 / 1.2 s）"
-summary: "對照門檻：VATS（30 s 內累計 10 s）與單次長分心 3 s。累計 small 3 × 0.5 = 1.5 s、medium 5 × 0.8 = 4 s、
-  large 7 × 1.2 = 8.4 s；每次之間回前方 3 s，large 共約 30 s。"
+title: "跟乘客聊天：邊講話邊反覆看乘客一眼（每次 0.6 / 1.2 / 1.8 s，3 / 5 / 6 次）"
+summary: "對照門檻：VATS（30 s 內累計 10 s）與單次長分心 3 s。每次看乘客 small 0.6 s、medium 1.2 s、large 1.8 s，
+  共 3 / 5 / 6 次，每次之間回前方 4.5 s：累計 1.8 / 6 / 10.8 s，任一 30 s 內最多 1.8 / 6 / 9 s（large 貼著 10 s）。
+  全程在講話：嘴在 0.1 與 0.3 / 0.35 之間一開一合（每段 0.1–0.25 s，約 3 Hz），回前方的最後 0.3 s 停頓。"
 status: ready
 source: written
 tags: [glance, head_turn, passenger]
 behaviors: [N07]
 params:
-  glance_s: {levels: {small: 0.5, medium: 0.8, large: 1.2}}
-  n: {levels: {small: 3, medium: 5, large: 7}}
+  glance_k: {levels: {small: 1, medium: 2, large: 3}}     # glance = glance_k x 0.6 s
+  n: {levels: {small: 3, medium: 5, large: 6}}
 template:
   behavior: {transition_head_s: 0.25}
   segments:
     - {target: road_ahead, duration: 3.0}
     - repeat: "${n}"
       segments:
-        - {target: passenger,  duration: "${glance_s}", mouth_openness: 0.3}
-        - {target: road_ahead, duration: 3.0, mouth_openness: 0.3}
+        - repeat: "${glance_k}"        # talking while looking at the passenger (first pulse covers the head turn)
+          segments:
+            - {target: passenger, duration: 0.25, mouth_openness: 0.3}
+            - {target: passenger, duration: 0.1,  mouth_openness: 0.1}
+            - {target: passenger, duration: 0.15, mouth_openness: 0.35}
+            - {target: passenger, duration: 0.1,  mouth_openness: 0.1}
+        - repeat: 7                    # back on the road, still talking: 7 x 0.6 s + 0.3 s pause = 4.5 s
+          segments:
+            - {target: road_ahead, duration: 0.25, mouth_openness: 0.3}
+            - {target: road_ahead, duration: 0.1,  mouth_openness: 0.1}
+            - {target: road_ahead, duration: 0.15, mouth_openness: 0.35}
+            - {target: road_ahead, duration: 0.1,  mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.3, mouth_openness: 0.1}
     - {target: road_ahead, duration: 2.0}

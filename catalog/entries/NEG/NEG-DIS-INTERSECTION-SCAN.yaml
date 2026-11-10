@@ -1,20 +1,28 @@
 id: NEG-DIS-INTERSECTION-SCAN
-title: "路口左右張望：看左前、右前路面各 1.0 / 2.0 / 2.8 s"
-summary: "對照門檻：長分心 3 s（只看頭姿或臉框的後處理會把轉頭當分心）。視線還在路面上（road_left / road_right，約 ±22°），
-  真值不是分心，但頭轉的角度不小。左、右、左各看一次，每次 small 1.0 s、medium 2.0 s、large 2.8 s（頭轉著接近 3 s 但不超過，
-  只看頭轉角度時最像長分心；真值一直在路上），中間回前方 1 s。"
+title: "路口左右張望：轉頭看左、右橫向路面（約 ±63°）各 0.8 / 1.2 / 2.0 s"
+summary: "對照門檻：長分心 3 s（只看頭姿或臉框的後處理會把轉頭當分心）。路口張望真的會轉頭 45–80°：這條加了橫向路面目標
+  cross_left / cross_right（車前 3 m、左右 6 m，約 ±63°，頭轉約 41°、其餘靠眼睛），並把它們算進 on_road_targets，真值全程在路上，
+  但頭轉的角度很大。左、右、左各看一次，每次 small 0.8 s、medium 1.2 s、large 2.0 s（大角度又停留 2 s，只看頭轉角度時最像長分心），
+  中間回前方 1 s。"
 status: ready
 source: written
 tags: [head_turn, intersection]
 behaviors: [N05]
 params:
-  dwell_s: {levels: {small: 1.0, medium: 2.0, large: 2.8}}
+  dwell_s: {levels: {small: 0.8, medium: 1.2, large: 2.0}}
 template:
+  behavior:
+    events:
+      on_road_targets: [road_ahead, road_left, road_right, cross_left, cross_right]
+  cabin:
+    targets:                        # cross traffic at the intersection: 3 m ahead, 6 m to the side (about +-63 deg)
+      cross_left:  [3.0,  6.0, 0.0]
+      cross_right: [3.0, -6.0, 0.0]
   segments:
-    - {target: road_ahead, duration: 3.0}
-    - {target: road_left,  duration: "${dwell_s}"}
-    - {target: road_ahead, duration: 1.0}
-    - {target: road_right, duration: "${dwell_s}"}
-    - {target: road_ahead, duration: 1.0}
-    - {target: road_left,  duration: "${dwell_s}"}
-    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead,  duration: 3.0}
+    - {target: cross_left,  duration: "${dwell_s}"}
+    - {target: road_ahead,  duration: 1.0}
+    - {target: cross_right, duration: "${dwell_s}"}
+    - {target: road_ahead,  duration: 1.0}
+    - {target: cross_left,  duration: "${dwell_s}"}
+    - {target: road_ahead,  duration: 3.0}

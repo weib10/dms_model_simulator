@@ -1,25 +1,25 @@
 id: BND-DRW-PERCLOS
-title: "反覆短閉眼（每次 0.5 s），閉眼比例從 50% 掃到 14%"
-summary: "閉眼 0.5 s、睜眼 open_s，重複 6 次；閉眼比例 = 0.5 / (0.5 + open_s)。每次閉眼都很短，只有看「一段時間內閉眼比例」的規則才會有反應。"
+title: "反覆短閉眼（每次 0.5 s）持續 60 s 以上，閉眼比例從 50% 掃到 14%"
+summary: "閉眼 0.5 s、睜眼 open_s 為一輪，重複到滿 60 s（open_s 3 s 那列 18 輪 = 63 s）；閉眼比例 = 0.5 / (0.5 + open_s)：50% / 40% / 33% / 25% / 20% / 14%。
+  每次閉眼都很短，只有看「一段時間內閉眼比例」的規則才會有反應。PERCLOS 一般用 60 s 視窗（P80：一分鐘內眼睛閉合 80% 以上的時間比例），
+  所以這段反覆閉眼至少一整個 60 s 視窗長，視窗裡的比例就是上面的值（差不到一輪；另有每分鐘 2 次的眨眼）。
+  模板不能做運算，輪數跟著 open_s 變，所以每個比例寫成一整個 repeat 區塊（各一列）。"
 status: ready
 source: written
 tags: [closure, perclos]
 behaviors: [V05]
 params:
-  open_s: {grid: [0.5, 0.75, 1.0, 1.5, 2.0, 3.0]}
+  pattern:
+    grid:     # 0.5 s closed + open_s open, repeated to at least 60 s
+      - {repeat: 60, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 0.5}]}    # open 0.5 s: 50%, 60 s
+      - {repeat: 48, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 0.75}]}   # open 0.75 s: 40%, 60 s
+      - {repeat: 40, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 1.0}]}    # open 1 s: 33%, 60 s
+      - {repeat: 30, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 1.5}]}    # open 1.5 s: 25%, 60 s
+      - {repeat: 24, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 2.0}]}    # open 2 s: 20%, 60 s
+      - {repeat: 18, segments: [{target: road_ahead, duration: 0.5, eye_openness: 0.05}, {target: road_ahead, duration: 3.0}]}    # open 3 s: 14%, 63 s
 template:
   behavior: {blink: {rate_per_min: 2}}
   segments:
     - {target: road_ahead, duration: 7.0}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
-    - {target: road_ahead, duration: "${open_s}"}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
-    - {target: road_ahead, duration: "${open_s}"}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
-    - {target: road_ahead, duration: "${open_s}"}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
-    - {target: road_ahead, duration: "${open_s}"}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
-    - {target: road_ahead, duration: "${open_s}"}
-    - {target: road_ahead, duration: 0.5, eye_openness: 0.05}
+    - "${pattern}"
     - {target: road_ahead, duration: 4.0}

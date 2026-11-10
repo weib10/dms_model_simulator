@@ -1,7 +1,8 @@
 id: POS-DIS-NCAP-OWL-DOWN
-title: "Euro NCAP 長分心（owl，往下看）：看中控或乘客腳踏區 5 / 4 / 3.5 s"
-summary: "頭會往下、往右轉。低頭的部分在臉框的水平變化上很小，主要只剩水平分量。
-  對照門檻：Euro NCAP 長分心，連續離開路面 3 s 以上。兩個區域（中控、乘客腳踏區）照舊各一列；看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。
+title: "Euro NCAP 長分心（owl，往下看）：看大腿、中控或乘客腳踏區 5 / 4 / 3.5 s"
+summary: "頭往下（看中控、腳踏區時也往右轉），轉頭 0.35 s。三個區域各一列：大腿（最常見，頭 [-5, -35, 0]，幾乎只有低頭）、中控 [-30, -25, 0]、乘客腳踏區 [-45, -35, 0]。
+  低頭的部分在 dash_right 的臉框上變化很小，看大腿那列幾乎只剩低頭；steering_column 在正前方下方，低頭看得比較清楚，當對照。
+  對照門檻：Euro NCAP 長分心，連續離開路面 3 s 以上。看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。
   模板不能做運算，所以那一段寫成同一段 0.5 s 重複 n 次（small 10、medium 8、large 7 次），跟一整段逐幀相同，不是停頓。"
 status: ready
 source: written
@@ -10,17 +11,18 @@ behaviors: [V03]
 params:
   zone:
     grid:
+      - {target: phone_lap,          duration: 0.5, head_pose: [-5, -35, 0]}    # lap (the most common form)
       - {target: center_display,     duration: 0.5, head_pose: [-30, -25, 0]}   # infotainment / centre console
       - {target: passenger_footwell, duration: 0.5, head_pose: [-45, -35, 0]}   # passenger footwell
   n: {levels: {small: 10, medium: 8, large: 7}}                                 # x 0.5 s = 5 / 4 / 3.5 s
 template:
   cabin:
     targets: {passenger_footwell: [0.60, -0.60, -0.65]}
-  behavior: {transition_head_s: 0.3}
+  behavior: {transition_head_s: 0.35}
   segments:
     - {target: road_ahead, duration: 3.0}
     - repeat: "${n}"
       segments: ["${zone}"]
     - {target: road_ahead, duration: 4.0}
 variation:
-  cameras: [dash_right]
+  cameras: [dash_right, steering_column]

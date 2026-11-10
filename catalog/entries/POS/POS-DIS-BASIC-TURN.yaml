@@ -1,6 +1,7 @@
 id: POS-DIS-BASIC-TURN
 title: "基本款：頭向右轉 60° 看乘客 7 s，再回正（60 / 60 / 45°，8 / 7 / 3.5 s）"
 summary: "分心家族的基本款：角度大、時間長，回正後恢復正常。只用 dash_right、只轉右邊：從這台相機看右轉時臉的變化最穩定。
+  轉頭和回正各 0.35 s（真人大角度轉頭約 0.3–0.6 s）。
   對照門檻：長分心，連續離開路面 3 s。small 頭轉 60° 8 s、medium 60° 7 s、large 45° 3.5 s（剛過門檻）。"
 status: ready
 source: written
@@ -10,7 +11,7 @@ params:
   turn_s: {levels: {small: 8.0, medium: 7.0, large: 3.5}}
   yaw: {levels: {small: -60, medium: -60, large: -45}}
 template:
-  behavior: {transition_head_s: 0.1}
+  behavior: {transition_head_s: 0.35}
   segments:
     - {target: road_ahead, duration: 3.0}
     - {target: passenger,  duration: "${turn_s}", head_pose: ["${yaw}", 0, 0]}

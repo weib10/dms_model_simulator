@@ -1,10 +1,11 @@
 id: NAT-ALL-CLEAN-300
 title: "300 s 日常駕駛：看路、看鏡子、看儀表，沒有手機、疲勞、抽菸、未繫"
-summary: "誤報率的基準線。用 gen-scenario 產生，四種片段的頻率都設 0；看鏡子、看乘客會有短暫轉頭。"
+summary: "誤報率的基準線。用 gen-scenario 產生，四種片段的頻率都設 0；看鏡子、看乘客會有短暫轉頭。
+  離開路面的目標不會直接相接（中間一定回到路面），鏡子最長 1.5 s、儀表、中控、乘客最長 2 s，所以任何 seed 都沒有違規。"
 status: ready
 source: generated
 tags: [natural, false_alarm]
-behaviors: [N01, N02, N03]
+behaviors: [N01, N02, N03, N07]
 generator:
   duration_s: 300
   config:
@@ -14,6 +15,16 @@ generator:
     seatbelt_off_episodes: {rate_per_min: 0}
     transitions:
       road_ahead: {phone_lap: 0.0}
-      center_display: {phone_lap: 0.0}
+      rearview_mirror: {left_mirror: 0.0}
+      cluster: {center_display: 0.0}
+      center_display: {phone_lap: 0.0, cluster: 0.0}
+    dwell:                         # off-road looks never chain and stay short (N02 mirror <= 1.5 s, N03 <= 2 s)
+      road_ahead: {mean_s: 5.0, min_s: 1.5}   # >= 1.5 s back on the road between looks; ~88 % eyes on road (Tivesten 2014)
+      left_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      right_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      rearview_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      cluster: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 2.0}
+      center_display: {max_s: 2.0}
+      passenger: {max_s: 2.0}
 variation:
   seeds: [0, 1]

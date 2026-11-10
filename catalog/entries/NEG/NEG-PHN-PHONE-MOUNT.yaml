@@ -1,7 +1,9 @@
 id: NEG-PHN-PHONE-MOUNT
-title: "手機放在儀表板的手機架上（導航），手在方向盤上，偶爾看一眼"
+title: "手機放在儀表板的手機架上（導航）：偶爾看一眼，最後伸手點一下（1.0 / 1.5 / 2.0 s）"
 summary: "對照：手拿手機（V09）。畫面裡有手機框，但沒用手拿、不在大腿也不貼耳，真值 phone_use 全程為否。
-  看手機架每次 small 0.5 s、medium 1.0 s、large 1.5 s，共 3 次，中間回路面 3 s。
+  看手機架每次 small 0.5 s、medium 1.0 s、large 1.5 s，共 3 次，中間回路面 3 s；最後一次邊看邊伸右手點手機架上的手機
+  （手在手機前面，hand: mount），small 1.0 s、medium 1.5 s、large 2.0 s：手和手機框在一起，是最像手拿手機的情況。
+  large 累計看手機架 6.5 s、單次最長 2.0 s，都在 VATS 10 s、長分心 3 s 以下。
   出風口的手機架只有 center_stack 相機拍得到（會有手機框），dash_right 拍不到（對照用）。"
 status: ready
 source: written
@@ -9,15 +11,20 @@ tags: [phone, glance]
 behaviors: [N28]
 params:
   look_s: {levels: {small: 0.5, medium: 1.0, large: 1.5}}
+  tap_s: {levels: {small: 1.0, medium: 1.5, large: 2.0}}
 template:
   cabin:
     targets:
       phone_mount: [0.60, -0.28, -0.12]   # 方向盤右上方的出風口手機架
+    hands:
+      mount: [0.56, -0.27, -0.13]         # 右手指尖點在手機架上的手機（手的中心在手機前面一點）
   segments:
     - {target: road_ahead, duration: 3.0, phone: phone_mount}
     - repeat: 3
       segments:
         - {target: phone_mount, duration: "${look_s}", phone: phone_mount}
         - {target: road_ahead,  duration: 3.0,         phone: phone_mount}
+    - {target: phone_mount, duration: "${tap_s}", phone: phone_mount, hand: mount}   # tapping the mounted phone
+    - {target: road_ahead,  duration: 3.0,        phone: phone_mount}
 variation:
   cameras: [center_stack, dash_right]

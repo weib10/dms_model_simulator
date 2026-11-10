@@ -6,8 +6,11 @@
 - 全部條目一覽：[INDEX.md](INDEX.md)（`dms-sim catalog index` 產生）
 - 條目：`entries/<類別>/<id>.yaml`，一條一個檔
 - 行為清單：[behaviors.yaml](behaviors.yaml)。每個行為類別一個編號（V 違規、N 正常、C 外觀條件），標常見度、好不好分、會跟哪幾號搞混；
-  條目用 `behaviors:` 指過去（第一個是主行為）。★（常見且好分）的行為一定不能出問題：`tests/test_behaviors.py` 檢查每個 ★ 行為都有條目，
-  而且條目的真值符合 `expect`（違規在 small 難度也要觸發，正常行為在 large 難度也不能越界）。常見度、好分度是估計值，有真實案例再改。
+  條目用 `behaviors:` 指過去（第一個是主行為）。★ = 必測（`must_test: true`，獨立欄位，跟常見度、好分度無關），一定不能出問題：
+  `tests/test_behaviors.py` 檢查每個必測行為都有條目，而且條目在每個 seed（隨機長段 10 個）、每個難度的真值都符合 `expect`
+  （違規每級都要觸發、POS/CLR 要達到最短時長、手機和菸要有相機看得到；正常行為不能越界）。常見度、好分度是估計值，有真實案例再改。
+- 哈欠用劇本事件：段落寫 `yawn: {start: true, duration_s: 5, peak_openness: 0.9}`，該段開頭開始一次哈欠（sin 輪廓），真值 `yawning` 才會成立；
+  只寫 `mouth_openness: 0.9` 是張嘴，不是哈欠。可加 `eye_openness_at_peak` 讓頂點時眼睛瞇起。
 - 難度：參數寫成 `{levels: {small: …, medium: …, large: …}}`。難度 = 離它像的那個違規門檻多近（small 一看就知道，large 貼著門檻但不跨過），
   每條在 summary 寫明對照的門檻。一列只取一個難度，條目裡所有 levels 參數同時取那一級（不做笛卡兒積）。
 - 模型誤差設定：[profiles.yaml](profiles.yaml)。分維度分等級（`jit` 抖動、`jmp` 跳動、`mis` 漏框、`drp` 掉幀、`lat` 延遲、`cnf` 分數偏低、`flp` 開閉眼嘴判錯、`fp` 誤報，各 1–3 級），用 `+` 疊加，例如 `jit2+jmp2+mis1`；`bad`、`worst` 是現成組合。等級是刻意粗略的，用來看後處理撐得住多少誤差。

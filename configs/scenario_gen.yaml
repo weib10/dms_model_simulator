@@ -30,6 +30,10 @@ transitions:
 
 dwell:                         # per-target dwell distribution; "default" for targets not listed
   default:         {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  left_mirror:     {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}   # = default (listed so entries can override)
+  right_mirror:    {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  rearview_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}
+  cluster:         {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 3.0}
   road_ahead:      {mean_s: 4.0, sigma: 0.6, min_s: 0.8, max_s: 15.0}
   road_left:       {mean_s: 1.0, sigma: 0.4, min_s: 0.3, max_s: 3.0}
   road_right:      {mean_s: 1.0, sigma: 0.4, min_s: 0.3, max_s: 3.0}

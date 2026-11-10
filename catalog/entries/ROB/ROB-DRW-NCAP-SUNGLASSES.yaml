@@ -1,16 +1,20 @@
 id: ROB-DRW-NCAP-SUNGLASSES
-title: "Euro NCAP 遮擋（墨鏡）：眼框完全偵測不到"
-summary: "模擬器沒有墨鏡幾何，用 profile no_eyes（眼框偵測率 0）近似：輸出裡沒有任何眼框；同一串行為含一段 4 s 轉頭看乘客。"
+title: "Euro NCAP 遮擋（墨鏡）：眼框完全偵測不到時，轉頭看乘客 4 s、閉眼點頭 4 s"
+summary: "模擬器沒有墨鏡幾何，用 profile no_eyes（眼框偵測率 0）近似：輸出裡沒有任何眼框。同一串行為含兩段：轉頭看乘客 4 s（頭 60°），
+  以及最關鍵的閉眼 4 s、頭往前點 20°（看不到眼睛時，只剩臉框和頭姿能看出睡著）。轉頭、點頭都是 0.35 s。
+  對照門檻：長分心連續離開路面 3 s；睡著連續閉眼 3 s。"
 status: ready
 source: written
-tags: [ncap, occlusion, sunglasses, robustness]
-behaviors: [C01, V01]
+tags: [ncap, occlusion, sunglasses, robustness, closure]
+behaviors: [C01, V01, V05, V06]
 template:
-  behavior: {transition_head_s: 0.1}
+  behavior: {transition_head_s: 0.35}
   segments:
     - {target: road_ahead, duration: 8.0}
     - {target: passenger,  duration: 4.0, head_pose: [-60, 0, 0]}
     - {target: road_ahead, duration: 8.0}
+    - {target: road_ahead, duration: 4.0, head_pose: [0, -20, 0], eye_openness: 0.05}
+    - {target: road_ahead, duration: 5.0}
 variation:
   cameras: [dash_right]
   profiles: [no_eyes]

@@ -1,15 +1,16 @@
 id: POS-YWN-COVERED
-title: "用手遮住嘴打哈欠"
-summary: "違規真的發生，但嘴被手擋住。對照：哈欠嘴張到約 0.9、持續數秒（一般 3–6 s）。難度 = 多難認出來：small 嘴張大 4 s、medium 3 s、large 2 s，手一直在嘴前。
-  真值 yawning 目前只有 yawn 事件會設（見 catalog/behaviors.yaml V07 的說明，待查）。"
+title: "用手遮住嘴打哈欠（5 / 4 / 3 s）"
+summary: "違規真的發生，但嘴被手擋住。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  對照：哈欠一般 3–10 s（文獻 5.9 ± 1.9 s）。難度 = 多難認出來：small 5 s、medium 4 s、large 3 s，手一直在嘴前。
+  dash_right 整段看不到嘴；steering_column 看得到一部分。嘴完全被擋時，後處理認不出哈欠是可以接受的。"
 status: ready
 source: written
 tags: [yawn, hand_near_face, occlusion]
 behaviors: [V07, N21]
 params:
-  yawn_s: {levels: {small: 4.0, medium: 3.0, large: 2.0}}
+  yawn_s: {levels: {small: 5.0, medium: 4.0, large: 3.0}}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: 0.9, hand: at_mouth}
+    - {target: road_ahead, duration: "${yawn_s}", hand: at_mouth, yawn: {start: true, duration_s: "${yawn_s}", peak_openness: 0.9}}
     - {target: road_ahead, duration: 3.0}

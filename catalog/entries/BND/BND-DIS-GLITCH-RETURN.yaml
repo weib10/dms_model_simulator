@@ -1,17 +1,18 @@
 id: BND-DIS-GLITCH-RETURN
-title: "頭轉 2 s，短暫回正 0.1–1.0 s，再轉 2 s"
-summary: "兩次轉頭中間夾一次很短的回正。看後處理把它當成一次還是兩次分心、計時有沒有歸零。"
+title: "頭轉 2 s，短暫回正 0.3–1.5 s，再轉 2 s"
+summary: "兩次轉頭中間夾一次很短的回正。看後處理把它當成一次還是兩次分心、計時有沒有歸零。
+  頭轉 50° 要 0.3 s（transition_head_s 0.3），所以回正最短 0.3 s：0.3 s 時頭剛好轉回正前方就又轉走。更短的跳動是模型輸出的問題，交給 emulator 的 jmp 誤差（profiles.yaml）。"
 status: ready
 source: written
 tags: [head_turn, glitch]
 behaviors: [V01]
 params:
-  gap_s: {grid: [0.1, 0.2, 0.3, 0.5, 1.0]}
+  gap_s: {grid: [0.3, 0.5, 0.8, 1.0, 1.5]}
 template:
   cabin:
     targets:                        # 3 m away in the head's direction: the eyes follow the head
       head_-50: [1.928, -2.298, 0.0]
-  behavior: {transition_head_s: 0.1}
+  behavior: {transition_head_s: 0.3}
   segments:
     - {target: road_ahead, duration: 3.0}
     - {target: "head_-50", duration: 2.0, head_pose: [-50, 0, 0]}

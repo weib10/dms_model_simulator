@@ -1,14 +1,15 @@
 id: NEG-DIS-TRAFFIC-LIGHT
-title: "抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1 / 2 / 3 s"
+title: "抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1.0 / 2.0 / 2.8 s"
 summary: "紅綠燈在擋風玻璃上緣外，看它仍算在看路（這條把 tl_* 加進 on_road_targets，真值全程在路上）。
-  對照：頭姿往上偏、視線離開正前方，像分心；仰角與時長越大越像。"
+  對照門檻：長分心 3 s（只看頭姿的後處理會把抬頭當分心）。頭姿往上偏、視線離開正前方，仰角與時長越大越像：
+  small 10° 1.0 s、medium 20° 2.0 s、large 30° 2.8 s（貼著 3 s 但不到），看兩次，中間回前方 3 s。"
 status: ready
 source: written
 tags: [look_up, traffic_light]
 behaviors: [N08]
 params:
   pitch: {levels: {small: 10, medium: 20, large: 30}}
-  look_s: {levels: {small: 1.0, medium: 2.0, large: 3.0}}
+  look_s: {levels: {small: 1.0, medium: 2.0, large: 2.8}}
 template:
   behavior:
     events:

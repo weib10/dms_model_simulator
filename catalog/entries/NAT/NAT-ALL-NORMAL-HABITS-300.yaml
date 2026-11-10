@@ -2,7 +2,7 @@ id: NAT-ALL-NORMAL-HABITS-300
 title: "300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤"
 summary: "量每小時誤報數用的長段。沒有任何違規（沒有手機、疲勞、抽菸、未繫，也不看大腿），只有看路、看鏡子、看儀表、偶爾看乘客，
   加上 configs/scenario_gen.yaml 的 habit_episodes（各種正常習慣，各有自己的時長）。這條的難度是習慣出現的頻率：
-  small 每分鐘 1 次、medium 2 次、large 4 次（是例外：其他條目的難度是離門檻多近）。看乘客、看中控最長 2.5 s、2 s。"
+  small 每分鐘 1 次、medium 2 次、large 4 次（是例外：其他條目的難度是離門檻多近）。離開路面的目標不會直接相接（中間一定回到路面），鏡子最長 1.5 s、儀表、中控、乘客最長 2 s。"
 status: ready
 source: generated
 tags: [natural, false_alarm, habits]
@@ -19,9 +19,16 @@ generator:
     habit_episodes: {rate_per_min: "${rate}"}
     transitions:
       road_ahead: {phone_lap: 0.0}
-      center_display: {phone_lap: 0.0}
-    dwell:
-      passenger: {max_s: 2.5}
+      rearview_mirror: {left_mirror: 0.0}
+      cluster: {center_display: 0.0}
+      center_display: {phone_lap: 0.0, cluster: 0.0}
+    dwell:                         # off-road looks never chain and stay short (N02 mirror <= 1.5 s, N03 <= 2 s)
+      road_ahead: {mean_s: 5.0, min_s: 1.5}   # >= 1.5 s back on the road between looks; ~88 % eyes on road (Tivesten 2014)
+      left_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      right_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      rearview_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      cluster: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 2.0}
       center_display: {max_s: 2.0}
+      passenger: {max_s: 2.0}
 variation:
   seeds: [0, 1]

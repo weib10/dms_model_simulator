@@ -361,3 +361,23 @@ def test_habits_on_top_of_builtin_kinds_never_break_generation():
                     assert s.get("hand") == "at_mouth"
                 if s.get("held"):
                     assert not s.get("cigarette") and not s.get("phone")
+
+
+def test_scripted_yawn_sets_the_label_and_narrows_the_eyes():
+    sc = {"name": "t", "behavior": {"blink": {"rate_per_min": 0}},
+          "segments": [{"target": "road_ahead", "duration": 1.0},
+                       {"target": "road_ahead", "duration": 2.0,
+                        "yawn": {"start": True, "duration_s": 4.0, "peak_openness": 0.8, "eye_openness_at_peak": 0.3}},
+                       {"target": "road_ahead", "duration": 3.0}]}
+    cabin, beh, frames = _frames(sc)
+    ev = label_events(frames, cabin, beh.cfg)
+    fps = beh.fps
+    on = [i for i, e in enumerate(ev) if e["yawning"]]
+    assert on[0] == int(1.0 * fps) and len(on) == int(4.0 * fps)      # starts with the segment, runs on past it
+    assert max(f.mouth_openness for f in frames) == pytest.approx(0.8, abs=1e-6)
+    assert min(f.openness_left for f in frames) == pytest.approx(0.3, abs=1e-6)
+    assert not any(e["eyes_closed"] for e in ev)
+    plain = dict(sc, segments=[dict(s) for s in sc["segments"]])
+    plain["segments"][1] = {"target": "road_ahead", "duration": 2.0, "mouth_openness": 0.9}
+    _, _, frames2 = _frames(plain)
+    assert not any(f.yawning for f in frames2)                          # an open mouth alone is not a yawn

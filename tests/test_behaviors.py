@@ -1,7 +1,7 @@
-"""Behaviour list (catalog/behaviors.yaml) and the core guarantee: behaviours that are common and easy to tell apart
-must never go wrong. For every core behaviour there is a ready entry, and every entry that lists it produces the
-expected ground truth: a violation fires its label even at the `small` level; a normal behaviour stays inside its
-bounds even at the `large` level."""
+"""Behaviour list (catalog/behaviors.yaml) and the must-test guarantee: behaviours marked must_test must never go
+wrong. For every must-test behaviour there is a ready entry, and every entry that lists it produces the expected
+ground truth on every seed and level (see test_core_entries_produce_the_expected_truth). Every NEG entry also stays
+below the violation thresholds at its hardest level."""
 import numpy as np
 import pytest
 from dms_model_simulator import catalog as C
@@ -35,10 +35,36 @@ def _param_sets(entry, level):
     return C.expand_params(entry, "boundary", rng, levels=[level] if C.has_levels(entry) else None, max_rows=10_000)
 
 
-def _labels(entry, params):
-    sc = C.build_scenario(entry, params, "core-check", seed=0)
-    sim = Simulation(sc, "dash_right", seed=0, fps=float(entry.get("fps", C.DEFAULT_FPS)))
+GEN_SEEDS = range(10)          # generated (random) drives are checked on more seeds than they list
+
+
+def _seeds(entry):
+    var = {**C.DEFAULT_VARIATION, **(entry.get("variation") or {})}
+    seeds = [int(x) for x in var["seeds"]]
+    return sorted(set(seeds) | set(GEN_SEEDS)) if "generator" in entry else seeds
+
+
+def _labels(entry, params, seed=0, sim_out=None):
+    sc = C.build_scenario(entry, params, "core-check", seed=seed)
+    sim = Simulation(sc, "dash_right", seed=seed, fps=float(entry.get("fps", C.DEFAULT_FPS)))
+    if sim_out is not None:
+        sim_out.append(sim)
     return label_events(sim.frames, sim.cabin, sim.behavior.cfg)
+
+
+def _visible_share(entry, params, seed, cls, label):
+    """Best share over the entry's cameras of the frames with `label` set in which the truth box of `cls` exists."""
+    var = {**C.DEFAULT_VARIATION, **(entry.get("variation") or {})}
+    best = 0.0
+    for cam in var["cameras"]:
+        sim = Simulation(C.build_scenario(entry, params, "vis", seed=seed), cam, seed=seed,
+                         fps=float(entry.get("fps", C.DEFAULT_FPS)))
+        truths = sim.truths()
+        idx = [i for i, t in enumerate(truths) if t["events"].get(label)]
+        if idx:
+            seen = sum(any(d["class"] == cls for d in truths[i]["detections"]) for i in idx)
+            best = max(best, seen / len(idx))
+    return best
 
 
 def _core_entries():
@@ -51,6 +77,10 @@ def _core_entries():
 
 @pytest.mark.parametrize("entry", _core_entries())
 def test_core_entries_produce_the_expected_truth(entry):
+    """Every seed (generated drives: 10 seeds), every level and parameter set:
+    - a must-test violation sets its label (a BND sweep: at least one set, sweeps go below thresholds on purpose);
+      in POS / CLR entries it lasts at least its min_s, and in POS entries its object is visible on some camera;
+    - the normal behaviours stay inside their bounds."""
     listed = [BEHAVIORS[b] for b in entry["behaviors"]]
     allowed = {b["expect"]["label"] for b in listed if b["kind"] == "violation" and b.get("expect")}
     normals = [b for b in listed if b["kind"] == "normal" and b.get("expect")]
@@ -61,29 +91,35 @@ def test_core_entries_produce_the_expected_truth(entry):
             if MAX_S_LABEL[k] not in allowed:
                 max_s[k] = max(max_s.get(k, 0.0), float(v))
     # a generated (random) drive may or may not contain a given violation: only its normal bounds are checked
-    core_violations = [b for b in listed if b["kind"] == "violation" and C.is_core(b)] if "generator" not in entry else []
-    # violations must fire at their mildest level (with levels: every set of `small`; a sweep without levels:
-    # at least one set, since a sweep has values below the threshold on purpose); normal behaviours must hold
-    # at their hardest level, every set
-    levelled = C.has_levels(entry)
-    fired = {b["expect"]["label"]: False for b in core_violations}
-    for level, check_v, check_n in (("small", True, not levelled), ("large", False, levelled)):
-        if levelled is False and level == "large":
-            break                                           # no levels: one pass covers both checks
-        for params in _param_sets(entry, level):
-            ev = _labels(entry, params)
-            if check_v:
-                for lab in fired:
-                    hit = any(f[lab] for f in ev)
-                    fired[lab] |= hit
-                    assert hit or not levelled, f"{entry['id']} {params}: never sets {lab}"
-            if check_n:
-                for lab in never:
-                    hit = [i for i, f in enumerate(ev) if f[lab]]
-                    assert not hit, f"{entry['id']} {params}: {lab} set at frame {hit[0]}"
-                for k, lim in max_s.items():
-                    worst = max(f[k] for f in ev)
-                    assert worst <= lim + 1e-6, f"{entry['id']} {params}: {k} reaches {worst:.2f} s > {lim} s"
+    must_v = [b for b in listed if b["kind"] == "violation" and C.is_core(b)] if "generator" not in entry else []
+    sweep = C.category(entry) == "BND"
+    timed = C.category(entry) in ("POS", "CLR")
+    fired = {b["expect"]["label"]: False for b in must_v}
+    sets = [p for lv in (C.LEVELS if C.has_levels(entry) else [None])
+            for p in _param_sets(entry, lv or "medium")]
+    for params in sets:
+        for seed in _seeds(entry):
+            ev = _labels(entry, params, seed)
+            for b in must_v:
+                lab = b["expect"]["label"]
+                hit = any(f[lab] for f in ev)
+                fired[lab] |= hit
+                assert hit or sweep, f"{entry['id']} {params} seed {seed}: never sets {lab} ({b['name']})"
+                if hit and timed:
+                    for k, lim in (b["expect"].get("min_s") or {}).items():
+                        longest = max(f[k] for f in ev)
+                        assert longest >= lim - 1e-6, \
+                            f"{entry['id']} {params} seed {seed}: {k} only {longest:.2f} s < {lim} s ({b['name']})"
+                if hit and C.category(entry) == "POS" and b["expect"].get("visible") and seed == _seeds(entry)[0]:
+                    share = _visible_share(entry, params, seed, b["expect"]["visible"], lab)
+                    assert share >= 0.5, (f"{entry['id']} {params}: {b['expect']['visible']} visible in only "
+                                          f"{share:.0%} of the {lab} frames on its cameras")
+            for lab in never:
+                hit = [i for i, f in enumerate(ev) if f[lab]]
+                assert not hit, f"{entry['id']} {params} seed {seed}: {lab} set at frame {hit[0]}"
+            for k, lim in max_s.items():
+                worst = max(f[k] for f in ev)
+                assert worst <= lim + 1e-6, f"{entry['id']} {params} seed {seed}: {k} reaches {worst:.2f} s > {lim} s"
     missing = [lab for lab, ok in fired.items() if not ok]
     assert not missing, f"{entry['id']}: no parameter set sets {missing}"
 
@@ -91,9 +127,7 @@ def test_core_entries_produce_the_expected_truth(entry):
 # ---- every NEG entry stays on the normal side of the violation thresholds, at its hardest level -------------
 NEG_LIMITS = {"off_road_s": 3.0, "closed_s": 1.0}      # Euro NCAP long distraction 3 s; microsleep ~1 s
 VATS_WINDOW_S, VATS_LIMIT_S = 30.0, 10.0                # accumulated off road within any 30 s window
-UNDECIDED = {   # known conflicts waiting for a decision (catalog/behaviors.yaml notes); strict: fails once resolved
-    "NEG-SMK-CIG-IN-LAP": "N23: the truth counts a cigarette in the hand as smoking (smoking_cigarette_states has hand)",
-}
+UNDECIDED: dict = {}   # known conflicts waiting for a decision (strict xfail: fails once resolved)
 NEG_ENTRIES = [pytest.param(e, id=e["id"], marks=[pytest.mark.xfail(reason=UNDECIDED[e["id"]], strict=True)]
                             if e["id"] in UNDECIDED else []) for e in ENTRIES if C.category(e) == "NEG"]
 
@@ -105,16 +139,17 @@ def test_neg_entries_stay_below_violation_thresholds_at_large(entry):
     fps = float(entry.get("fps", C.DEFAULT_FPS))
     win = int(round(VATS_WINDOW_S * fps))
     for params in _param_sets(entry, "large"):
-        ev = _labels(entry, params)
+      for seed in _seeds(entry):
+        ev = _labels(entry, params, seed)
         for k, lim in NEG_LIMITS.items():
             if MAX_S_LABEL[k] in allowed:
                 continue
             worst = max(f[k] for f in ev)
-            assert worst < lim, f"{entry['id']} {params}: {k} reaches {worst:.2f} s (threshold {lim} s)"
+            assert worst < lim, f"{entry['id']} {params} seed {seed}: {k} reaches {worst:.2f} s (threshold {lim} s)"
         if "eyes_off_road" not in allowed:
             off = np.array([f["eyes_off_road"] for f in ev], float)
             acc = np.convolve(off, np.ones(win), "valid").max() / fps if len(off) >= win else off.sum() / fps
-            assert acc < VATS_LIMIT_S, f"{entry['id']} {params}: {acc:.2f} s off road within {VATS_WINDOW_S:g} s"
+            assert acc < VATS_LIMIT_S, f"{entry['id']} {params} seed {seed}: {acc:.2f} s off road within {VATS_WINDOW_S:g} s"
         for lab in ("phone_use", "smoking", "seatbelt_off"):
             if lab not in allowed:
                 hit = [i for i, f in enumerate(ev) if f[lab]]

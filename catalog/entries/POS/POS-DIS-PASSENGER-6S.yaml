@@ -1,19 +1,19 @@
 id: POS-DIS-PASSENGER-6S
-title: "頭向右轉 60° 看乘客 6 s（60 / 60 / 45°，8 / 6 / 3.5 s）"
-summary: "只用 dash_right。視線目標 passenger 在右約 82°，頭照預設增益會轉約 53°；這裡直接給頭姿，眼睛補剩下的角度。
-  對照門檻：長分心，連續離開路面 3 s。small 頭轉 60° 8 s、medium 60° 6 s、large 45° 3.5 s（剛過門檻）。"
+title: "自然頭眼分工：看乘客 6 s，頭照預設增益轉約 53°、眼睛補到約 82°（8 / 6 / 3.5 s）"
+summary: "只用 dash_right。視線目標 passenger 在右約 82°；不給頭姿，頭照預設增益（yaw 0.65）轉約 53°，眼睛補剩下的角度，轉頭 0.35 s。
+  跟直接給頭姿 60° / 45° 的 POS-DIS-BASIC-TURN、POS-DIS-NCAP-OWL-PASSENGER 對照：同一個目標、頭轉得少一點。
+  對照門檻：長分心，連續離開路面 3 s。small 看 8 s、medium 6 s、large 3.5 s（剛過門檻）。"
 status: ready
 source: written
-tags: [head_turn, passenger]
+tags: [head_turn, passenger, natural_gain]
 behaviors: [V01]
 params:
   look_s: {levels: {small: 8.0, medium: 6.0, large: 3.5}}
-  yaw: {levels: {small: -60, medium: -60, large: -45}}
 template:
-  behavior: {transition_head_s: 0.1}
+  behavior: {transition_head_s: 0.35}
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: passenger,  duration: "${look_s}", head_pose: ["${yaw}", 0, 0]}
+    - {target: passenger,  duration: "${look_s}"}
     - {target: road_ahead, duration: 3.0}
 variation:
   cameras: [dash_right]

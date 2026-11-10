@@ -1,16 +1,34 @@
 id: BND-PHN-CALL-GAP
-title: "講電話 3 s、放下一下、再講 3 s"
-summary: "中間放下手機的時間很短。看後處理把它當成一通還是兩通、放下時有沒有解除。"
+title: "講電話 3 s、中間停 0.3–3 s（手機放下，或還拿在手上放到大腿）、再講 3 s"
+summary: "中間停一下的時間很短。看後處理把它當成一通還是兩通、停的時候有沒有解除。兩種停法各掃一遍：
+  放下手機（手回方向盤、沒有手機，真值 phone_use 中斷）；手機還拿在手上、放到大腿（hand: phone、phone: lap，真值 phone_use 不中斷，
+  但大腿上的手機只有頭頂相機拍得到，預設兩台相機上手機框會消失）。
+  模板不能把兩個參數綁在一起，所以停的那一段整段寫成參數（6 個時長 × 2 種停法，各一列）。"
 status: ready
 source: written
 tags: [phone, call, gap]
-behaviors: [V08]
+behaviors: [V08, V09]
 params:
-  gap_s: {grid: [0.3, 0.6, 1.0, 1.5, 2.0, 3.0]}
+  gap:
+    grid:
+      # put the phone down: hand back on the wheel, no phone
+      - {target: road_ahead, duration: 0.3}
+      - {target: road_ahead, duration: 0.6}
+      - {target: road_ahead, duration: 1.0}
+      - {target: road_ahead, duration: 1.5}
+      - {target: road_ahead, duration: 2.0}
+      - {target: road_ahead, duration: 3.0}
+      # phone still in the hand, lowered to the lap (phone use goes on)
+      - {target: road_ahead, duration: 0.3, hand: phone, phone: lap}
+      - {target: road_ahead, duration: 0.6, hand: phone, phone: lap}
+      - {target: road_ahead, duration: 1.0, hand: phone, phone: lap}
+      - {target: road_ahead, duration: 1.5, hand: phone, phone: lap}
+      - {target: road_ahead, duration: 2.0, hand: phone, phone: lap}
+      - {target: road_ahead, duration: 3.0, hand: phone, phone: lap}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
     - {target: road_ahead, duration: 3.0, hand: call, phone: call}
-    - {target: road_ahead, duration: "${gap_s}"}
+    - "${gap}"
     - {target: road_ahead, duration: 3.0, hand: call, phone: call}
     - {target: road_ahead, duration: 3.0}

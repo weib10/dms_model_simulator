@@ -107,6 +107,7 @@ hands:                        # 3D positions of the hand centre for each hand st
   wheel_cross_l: [0.50, 0.12, -0.07]   # turning hand over hand: hand crossing the top of the wheel, left / centre /
   wheel_cross_c: [0.50, 0.00, -0.08]   # right; on the steering-column camera's line of sight to the face
   wheel_cross_r: [0.50, -0.12, -0.07]
+  chest_left: [0.06, 0.05, -0.28]     # right hand across the chest at the left shoulder strap (scratching, coat)
 call_offset: [-0.075, -0.105, -0.030]        # head frame: hand at the right ear, behind the phone
 phone_call_offset: [-0.065, -0.090, -0.030]  # head frame: phone centre during a call (against the ear, inside the hand)
 smoke_offset: [0.075, -0.030, -0.095] # head frame: in front of and just below the right mouth corner
@@ -267,4 +268,15 @@ occluders:
     active_when_hand: wheel_cross_r
     a: [0.48, -0.14, -0.09]
     b: [0.25, -0.10, -0.35]      # elbow kept 7 cm off the dash_right lens
+    radius: 0.035
+  - name: hand_chest_left        # right hand on the left chest, in front of the seatbelt strap
+    type: sphere
+    active_when_hand: chest_left
+    center: hand
+    radius: 0.05
+  - name: forearm_chest_left     # forearm across the chest back to the right elbow
+    type: cylinder
+    active_when_hand: chest_left
+    a: [0.05, 0.02, -0.30]
+    b: [0.02, -0.24, -0.42]
     radius: 0.035

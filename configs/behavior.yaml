@@ -27,10 +27,13 @@ closure:                     # long eye closures (drowsiness); zero rate disable
 mouth_openness: 0.05         # baseline mouth openness (0 closed .. 1 fully open)
 yawn:                        # yawns; overridable per segment like "closure"; zero rate disables
   rate_per_min: 0
-  duration_s: 4.0            # full yawn, smooth sin rise and fall
+  duration_s: 6.0            # full yawn, smooth sin rise and fall (published: 5.9 +- 1.9 s, Provine 1986)
   peak_openness: 0.9
+  start: false               # a segment with yawn: {start: true} starts one yawn at its first frame (scripted
+                             # yawn: sets the truth label yawning; it may run on into the next segments)
+  eye_openness_at_peak: null # eyes narrow towards this openness at the peak of a yawn (null = unchanged)
 hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_mouth | at_eye (hand to face, empty hand)
-                             # | mirror | wheel_cross_l / _c / _r (configs/cabin.yaml hands; a scenario may add fixed ones)
+                             # | mirror | wheel_cross_l / _c / _r | chest_left (configs/cabin.yaml hands; a scenario may add fixed ones)
 phone: none                  # none | lap | call
 cigarette: none              # none | mouth | hand (hand = at the current hand position)
 seatbelt: on                 # on | off (YAML on/off booleans are accepted)

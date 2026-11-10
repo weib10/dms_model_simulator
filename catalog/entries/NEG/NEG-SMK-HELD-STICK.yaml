@@ -1,15 +1,15 @@
 id: NEG-SMK-HELD-STICK
-title: "嘴裡叼東西（沒用手扶）：牙籤 / 棒棒糖 / 吸管（3 / 6 / 10 s）"
+title: "嘴裡叼東西（沒用手扶）：牙籤 / 棒棒糖 / 筆（3 / 6 / 10 s）"
 summary: "對照：抽菸（嘴邊一根約 8 cm、直徑 9 mm 的細長物）。叼著的東西越來越像菸：small 牙籤（6 cm、直徑 2.4 mm）、medium 棒棒糖的細棍
-  （7 cm、直徑 3 mm）、large 吸管（10 cm、直徑 7 mm，最接近菸），
-  時間 3 / 6 / 10 s，手在方向盤上，真值 smoking 全程為否。profile ctx_fp 打開情境誤報：吸管、筆有較高機率被報成菸框，
-  牙籤、棒棒糖較低（configs/emulator.yaml 的 stick_in_mouth_as_cigarette）。"
+  （7 cm、直徑 3 mm）、large 筆（14 cm、直徑 10 mm，粗細最接近菸的 9 mm），
+  時間 3 / 6 / 10 s，手在方向盤上，真值 smoking 全程為否。profile ctx_fp 打開情境誤報：筆（和吸管）有較高機率被報成菸框，
+  牙籤、棒棒糖較低（configs/emulator.yaml 的 stick_in_mouth_as_cigarette、thin_stick_in_mouth_as_cigarette）。"
 status: ready
 source: written
 tags: [held_object, mouth, false_positive]
 behaviors: [N22]
 params:
-  object: {levels: {small: toothpick, medium: lollipop, large: straw}}
+  object: {levels: {small: toothpick, medium: lollipop, large: pen}}
   hold_s: {levels: {small: 3.0, medium: 6.0, large: 10.0}}
 template:
   segments:

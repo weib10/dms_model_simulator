@@ -1,16 +1,18 @@
 id: POS-YWN-ONLY
-title: "眼睛正常，只打一次大哈欠（嘴張大 6 / 4 / 2.5 s）"
-summary: "只有嘴，沒有閉眼。
-  對照：哈欠嘴張到約 0.9、持續數秒（一般 3–6 s）；模型的嘴開合判斷門檻約 0.55。small 開合度 0.95、6 s；medium 0.9、4 s；large 0.8、2.5 s。"
+title: "打哈欠同時瞇眼（6 / 5 / 3.5 s，頂點眼睛 0.5 / 0.4 / 0.3）"
+summary: "哈欠到頂點時眼睛會瞇起甚至閉上（文獻：頂點時閉眼）。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  看閉眼判斷會不會被哈欠牽動：眼睛最瞇時仍在閉眼門檻 0.2 以上，真值不閉眼。
+  small 6 s、嘴 0.95、眼 0.5；medium 5 s、0.85、0.4；large 3.5 s、0.7、0.3。"
 status: ready
 source: written
-tags: [yawn]
-behaviors: [V07]
+tags: [yawn, squint, interaction]
+behaviors: [V07, N11]
 params:
-  yawn_s: {levels: {small: 6.0, medium: 4.0, large: 2.5}}
-  mouth: {levels: {small: 0.95, medium: 0.9, large: 0.8}}
+  yawn_s: {levels: {small: 6.0, medium: 5.0, large: 3.5}}
+  mouth: {levels: {small: 0.95, medium: 0.85, large: 0.7}}
+  eyes: {levels: {small: 0.5, medium: 0.4, large: 0.3}}
 template:
   segments:
     - {target: road_ahead, duration: 4.0}
-    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: "${mouth}"}
+    - {target: road_ahead, duration: "${yawn_s}", yawn: {start: true, duration_s: "${yawn_s}", peak_openness: "${mouth}", eye_openness_at_peak: "${eyes}"}}
     - {target: road_ahead, duration: 4.0}

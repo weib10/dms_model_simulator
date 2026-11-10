@@ -1,8 +1,20 @@
 id: POS-DRW-PROGRESSIVE
-title: "一路變睏：開合度下降、長閉眼、哈欠、低頭，最後 2 s 微睡"
-summary: "現有劇本 scenarios/drowsy.yaml 原封包。"
+title: "一路變睏（約 70 s）：眨眼變慢、哈欠、長閉眼、點頭，最後微睡"
+summary: "疲勞逐漸加重的濃縮版。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  清醒 10 s → 眨眼變慢、第一次哈欠（20 s）→ 開合度 0.6、長閉眼開始出現、第二次哈欠（20 s）→ 開合度 0.4、頭往下 25°、閉眼更頻繁（15 s）
+  → 微睡 2 s（頭往下 30°，劇本固定，每個 seed 都有）→ 驚醒回正。視線一直在路上（低頭但眼睛補償），所以沒有離路分心。"
 status: ready
 source: written
-tags: [drowsy, progressive, existing]
-behaviors: [V05, V07, V03]
-from_scenario: scenarios/drowsy.yaml
+tags: [drowsy, progressive]
+behaviors: [V05, V07, V06]
+template:
+  behavior: {blink: {rate_per_min: 12, duration_s: 0.2}}
+  segments:
+    - {target: road_ahead, duration: 10.0}
+    - {target: road_ahead, duration: 6.0, yawn: {start: true, duration_s: 6.0, peak_openness: 0.9}}
+    - {target: road_ahead, duration: 14.0, eye_openness: 0.8}
+    - {target: road_ahead, duration: 6.0, eye_openness: 0.6, yawn: {start: true, duration_s: 6.0, peak_openness: 0.95}}
+    - {target: road_ahead, duration: 14.0, eye_openness: 0.6, closure: {rate_per_min: 4, duration_s: 1.2}}
+    - {target: road_ahead, duration: 15.0, eye_openness: 0.4, closure: {rate_per_min: 8, duration_s: 1.5}, head_pose: [0, -25, 0]}
+    - {target: road_ahead, duration: 2.0, eye_openness: 0.05, head_pose: [0, -30, 0]}
+    - {target: road_ahead, duration: 5.0}

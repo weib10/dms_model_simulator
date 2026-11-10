@@ -1,6 +1,7 @@
 id: NEG-YWN-CHEWING
-title: "嚼口香糖：嘴小幅度規律開合"
-summary: "對照：打哈欠、講話。嘴的開合度在 0.05 與 small 0.15、medium 0.2、large 0.25 之間來回，一下 0.5 s，持續 15 s。幅度比講話小、比哈欠小很多。"
+title: "嚼口香糖：嘴小幅度規律開合（約 1.4 Hz）"
+summary: "對照：打哈欠、講話。嘴的開合度在 0.05 與 small 0.15、medium 0.2、large 0.25 之間來回，約 1.4 Hz（文獻：咀嚼 1.2–1.8 Hz）：
+  張 0.35 s、合 0.35 s、張 0.4 s、合 0.35 s 為一組，10 組共 14.5 s。幅度比講話小、比哈欠小很多。"
 status: ready
 source: written
 tags: [mouth, chewing]
@@ -10,8 +11,10 @@ params:
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - repeat: 30
+    - repeat: 10
       segments:
-        - {target: road_ahead, duration: 0.25, mouth_openness: "${peak}"}
-        - {target: road_ahead, duration: 0.25, mouth_openness: 0.05}
+        - {target: road_ahead, duration: 0.35, mouth_openness: "${peak}"}
+        - {target: road_ahead, duration: 0.35, mouth_openness: 0.05}
+        - {target: road_ahead, duration: 0.4,  mouth_openness: "${peak}"}
+        - {target: road_ahead, duration: 0.35, mouth_openness: 0.05}
     - {target: road_ahead, duration: 3.0}

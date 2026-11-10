@@ -1,20 +1,26 @@
 id: NEG-ALL-LAUGH
-title: "大笑：嘴張開、眼睛瞇起"
-summary: "同時像兩種違規：打哈欠（嘴張大且久）與閉眼（開合度 < 0.2）。嘴 small 0.4、medium 0.55、large 0.75，
-  眼睛 0.6 / 0.45 / 0.3（0.25 以下視線輸出會失效），每次 0.8 / 1.2 / 1.5 s（哈欠通常 3–6 s），笑 2 次，中間 3 s。
-  medium、large 的嘴已經超過 0.55，跟哈欠的差別只剩時長（1.5 s 以內）。"
+title: "大笑：嘴約 4 Hz 一開一合、眼睛瞇起、頭微仰，每陣 2.0 / 2.25 / 2.5 s"
+summary: "同時像兩種違規：打哈欠（嘴張大且久，3 s 以上）與閉眼（開合度 < 0.2）。一陣笑是嘴約 4 Hz 的開合（文獻：笑每個音節約 0.11 s、間隔約 0.12 s）：
+  張 0.15 s、半合 0.1 s 交替，嘴 small 0.5 / 0.35、medium 0.6 / 0.45、large 0.75 / 0.45（張 / 半合），
+  眼睛 0.6 / 0.45 / 0.3（0.25 以下視線輸出會失效），頭往後仰約 5°。每陣 small 2.0 s、medium 2.25 s、large 2.5 s，笑 2 陣，中間 3 s。
+  medium、large 的張嘴超過 0.55，模型報張嘴是一段一段的（每次 0.15 s，雜訊把半合也推過 0.55 時會連成約 0.4 s），跟哈欠的差別是一開一合與總長（2.5 s 以內）。"
 status: ready
 source: written
 tags: [yawn, closure, mouth, squint, laugh]
 behaviors: [N17]
 params:
-  mouth: {levels: {small: 0.4, medium: 0.55, large: 0.75}}
+  hi: {levels: {small: 0.5, medium: 0.6, large: 0.75}}
+  lo: {levels: {small: 0.35, medium: 0.45, large: 0.45}}
   eyes: {levels: {small: 0.6, medium: 0.45, large: 0.3}}
-  laugh_s: {levels: {small: 0.8, medium: 1.2, large: 1.5}}
+  k: {levels: {small: 8, medium: 9, large: 10}}     # 0.25 s open / half-closed cycles per laugh
 template:
+  behavior: {transition_head_s: 0.15}              # the 5 deg head tilt is done within the first pulse
   segments:
     - {target: road_ahead, duration: 3.0}
     - repeat: 2
       segments:
-        - {target: road_ahead, duration: "${laugh_s}", mouth_openness: "${mouth}", eye_openness: "${eyes}"}
+        - repeat: "${k}"
+          segments:
+            - {target: road_ahead, duration: 0.15, mouth_openness: "${hi}", eye_openness: "${eyes}", head_pose: [0, 5, 0]}
+            - {target: road_ahead, duration: 0.1,  mouth_openness: "${lo}", eye_openness: "${eyes}", head_pose: [0, 5, 0]}
         - {target: road_ahead, duration: 3.0}

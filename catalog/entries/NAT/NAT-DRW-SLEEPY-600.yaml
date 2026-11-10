@@ -1,10 +1,11 @@
 id: NAT-DRW-SLEEPY-600
 title: "600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段）"
-summary: "長時間、反覆出現的疲勞片段。看疲勞相關的輸出被切成幾段、走勢如何。"
+summary: "長時間、反覆出現的疲勞片段（閉眼、哈欠）。看疲勞相關的輸出被切成幾段、走勢如何。
+  只有疲勞：不看大腿，離開路面的目標不直接相接、看鏡子最長 1.5 s、儀表中控乘客最長 2 s，所以沒有分心混進來。"
 status: ready
 source: generated
 tags: [natural, drowsy]
-behaviors: [V05, V07, V03, V01, N01, N02, N03]
+behaviors: [V05, V07, N01, N02, N03, N07]
 generator:
   duration_s: 600
   config:
@@ -12,5 +13,18 @@ generator:
     smoking_episodes: {rate_per_min: 0}
     seatbelt_off_episodes: {rate_per_min: 0}
     drowsy_episodes: {rate_per_min: 0.6}
+    transitions:   # only fatigue: no lap / chained off-road looks
+      road_ahead: {phone_lap: 0.0}
+      rearview_mirror: {left_mirror: 0.0}
+      cluster: {center_display: 0.0}
+      center_display: {phone_lap: 0.0, cluster: 0.0}
+    dwell:                         # off-road looks never chain and stay short (N02 mirror <= 1.5 s, N03 <= 2 s)
+      road_ahead: {mean_s: 5.0, min_s: 1.5}   # >= 1.5 s back on the road between looks; ~88 % eyes on road (Tivesten 2014)
+      left_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      right_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      rearview_mirror: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 1.5}
+      cluster: {mean_s: 0.8, sigma: 0.4, min_s: 0.3, max_s: 2.0}
+      center_display: {max_s: 2.0}
+      passenger: {max_s: 2.0}
 variation:
   cameras: [dash_right]

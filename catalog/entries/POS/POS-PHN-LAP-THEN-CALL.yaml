@@ -1,8 +1,19 @@
 id: POS-PHN-LAP-THEN-CALL
-title: "低頭看大腿上的手機，再接電話（通話時看乘客 1.5 s）"
-summary: "現有劇本 scenarios/phone_distraction.yaml 原封包。大腿上的手機兩台相機都拍不到，只有通話段（第 4、5 段）看得到手機。"
+title: "低頭看大腿上的手機 4 s、抬頭 1 s、再看 2 s，然後接電話（通話時看乘客 1.5 s）"
+summary: "從 scenarios/phone_distraction.yaml 改寫成模板（劇本檔不動），第一次看大腿從 3.0 s 拉長到 4.0 s，跨過長分心門檻（連續離開路面 3 s，V03）。
+  通話時看乘客 1.5 s 是聊天時看一眼（N07），不是長分心。大腿上的手機只有 overhead_console 拍得到（dash_right、steering_column 拍不到），通話段三台都看得到手機。"
 status: ready
 source: written
-tags: [phone, call, existing]
-behaviors: [V09, V08, V01]
-from_scenario: scenarios/phone_distraction.yaml
+tags: [phone, call, look_down]
+behaviors: [V09, V03, V08, N07]
+template:
+  segments:
+    - {target: road_ahead, duration: 2.0}
+    - {target: phone_lap,  duration: 4.0, hand: phone, phone: lap}
+    - {target: road_ahead, duration: 1.0, hand: phone, phone: lap}
+    - {target: phone_lap,  duration: 2.0, hand: phone, phone: lap}
+    - {target: road_ahead, duration: 3.0, hand: call,  phone: call}
+    - {target: passenger,  duration: 1.5, hand: call,  phone: call}
+    - {target: road_ahead, duration: 2.0}
+variation:
+  cameras: [dash_right, steering_column, overhead_console]

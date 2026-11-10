@@ -1,0 +1,15 @@
+id: BND-YWN-PEAK
+title: "哈欠張嘴幅度從 0.5 掃到 0.95（每次 5 s）"
+summary: "一次 5 s 的哈欠，嘴最大開合度由小到大。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  模型的張嘴門檻約 0.55：0.5 的哈欠從頭到尾都不會被報成張嘴，0.55–0.6 附近只有頂點一下。"
+status: ready
+source: written
+tags: [yawn, mouth]
+behaviors: [V07]
+params:
+  peak: {grid: [0.5, 0.55, 0.6, 0.7, 0.8, 0.95]}
+template:
+  segments:
+    - {target: road_ahead, duration: 3.0}
+    - {target: road_ahead, duration: 5.0, yawn: {start: true, duration_s: 5.0, peak_openness: "${peak}"}}
+    - {target: road_ahead, duration: 3.0}

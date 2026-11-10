@@ -1,14 +1,15 @@
 id: BND-YWN-DURATION
-title: "嘴張大的時間從 0.25 s 掃到 5 s"
-summary: "嘴巴開合度 0.9，持續時間由短到長。開合度多少算張嘴，由輸出格式的開閉門檻決定（模擬器預設 0.55）。"
+title: "哈欠長度從 2 s 掃到 8 s（含 3 s 附近）"
+summary: "一次哈欠，嘴最大 0.9，總長由短到長。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
+  嘴超過 0.55（模擬器預設的張嘴門檻）的時間約為總長的 0.6 倍。3 s 附近加密，看哈欠長度的判斷門檻。"
 status: ready
 source: written
 tags: [yawn, duration]
 behaviors: [V07]
 params:
-  yawn_s: {grid: [0.25, 0.5, 1.0, 2.0, 3.0, 5.0]}
+  yawn_s: {grid: [2.0, 2.5, 2.95, 3.0, 3.05, 3.5, 4.0, 5.0, 6.0, 8.0]}
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: "${yawn_s}", mouth_openness: 0.9}
+    - {target: road_ahead, duration: "${yawn_s}", yawn: {start: true, duration_s: "${yawn_s}", peak_openness: 0.9}}
     - {target: road_ahead, duration: 3.0}

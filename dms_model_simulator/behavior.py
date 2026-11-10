@@ -145,7 +145,7 @@ class BehaviorGenerator:
         # events last a whole number of frames (round(duration_s * fps)); *_left = frames still to play
         blink_left = closure_left = yawn_left = 0
         blink_n = closure_n = yawn_n = 1
-        yawn_peak = 0.0
+        yawn_peak, yawn_eyes = 0.0, None
         k_cur, hp_start = None, None
         hp = g_dir = g_dist = None
         g_dir0 = g_dist0 = None
@@ -166,6 +166,10 @@ class BehaviorGenerator:
                                                         (float(closure_cfg["rate_per_min"]), n_closure)])
                 n_yawn = self._n_frames(yawn_cfg["duration_s"])
                 (p_yawn,) = self._start_probs([(float(yawn_cfg["rate_per_min"]), n_yawn)])
+                if yawn_cfg.get("start"):           # scripted yawn: one yawn starts with this segment
+                    yawn_n = yawn_left = n_yawn
+                    yawn_peak = float(yawn_cfg["peak_openness"])
+                    yawn_eyes = yawn_cfg.get("eye_openness_at_peak")
                 k_cur = k
             since = t - seg["start"]
             # head: slower move
@@ -206,10 +210,13 @@ class BehaviorGenerator:
             if yawn_left <= 0 and u_yawn < p_yawn:
                 yawn_n = yawn_left = n_yawn
                 yawn_peak = float(yawn_cfg["peak_openness"])
+                yawn_eyes = yawn_cfg.get("eye_openness_at_peak")
             mouth, yawning = base_mouth, False
             if yawn_left > 0:
                 s_y = _bump(yawn_n - yawn_left, yawn_n)
                 mouth = base_mouth * (1 - s_y) + max(yawn_peak, base_mouth) * s_y
+                if yawn_eyes is not None and not blink:   # eyes narrow towards the peak of the yawn
+                    openness = min(openness, base_open * (1 - s_y) + float(yawn_eyes) * s_y)
                 yawning, yawn_left = True, yawn_left - 1
             frames.append(DriverFrame(
                 t=t, head_yaw=float(hp[0]), head_pitch=float(hp[1]), head_roll=float(hp[2]),

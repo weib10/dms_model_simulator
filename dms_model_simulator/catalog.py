@@ -60,7 +60,7 @@ BEHAVIOR_KINDS = ("violation", "normal", "condition")
 COMMON = {"often": "常見", "sometimes": "偶爾", "rare": "少見"}
 SEPARABLE = {"easy": "好分", "medium": "普通", "hard": "難分"}
 BEHAVIOR_ID_RE = re.compile(r"^[VNC][0-9]{2}$")
-EXPECT_KEYS = {"label", "max_s", "never"}
+EXPECT_KEYS = {"label", "min_s", "visible", "max_s", "never"}
 
 
 def load_behaviors(path=None) -> dict:
@@ -69,8 +69,9 @@ def load_behaviors(path=None) -> dict:
 
 
 def is_core(b: dict) -> bool:
-    """Common and easy to tell apart: these must never go wrong (tests/test_behaviors.py)."""
-    return b.get("common") == "often" and b.get("separable") == "easy"
+    """Must-test behaviour (must_test: true): it must never go wrong (tests/test_behaviors.py). Independent of the
+    common / separable estimates, so revising an estimate never drops a test."""
+    return bool(b.get("must_test"))
 
 
 def validate_behaviors(behaviors: dict) -> list[str]:
@@ -96,7 +97,7 @@ def validate_behaviors(behaviors: dict) -> list[str]:
         ex = b.get("expect") or {}
         errs += [f"{k}: unknown expect key {q!r}" for q in sorted(set(ex) - EXPECT_KEYS)]
         if is_core(b) and b.get("kind") != "condition" and not ex:
-            errs.append(f"{k}: core behaviour (often, easy) needs `expect`")
+            errs.append(f"{k}: must_test behaviour needs `expect`")
         if b.get("kind") == "violation" and ex and "label" not in ex:
             errs.append(f"{k}: violation expect needs `label`")
     return errs
@@ -575,7 +576,7 @@ def index_markdown(entries: list[dict]) -> str:
     beh = load_behaviors()
     kind_zh = {"violation": "違規", "normal": "正常", "condition": "外觀條件"}
     L += ["", "## 行為清單", "",
-          "編號定義在 [behaviors.yaml](behaviors.yaml)。常見度、好分度是估計值；★ = 常見且好分，一定不能出問題（有測試把關）。", "",
+          "編號定義在 [behaviors.yaml](behaviors.yaml)。常見度、好分度是估計值；★ = 必測（must_test），一定不能出問題（有測試把關）。", "",
           "| 編號 | 行為 | 類型 | 常見 | 好分 | 會跟誰搞混 | 條目數 |", "|---|---|---|---|---|---|---|"]
     for k, b in beh.items():
         n = sum(k in (e.get("behaviors") or []) for e in entries)

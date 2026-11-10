@@ -1,16 +1,33 @@
 id: NEG-YWN-TALKING
-title: "講話：嘴巴微開（開合度 0.3 / 0.4 / 0.5）持續 5 / 10 / 15 s"
-summary: "對照：打哈欠（嘴張到 0.9、持續 3–6 s）與模型的嘴開合判斷門檻（約 0.55）。講話的嘴型，開合度 small 0.3、
-  medium 0.4、large 0.5（貼著 0.55 但在下面），持續 5 / 10 / 15 s。只有固定開合，沒有一開一合的動態。"
+title: "講話：嘴一開一合（約 2.4 Hz，峰值 0.3 / 0.4 / 0.5，偶爾張大到 0.35 / 0.45 / 0.6）持續 5 / 10 / 15 s"
+summary: "對照：打哈欠（嘴張到 0.9、持續 3–6 s）與模型的嘴開合判斷門檻（約 0.55）。講話的嘴不規則地一開一合（文獻：講話時嘴的開合 2–7 Hz）：
+  每句 2.5 s，嘴在 0.1 與峰值之間切換，每段 0.15–0.2 s，一句 6 個音節（約 2.4 Hz），句尾停 0.45 s。
+  峰值 small 0.3 / 0.2、medium 0.4 / 0.3、large 0.5 / 0.4，每句有一個音節張大 0.3 s（0.35 / 0.45 / 0.6）：
+  large 的張大越過 0.55，模型會短暫報張嘴（每次 0.3 s，哈欠要好幾秒）。持續 2 / 4 / 6 句（5 / 10 / 15 s）。"
 status: ready
 source: written
 tags: [talking, mouth]
 behaviors: [N15]
 params:
-  mouth: {levels: {small: 0.3, medium: 0.4, large: 0.5}}
-  talk_s: {levels: {small: 5.0, medium: 10.0, large: 15.0}}
+  hi: {levels: {small: 0.3, medium: 0.4, large: 0.5}}       # stressed syllable
+  mid: {levels: {small: 0.2, medium: 0.3, large: 0.4}}      # unstressed syllable
+  wide: {levels: {small: 0.35, medium: 0.45, large: 0.6}}   # one wide-open syllable per phrase, 0.3 s
+  n: {levels: {small: 2, medium: 4, large: 6}}              # phrases of 2.5 s
 template:
   segments:
     - {target: road_ahead, duration: 3.0}
-    - {target: road_ahead, duration: "${talk_s}", mouth_openness: "${mouth}"}
+    - repeat: "${n}"
+      segments:
+        - {target: road_ahead, duration: 0.15, mouth_openness: "${hi}"}
+        - {target: road_ahead, duration: 0.15, mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.2,  mouth_openness: "${mid}"}
+        - {target: road_ahead, duration: 0.15, mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.3,  mouth_openness: "${wide}"}
+        - {target: road_ahead, duration: 0.2,  mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.15, mouth_openness: "${mid}"}
+        - {target: road_ahead, duration: 0.2,  mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.2,  mouth_openness: "${hi}"}
+        - {target: road_ahead, duration: 0.15, mouth_openness: 0.1}
+        - {target: road_ahead, duration: 0.2,  mouth_openness: "${mid}"}
+        - {target: road_ahead, duration: 0.45, mouth_openness: 0.1}   # pause at the end of the phrase
     - {target: road_ahead, duration: 2.0}

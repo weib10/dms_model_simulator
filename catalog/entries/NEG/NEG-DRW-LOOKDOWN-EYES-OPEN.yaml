@@ -2,7 +2,8 @@ id: NEG-DRW-LOOKDOWN-EYES-OPEN
 title: "低頭看大腿 1.0 / 1.8 / 2.6 s，眼睛是睜開的"
 summary: "對照門檻：低頭長分心 3 s（V03），以及閉眼（低頭時眼框變小）。低頭一次 small 1.0 s、medium 1.8 s、large 2.6 s，
   都在 3 s 以下，是正常的短暫低頭。低頭時眼框變小，真實模型常把睜眼認成閉眼。eye_flip 讓模擬模型在低頭、
-  眼框變小時成段報成閉眼，nominal 不翻，兩個對照。"
+  眼框變小時成段報成閉眼，nominal 不翻，兩個對照。翻轉是隨機的，模型雜訊 seed 0–2 在 large 低頭 52 幀裡只翻 1 / 5 / 0 幀，
+  所以這條跑 10 個 seed（0–9）。"
 status: ready
 source: written
 tags: [look_down, class_flip]
@@ -16,3 +17,4 @@ template:
     - {target: road_ahead, duration: 4.0}
 variation:
   profiles: [nominal, eye_flip]
+  emulator_seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]   # flips are rare per run: seeds 0-2 alone barely show any
