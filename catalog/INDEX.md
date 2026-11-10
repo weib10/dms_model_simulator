@@ -22,10 +22,10 @@
 |---|---|---|---|---|---|---|
 | ★ V01 | 轉頭長分心（看乘客、窗外） | 違規 | 常見 | 好分 | N02, N04, N05, N06, N07, N08, N25 | 13 |
 | V02 | 只動眼睛的長分心（lizard） | 違規 | 常見 | 難分 | N09, N03 | 1 |
-| V03 | 低頭長分心（看大腿、腳踏區） | 違規 | 常見 | 普通 | N03, N12, N14, N24, V06 | 3 |
+| V03 | 低頭長分心（看大腿、腳踏區） | 違規 | 常見 | 普通 | N03, N12, N14, N24, V06 | 4 |
 | V04 | 短分心累計（VATS） | 違規 | 常見 | 難分 | N06, N07, N03, N02, N09 | 1 |
 | ★ V05 | 閉眼、微睡 | 違規 | 偶爾 | 普通 | N10, N11, N12, N13, N14, N17, N27, N30, C01 | 15 |
-| V06 | 睡著、無反應（閉眼＋垂頭） | 違規 | 少見 | 好分 | V03, N27 | 4 |
+| V06 | 睡著、無反應（閉眼＋垂頭） | 違規 | 少見 | 好分 | V03, N27 | 5 |
 | ★ V07 | 打哈欠 | 違規 | 常見 | 普通 | N15, N16, N17, N18, N19, C02 | 12 |
 | ★ V08 | 講電話（手機貼耳） | 違規 | 常見 | 好分 | N20, N19 | 10 |
 | ★ V09 | 手拿手機看或打字 | 違規 | 常見 | 普通 | N28, N19, N24 | 5 |
@@ -87,7 +87,7 @@
 | `POS-YWN-COVERED` | 用手遮住嘴打哈欠（5 / 4 / 3 s） | V07, N21 | yawn, hand_near_face, occlusion | 三段 | ready |
 | `POS-YWN-ONLY` | 打哈欠同時瞇眼（6 / 5 / 3.5 s，頂點眼睛 0.5 / 0.4 / 0.3） | V07, N11 | yawn, squint, interaction | 三段 | ready |
 | `POS-PHN-BASIC-CALL` | 基本款：看著路講電話 6 / 5 / 2 s，再放下 | V08 | basic, phone, call | 三段 | ready |
-| `POS-PHN-HELD-UP` | 手機拿在胸前（打字、看訊息）：看手機 6 s、2.5 s × 3 次、1.5 s × 6 次，或拿著但看路 | V09 | phone, held_up, glance | 三段 | ready |
+| `POS-PHN-HELD-UP` | 手機拿在胸前（打字、看訊息）：看手機 6 s、2.5 s × 3 次、1.5 s × 6 次，或拿著但看路 | V09, V03 | phone, held_up, glance | 三段 | ready |
 | `POS-PHN-LAP-THEN-CALL` | 低頭看大腿上的手機 4 s、抬頭 1 s、再看 2 s，然後接電話（通話時看乘客 1.5 s） | V09, V03, V08, N07 | phone, call, look_down |  | ready |
 | `POS-PHN-WINDSHIELD` | 手機舉在擋風玻璃前（Euro NCAP advanced） | V09 | phone, ncap |  | planned：camera_ahead_of_the_phone |
 | `POS-SMK-BASIC` | 基本款：菸含在嘴上、雙手在方向盤 6 / 5 / 2 s，再拿掉 | V10 | basic, smoking | 三段 | ready |
@@ -178,7 +178,7 @@
 
 | id | 情境 | 行為 | 標籤 | 難度 | 狀態 |
 |---|---|---|---|---|---|
-| `NAT-DRW-SLEEPY-600` | 600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段） | V05, V07, N01, N02, N03, N07 | natural, drowsy |  | ready |
+| `NAT-DRW-SLEEPY-600` | 600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段） | V05, V07, V06, N01, N02, N03, N07 | natural, drowsy |  | ready |
 | `NAT-ALL-CLEAN-300` | 300 s 日常駕駛：看路、看鏡子、看儀表，沒有手機、疲勞、抽菸、未繫 | N01, N02, N03, N07 | natural, false_alarm |  | ready |
 | `NAT-ALL-MIXED-120` | 120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸、未繫安全帶片段 | N01, N02, N03, V08, V09, V03, V01, V05, V07, V10 | natural, existing |  | ready |
 | `NAT-ALL-NORMAL-HABITS-300` | 300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤 | N01, N02, N03, N07, N13, N15, N17, N18, N19, N20, N21, N22 | natural, false_alarm, habits | 三段 | ready |

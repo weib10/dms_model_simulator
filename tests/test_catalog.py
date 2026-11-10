@@ -454,3 +454,17 @@ def test_cli_param_overrides(tmp_path, monkeypatch, capsys):
     assert {r["level"] for r in man["rows"]} == {"medium"} and {r["params"]["call_s"] for r in man["rows"]} == {0.25}
     with pytest.raises(SystemExit):
         cli.main(["catalog", "expand", "--out", str(tmp_path / "b"), "--param", "nope=1"])
+
+
+def test_validate_event_override_keys_and_scripted_yawn_overlaps():
+    seg = lambda **k: {"target": "road_ahead", "duration": 2.0, **k}
+    typo = _entry(params={}, template={"segments": [seg(yawn={"strat": True, "peak_opennes": 0.9}),
+                                                    seg(closure={"openess": 0.1})]})
+    errs = C.validate(typo, PR)
+    assert any("yawn.strat" in e for e in errs) and any("closure.openess" in e for e in errs)
+    ok = _entry(params={}, template={"segments": [seg(yawn={"start": True, "duration_s": 2.0}),
+                                                  seg(yawn={"start": True, "duration_s": 2.0})]})
+    assert C.validate(ok, PR) == []                                    # back to back is fine
+    overlap = _entry(params={}, template={"segments": [seg(yawn={"start": True, "duration_s": 3.0}),
+                                                       seg(yawn={"start": True, "duration_s": 2.0})]})
+    assert any("still runs" in e for e in C.validate(overlap, PR))

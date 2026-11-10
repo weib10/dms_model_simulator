@@ -30,8 +30,10 @@ yawn:                        # yawns; overridable per segment like "closure"; ze
   duration_s: 6.0            # full yawn, smooth sin rise and fall (published: 5.9 +- 1.9 s, Provine 1986)
   peak_openness: 0.9
   start: false               # a segment with yawn: {start: true} starts one yawn at its first frame (scripted
-                             # yawn: sets the truth label yawning; it may run on into the next segments)
-  eye_openness_at_peak: null # eyes narrow towards this openness at the peak of a yawn (null = unchanged)
+                             # yawn: sets the truth label yawning; it may run on into the next segments). A start
+                             # while a yawn runs restarts it (the mouth jumps): catalog validate rejects overlaps
+  eye_openness_at_peak: null # eyes narrow towards this openness at the peak of a yawn (null = unchanged); below
+                             # events.closed_openness_threshold (0.2) the peak counts as eyes closed
 hand: wheel                  # wheel | lap | phone | call | smoke | at_ear | at_mouth | at_eye (hand to face, empty hand)
                              # | mirror | wheel_cross_l / _c / _r | chest_left (configs/cabin.yaml hands; a scenario may add fixed ones)
 phone: none                  # none | lap | call

@@ -3,7 +3,7 @@ title: "頭向左轉 35° 時閉眼 3 s（20 / 35 / 45°，4 / 3 / 1.5 s）"
 summary: "臉側轉時眼框變小、比較難判開閉。先轉頭 1 s（轉頭 0.35 s，眼睛睜開、仍看路），再閉眼。
   往左轉：兩台預設相機上眼框都隨角度變小（往右轉會轉向 dash_right，眼框反而變大）。dash_right 在右前方：右眼框隨角度變小，左眼框 35° 起就看不到；
   steering_column 在正前方：左眼框隨角度變小，右眼框大小差不多。
-  對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。small 頭轉 20°、閉 4 s；medium 35°、3 s；large 45°、1.5 s（眼框最小、閉眼剛過門檻）。"
+  對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。small 頭轉 20°、閉 4 s；medium 35°、3 s；large 45°、1.5 s（眼框最小、閉眼比門檻長 0.5 s）。"
 status: ready
 source: written
 tags: [closure, head_turn, interaction]

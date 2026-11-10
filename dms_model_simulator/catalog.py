@@ -388,6 +388,25 @@ def validate(entry: dict, profiles: dict, cfgs: dict | None = None) -> list[str]
     return list(dict.fromkeys(errs))
 
 
+def _scripted_yawn_overlaps(sc: dict, beh: dict) -> list[str]:
+    """A scripted yawn (yawn: {start: true}) that starts while the previous one still runs restarts it and the mouth
+    jumps; reject that."""
+    errs, t, busy_until = [], Fraction(0), None
+    for i, s in enumerate(sc.get("segments") or []):
+        y = s.get("yawn") if isinstance(s.get("yawn"), dict) else {}
+        d = s.get("duration")
+        if y.get("start"):
+            if busy_until is not None and t < busy_until:
+                errs.append(f"segment {i}: scripted yawn starts while the previous one still runs "
+                            f"(until {float(busy_until):g} s)")
+            yd = y.get("duration_s", beh["yawn"]["duration_s"])
+            if isinstance(yd, (int, float)) and not isinstance(yd, bool):
+                busy_until = t + Fraction(str(yd))
+        if isinstance(d, (int, float)) and not isinstance(d, bool):
+            t += Fraction(str(d))
+    return errs
+
+
 def _check_scenario(sc: dict, cfgs: dict, fps: float, params: dict) -> list[str]:
     errs = [f"behavior override {p!r} is not in configs/behavior.yaml"
             for p in _unknown_paths(sc.get("behavior"), cfgs["behavior"])]
@@ -396,6 +415,7 @@ def _check_scenario(sc: dict, cfgs: dict, fps: float, params: dict) -> list[str]
                                      cfgs["cabin"])]
     cab = deep_merge(cfgs["cabin"], sc.get("cabin"))
     beh = deep_merge(cfgs["behavior"], sc.get("behavior"))   # segment defaults, as BehaviorGenerator applies them
+    errs += _scripted_yawn_overlaps(sc, beh)
     targets = set(cab["targets"])
     hands = set(cab["hands"]) | {"none"}
     if not sc.get("segments"):
@@ -425,6 +445,10 @@ def _check_scenario(sc: dict, cfgs: dict, fps: float, params: dict) -> list[str]
             need = ((cab.get("held_objects") or {}).get(held) or {}).get("needs_hand")
             if need and s.get("hand", beh["hand"]) != need:
                 errs.append(f"segment {i}: held {held!r} needs hand: {need}")
+        for key in ("yawn", "closure", "blink"):      # event overrides: keys must exist in configs/behavior.yaml
+            if isinstance(s.get(key), dict):
+                errs += [f"segment {i}: {key}.{q} is not in configs/behavior.yaml {key}"
+                         for q in _unknown_paths(s[key], cfgs["behavior"][key])]
         if "head_pose" in s and (not isinstance(s["head_pose"], list) or len(s["head_pose"]) != 3):
             errs.append(f"segment {i}: head_pose must be [yaw, pitch, roll]")
     return errs

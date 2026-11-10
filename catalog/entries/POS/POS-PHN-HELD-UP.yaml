@@ -3,11 +3,12 @@ title: "手機拿在胸前（打字、看訊息）：看手機 6 s、2.5 s × 3 
 summary: "大腿上的手機只有頭頂相機拍得到，所以用拿在胸前的手機（phone_held：駕駛正前方偏右、眼睛下方約 31°，在路面方框外），並算進真值的 phone_use。
   每次看手機之後抬頭看路 1 s，手機一直拿在手上。看手機 / 拿著但一直看路各一列。
   對照：手拿手機的真值沒有時長門檻。公開資料：撥號、打字時最長單次離路視線中位數 2.0 / 2.5 s。
-  small 看手機 6 s 一次；medium 2.5 s × 3 次；large 1.5 s × 6 次（反覆短瞥，每次都比長分心 3 s 短，只剩手機本身是違規）。"
+  small 看手機 6 s 一次（同時是低頭長分心 V03）；medium 2.5 s × 3 次；large 1.5 s × 6 次（反覆短瞥，每次都比長分心 3 s 短，只剩手機本身是違規）。
+  相機用 steering_column 和 overhead_console：手機離 dash_right 鏡頭只有約 15 cm，在那台畫面裡大到被裁掉，所以不用它。"
 status: ready
 source: written
 tags: [phone, held_up, glance]
-behaviors: [V09]
+behaviors: [V09, V03]
 params:
   look: {grid: [phone_held, road_ahead]}      # 看手機 / 拿著但看路
   look_s: {levels: {small: 6.0, medium: 2.5, large: 1.5}}
@@ -24,3 +25,5 @@ template:
         - {target: "${look}",  duration: "${look_s}", hand: phone_held, phone: phone_held}
         - {target: road_ahead, duration: 1.0,         hand: phone_held, phone: phone_held}
     - {target: road_ahead, duration: 3.0}
+variation:
+  cameras: [steering_column, overhead_console]

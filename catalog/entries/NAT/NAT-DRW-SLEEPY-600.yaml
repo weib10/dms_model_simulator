@@ -1,11 +1,12 @@
 id: NAT-DRW-SLEEPY-600
 title: "600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段）"
 summary: "長時間、反覆出現的疲勞片段（閉眼、哈欠）。看疲勞相關的輸出被切成幾段、走勢如何。
-  只有疲勞：不看大腿，離開路面的目標不直接相接、看鏡子最長 1.5 s、儀表中控乘客最長 2 s，所以沒有分心混進來。"
+  只有疲勞：不看大腿，離開路面的目標不直接相接、看鏡子最長 1.5 s、儀表中控乘客最長 2 s，所以沒有長分心混進來
+  （偶爾短瞥湊起來，任一 30 s 內最多約 9.9 s，貼著 VATS 10 s）。兩次閉眼偶爾會接在一起，連續閉眼可達約 3 s（NCAP 的睡著，V06）。"
 status: ready
 source: generated
 tags: [natural, drowsy]
-behaviors: [V05, V07, N01, N02, N03, N07]
+behaviors: [V05, V07, V06, N01, N02, N03, N07]
 generator:
   duration_s: 600
   config:
