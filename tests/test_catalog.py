@@ -348,6 +348,37 @@ def test_run_pictures_are_optional_and_change_no_other_file(tmp_path):
             C.run(tmp_path, log=lambda *a: None, gif=True, **bad)
 
 
+def test_gallery_lists_the_whole_catalog_with_the_pictures_of_the_run(tmp_path):
+    from dms_model_simulator import gallery as G
+    ran, other = _short(), _short(id="POS-PHN-TEST", title="not <run>", tags=["x"])
+    planned = _short(id="NEG-DIS-TEST", status="planned", needs=["a thing"])
+    man = C.expand([ran], tmp_path, "boundary", profiles=PR)
+    (rid,) = [r["row_id"] for r in man["rows"]]
+    page = G.gallery_html(tmp_path, entries=[ran, other, planned])           # before `catalog run`
+    assert "這一列還沒匯出" in page and "<img" not in page
+    C.run(tmp_path, log=lambda *a: None)
+    page = G.gallery_html(tmp_path, entries=[ran, other, planned])
+    assert "這一列沒有圖" in page and "<img" not in page and f'href="rows/{rid}/card.md"' in page
+    C.run(tmp_path, log=lambda *a: None, timeline=True, gif=True)
+    out = G.write_gallery(tmp_path, entries=[ran, other, planned])
+    page = out.read_text(encoding="utf-8")
+    assert out == tmp_path / "index.html" and b"\r" not in out.read_bytes()
+    assert f'src="rows/{rid}/timeline.png"' in page and f'src="rows/{rid}/preview.gif"' in page
+    assert f'href="scenarios/{Path(man["rows"][0]["scenario"]).name}"' in page
+    assert str(tmp_path) not in page                                          # relative links only
+    for e in (ran, other, planned):                                           # every entry, run or not: a page,
+        assert f'id="e-{e["id"]}"' in page and page.count(f'href="#e/{e["id"]}"') >= 2   # a list line, prev / next
+    assert "not &lt;run&gt;" in page and "這次的 run 沒有選這一條" in page and "缺 a thing" in page
+    assert "call_s=0.5" in page and "看 road_ahead" in page                   # the row's parameters and script
+    # the map: behaviour family x category, a count per cell; one list per family; reading order = family, category
+    assert '<td class="n"><a href="#g/PHN/BND">1</a></td>' in page and '<a href="#g/DIS/NEG">1</a>' in page
+    assert 'id="g-PHN"' in page and 'id="g-PHN-POS"' in page and 'id="g-DIS-NEG"' in page
+    assert [page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST")] == sorted(
+        page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST"))
+    assert "目錄有 3 條情境" in page and "這次的 run 跑了 1 條、1 列，1 列有圖" in page
+    assert page.count('class="view') == 1 + 2 + 3                             # home, two families, three entries
+
+
 def test_partial_run_lists_rows_of_the_current_manifest(tmp_path):
     e1, e2 = _short(), _short(id="POS-PHN-TEST")
     man = C.expand([e1, e2], tmp_path, "boundary", profiles=PR)
@@ -400,6 +431,8 @@ def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     cli.main(["catalog", "run", str(tmp_path), "--timeline"])
     assert "plus timeline.png per row" in capsys.readouterr().out
     assert (Path(t["card"]).parent / "timeline.png").exists()
+    cli.main(["catalog", "gallery", str(tmp_path), "--title", "T"])
+    assert "index.html" in capsys.readouterr().out and "<title>T</title>" in (tmp_path / "index.html").read_text("utf-8")
     cli.main(["catalog", "index", "--out", str(tmp_path / "INDEX.md")])
     assert "BND-PHN-TEST" in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
 

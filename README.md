@@ -75,6 +75,7 @@ dms-sim demo --scenario phone_distraction --out out/demo           # every camer
 dms-sim export --scenario phone_distraction --camera dash_right --format frame_yaml --profile bad --out out/x
 dms-sim catalog expand POS-PHN --out runs/r1 && dms-sim catalog run runs/r1 --jobs 4   # one card per row
 dms-sim catalog run runs/r1 --jobs 4 --timeline --gif              # and a timeline picture + camera-view GIF per row
+dms-sim catalog gallery runs/r1                                    # runs/r1/index.html: every entry with its pictures
 ```
 
 More commands:
@@ -275,6 +276,10 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   `timeline.png` (truth gaze zone, eye openness, truth behaviour labels and injected model errors over time) and
   `preview.gif` (the camera view, truth boxes green, model boxes red). They are drawn from the row's own
   simulation, change no other file and are left out of `catalog verify`. A GIF of a 5-minute row is about 20 MB.
+- **Overview page** (`dms-sim catalog gallery RUN`): `RUN/index.html`, to browse a run one thing at a time: a map
+  (behaviour family x category, a count per cell), the list of one family, then one entry with one of its rows
+  (script, camera view, timeline) and previous / next. The page text is in Chinese, like the catalog.
+  `catalog/README.md` has the commands that build it for the whole catalog.
 
 ## Reproducibility
 

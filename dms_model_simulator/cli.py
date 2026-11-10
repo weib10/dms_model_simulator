@@ -365,7 +365,7 @@ def parse_param_overrides(items: list[str]) -> dict:
 
 
 def cmd_catalog(a):
-    """Scenario catalog (catalog/, see catalog/README.md): list / show / validate / index / expand / run."""
+    """Scenario catalog (catalog/, see catalog/README.md): list / show / validate / index / expand / run / gallery."""
     from . import catalog as C
     if a.action in ("list", "show", "validate", "index", "expand"):
         entries = C.load_entries()
@@ -425,6 +425,9 @@ def cmd_catalog(a):
         done = C.run(a.run_dir, a.select, a.jobs, layout=a.layout, include_face=a.include_face, labels=a.labels,
                      **_picture_kwargs(a))
         print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row{_picture_note(a)}")
+    elif a.action == "gallery":
+        from .gallery import write_gallery
+        print(f"wrote {write_gallery(a.run_dir, title=a.title)} (open it in a browser)")
 
 
 def cmd_exam(a):
@@ -632,7 +635,7 @@ def main(argv=None):
     _variant_arg(ex)
     _profile_arg(ex)
     ex.set_defaults(fn=cmd_export)
-    cg = sub.add_parser("catalog", help="scenario catalog: list / show / validate / index / expand / run "
+    cg = sub.add_parser("catalog", help="scenario catalog: list / show / validate / index / expand / run / gallery "
                                         "(see catalog/README.md)")
     cs = cg.add_subparsers(dest="action", required=True)
 
@@ -673,6 +676,9 @@ def main(argv=None):
                         "and sha256 are written to every row.json")
     _picture_args(q)
     _pipeline_args(q)
+    q = cs.add_parser("gallery", help="write RUN_DIR/index.html: the whole catalog on one page, each entry with the "
+                                      "pictures, script and behaviour card of its rows in this run")
+    q.add_argument("run_dir"); q.add_argument("--title", default=None, help="page title")
     q = cs.add_parser("verify", help="compare two exported runs: fingerprint (code, configs, entries), row ids, "
                                      "and every row's output (structure exact, numbers within --tol)")
     q.add_argument("run_a"); q.add_argument("run_b")

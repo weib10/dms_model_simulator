@@ -54,6 +54,7 @@ dms-sim catalog run runs/r1 --jobs 4         # 每列匯出到 runs/r1/rows/<row
 dms-sim catalog run runs/r1 --layout my_layout.yaml   # frame_yaml 改用自己的類別 id 與門檻；layout 路徑與 sha256 記進每列 row.json
 dms-sim catalog run runs/r1 --include-face            # pipeline JSONL 帶臉框（--labels mapped：改用 layout 的類別）
 dms-sim catalog run runs/r1 --timeline --gif          # 每列多出 timeline.png、preview.gif（預設都不出）
+dms-sim catalog gallery runs/r1                       # 寫 runs/r1/index.html：整個目錄一頁看完，每條底下是這次 run 的圖、劇本、行為卡
 dms-sim catalog expand NEG --level large --out runs/h1        # 只要最難的一級（預設三級都出，row id 帶難度）
 dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直接覆蓋參數（值用 YAML 解析；只套到有這個參數的條目）
 ```
@@ -69,6 +70,25 @@ dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直
   13 s 的一列約 1 MB、幾秒；300 s 的一列約 20 MB、一分多鐘
 
 圖用這一列自己的模擬結果畫，不改其他檔案；`catalog verify` 不比圖。重跑時沒指定的圖會刪掉（免得留著舊輸出的圖）。
+
+**總覽頁**（`catalog gallery`）：一個 HTML 檔，連結都是相對路徑，用瀏覽器直接開。一次只顯示一層：
+
+1. 地圖：行為家族 × 類別的條數表（一個畫面），底下是模擬器怎麼運作。點格子進清單。
+2. 清單：一個行為家族的所有條目，照類別分組，一條一行標題。這次沒跑的、planned 的也列。
+3. 單條：只看這一條的一列：劇本表、相機畫面 GIF、時間軸圖。其他列（難度、相機、誤差設定）用下拉選；左右鍵或頁尾連結換上一條／下一條。
+
+右上角可以搜尋標題、id、行為編號。它不存資料，只讀 manifest、每列的 `card.json` 和圖；重跑之後重產一次。
+考卷的答案側也是一個 run：`dms-sim catalog gallery runs/A/key`。
+
+全目錄各出一張的做法（一個難度、一個模型雜訊 seed；長時間的 NAT 只出時間軸圖）。444 列、`--jobs 4` 約 17 分鐘、3 GB
+（JSONL 約 2 GB、GIF 約 340 MB，其餘是每幀一個的小檔）：
+
+```bash
+dms-sim catalog expand all --level medium --emulator-seeds 1 --out runs/gallery
+dms-sim catalog run runs/gallery POS NEG BND CLR ROB --jobs 4 --timeline --gif --gif-every 4
+dms-sim catalog run runs/gallery NAT --jobs 4 --timeline
+dms-sim catalog gallery runs/gallery
+```
 
 `rows.tsv` 每列一行：row_id、labels 目錄、truth、card、fps。run 目錄放短路徑（如 `runs/`），Windows 的 260 字元上限會讓長路徑失敗。
 
