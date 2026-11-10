@@ -17,7 +17,10 @@ from .config import CONFIG_DIR, ROOT
 
 # fingerprint keys that change the output; the others are recorded for information only
 DECISIVE = ("package", "git_commit", "numpy", "configs", "catalog", "entries")
-SKIP_FILES = {"row.json"}                       # holds absolute paths of this machine
+# optional pictures of a row (`catalog run --timeline / --gif`): views of the output, not output
+PICTURE_FILES = {"timeline": "timeline.png", "gif": "preview.gif"}
+# not compared: row.json holds absolute paths of this machine; a run with pictures is the same test as one without
+SKIP_FILES = {"row.json", *PICTURE_FILES.values()}
 
 
 def _sha(data: bytes) -> str:

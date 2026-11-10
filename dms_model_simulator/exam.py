@@ -22,6 +22,7 @@ from . import catalog as C
 from .config import ROOT, load_yaml
 from .emulator import OBSERVABLE_CHANNELS
 from .metrics import segments
+from .repro import PICTURE_FILES
 
 EXAMS_DIR = ROOT / "exams"
 GRADING = EXAMS_DIR / "grading.yaml"
@@ -85,7 +86,8 @@ def _row_intent(exam: dict, row: dict, behaviors: list[str], known: dict) -> tup
 # ---- build --------------------------------------------------------------------------------------------
 def build(exam, out_dir, jobs: int = 1, cameras: list[str] | None = None, layout=None,
           include_face: bool | None = None, labels: str | None = None, seed: int | None = None,
-          force: bool = False, log=print, entries: list[dict] | None = None) -> dict:
+          force: bool = False, log=print, entries: list[dict] | None = None, timeline: bool = False,
+          gif: bool = False, gif_every: int = 3, gif_scale: float = 0.4) -> dict:
     """Simulate an exam and lay it out for whoever sits it. Writes under out_dir:
 
         exam.json                      what the exam is: name, fingerprint, one record per row
@@ -99,7 +101,9 @@ def build(exam, out_dir, jobs: int = 1, cameras: list[str] | None = None, layout
     `expand.camera` / `expand.seed` (a post-processing is built for one camera position; a private seed with
     `mode: random` gives a held-out version). layout, include_face, labels only change how the model output is
     written (as for `catalog run`): the truth and the row ids stay the same. entries: the catalog entries to pick
-    from (default: the repo's catalog). Returns the content of exam.json."""
+    from (default: the repo's catalog). timeline / gif (gif_every, gif_scale): pictures per row on the answer side,
+    key/rows/<row_id>/timeline.png and preview.gif (as for `catalog run`), shown in key/answer_key.md; they change
+    no other file. Returns the content of exam.json."""
     exam = load_exam(exam)
     out = Path(out_dir)
     if (out / "exam.json").exists() or (out / "key").exists():
@@ -121,7 +125,8 @@ def build(exam, out_dir, jobs: int = 1, cameras: list[str] | None = None, layout
     if man["skipped_planned"]:
         raise ExamError(f"exam {exam['name']}: planned entries cannot be simulated: {man['skipped_planned']}")
     done = {d["row_id"]: d for d in C.run(key, jobs=jobs, log=log, layout=layout, include_face=include_face,
-                                          labels=labels)}
+                                          labels=labels, timeline=timeline, gif=gif, gif_every=gif_every,
+                                          gif_scale=gif_scale)}
     known = C.load_behaviors()
     rows = []
     for r in man["rows"]:
@@ -193,6 +198,12 @@ def answer_key_markdown(exam_dir, grading=None) -> str:
                 lines.append(f"| {c} | {_spans(t, fps)} | {_spans(hidden, fps) or 'none'} |")
         L += (["| behaviour | on (s) | of that, no evidence (s) |", "|---|---|---|"] + lines) if lines \
             else ["No behaviour label is on in this row."]
+        rd = Path(exam_dir) / "key" / "rows" / r["row_id"]              # pictures of `build --timeline / --gif`
+        if (rd / PICTURE_FILES["gif"]).is_file():
+            L += ["", f"Camera view, truth boxes green, model boxes red: "
+                      f"[{PICTURE_FILES['gif']}](rows/{r['row_id']}/{PICTURE_FILES['gif']})"]
+        if (rd / PICTURE_FILES["timeline"]).is_file():
+            L += ["", f"![timeline](rows/{r['row_id']}/{PICTURE_FILES['timeline']})"]
     return "\n".join(L) + "\n"
 
 

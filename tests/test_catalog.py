@@ -318,6 +318,36 @@ def test_run_writes_frames_jsonl_and_card_per_row(tmp_path):
         assert Path(t["card"]) == Path(d["card"]) and t["fps"] == "20"
 
 
+def _row_files(run_dir, skip=()):
+    return {p.relative_to(run_dir).as_posix(): p.read_bytes() for p in sorted(run_dir.rglob("*"))
+            if p.is_file() and p.name not in skip}
+
+
+def test_run_pictures_are_optional_and_change_no_other_file(tmp_path):
+    from PIL import Image
+    C.expand([_short()], tmp_path, "boundary", profiles=PR)
+    (plain,) = C.run(tmp_path, log=lambda *a: None)
+    rd = tmp_path / "rows" / plain["row_id"]
+    assert "pictures" not in plain and not list(rd.glob("*.png")) and not list(rd.glob("*.gif"))
+    before = _row_files(tmp_path)
+    (d,) = C.run(tmp_path, log=lambda *a: None, timeline=True, gif=True, gif_every=4, gif_scale=0.25)
+    assert d["pictures"] == {"timeline": str(rd / "timeline.png"), "gif": str(rd / "preview.gif")}
+    assert json.loads((rd / "row.json").read_text()) == d
+    with Image.open(rd / "timeline.png") as im:
+        assert im.format == "PNG" and im.width > 400
+    with Image.open(rd / "preview.gif") as im:
+        assert (im.n_frames, im.size, im.info["duration"]) == (5, (480, 270), 200)   # 20 frames, every 4th, 5 fps
+    assert _row_files(tmp_path, skip=("row.json", "timeline.png", "preview.gif")) == \
+        {k: v for k, v in before.items() if not k.endswith("row.json")}
+    (d,) = C.run(tmp_path, log=lambda *a: None, timeline=True)            # a picture not asked for again is removed
+    assert list(d["pictures"]) == ["timeline"] and not (rd / "preview.gif").exists()
+    C.run(tmp_path, log=lambda *a: None)
+    assert _row_files(tmp_path) == before
+    for bad in ({"gif_every": 0}, {"gif_scale": 0.0}):
+        with pytest.raises(C.CatalogError, match="gif_every must be"):
+            C.run(tmp_path, log=lambda *a: None, gif=True, **bad)
+
+
 def test_partial_run_lists_rows_of_the_current_manifest(tmp_path):
     e1, e2 = _short(), _short(id="POS-PHN-TEST")
     man = C.expand([e1, e2], tmp_path, "boundary", profiles=PR)
@@ -366,6 +396,10 @@ def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     assert "exported 1 rows" in out and "rows.tsv" in out
     (t,) = _rows_tsv(tmp_path)
     assert Path(t["card"]).name == "card.md" and Path(t["card"]).exists()
+    assert not (Path(t["card"]).parent / "timeline.png").exists()
+    cli.main(["catalog", "run", str(tmp_path), "--timeline"])
+    assert "plus timeline.png per row" in capsys.readouterr().out
+    assert (Path(t["card"]).parent / "timeline.png").exists()
     cli.main(["catalog", "index", "--out", str(tmp_path / "INDEX.md")])
     assert "BND-PHN-TEST" in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
 

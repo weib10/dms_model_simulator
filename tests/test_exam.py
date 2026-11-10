@@ -88,6 +88,21 @@ def test_build_writes_an_answer_key_to_read(built):
     assert "(5.0 s, 100 frames at 20 fps, camera `dash_right`, error profile `exact`)" in parts[pos]
 
 
+def test_build_with_pictures_shows_them_in_the_answer_key(built, tmp_path):
+    d, meta = built
+    assert "timeline.png" not in (d / "key" / "answer_key.md").read_text(encoding="utf-8")
+    one = {**EXAM, "entries": ["POS-PHN-TEST"]}
+    m = E.build(one, tmp_path / "p", entries=ENTRIES, log=lambda *_: None, timeline=True, gif=True, gif_every=10)
+    (rid,) = [r["row_id"] for r in m["rows"]]
+    assert m["rows"] == [r for r in meta["rows"] if r["row_id"] == rid]   # the same row as without pictures
+    rd = tmp_path / "p" / "key" / "rows" / rid
+    assert (rd / "timeline.png").is_file() and (rd / "preview.gif").is_file()
+    assert sorted(p.name for p in (tmp_path / "p" / "questions" / rid).iterdir()) == ["pipeline.jsonl", "row.json"]
+    text = (tmp_path / "p" / "key" / "answer_key.md").read_text(encoding="utf-8")
+    assert f"![timeline](rows/{rid}/timeline.png)" in text and f"[preview.gif](rows/{rid}/preview.gif)" in text
+    assert E.load_truth(tmp_path / "p", rid) == E.load_truth(d, rid)
+
+
 def test_build_refuses_to_overwrite_and_checks_the_definition(built, tmp_path):
     d, _ = built
     with pytest.raises(E.ExamError, match="already holds an exam"):

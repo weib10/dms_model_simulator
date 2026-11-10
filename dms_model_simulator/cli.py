@@ -422,8 +422,9 @@ def cmd_catalog(a):
         if not res["same"]:
             raise SystemExit(1)
     elif a.action == "run":
-        done = C.run(a.run_dir, a.select, a.jobs, layout=a.layout, include_face=a.include_face, labels=a.labels)
-        print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row")
+        done = C.run(a.run_dir, a.select, a.jobs, layout=a.layout, include_face=a.include_face, labels=a.labels,
+                     **_picture_kwargs(a))
+        print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row{_picture_note(a)}")
 
 
 def cmd_exam(a):
@@ -437,10 +438,10 @@ def cmd_exam(a):
         elif a.action == "build":
             meta = E.build(a.exam, a.out, jobs=a.jobs, cameras=a.camera, layout=a.layout,
                            include_face=a.include_face, labels=a.labels, seed=a.seed, force=a.force,
-                           log=lambda *_: None)
+                           log=lambda *_: None, **_picture_kwargs(a))
             print(f"exam {meta['exam']} ({meta['fingerprint_id']}): {meta['rows_total']} rows, "
                   f"{meta['frames_total']} frames -> {a.out}/questions (model output), {a.out}/key (truth; "
-                  f"to read: key/answer_key.md)")
+                  f"to read: key/answer_key.md{_picture_note(a)})")
         elif a.action == "oracle":
             print(f"wrote {E.oracle_answers(a.exam_dir, a.out)} (the truth as an answer sheet)")
         elif a.action == "grade":
@@ -509,6 +510,28 @@ def _label_args(parser):
                         help="pipeline JSONL OD labels: sim = simulator classes; mapped = the consumer classes of the "
                              "--layout class_map (per-class conf thresholds; face included unless --no-face). dms.bin "
                              "always follows its layout")
+
+
+def _picture_args(parser):
+    """Optional pictures per catalog / exam row (catalog._row_pictures)."""
+    parser.add_argument("--timeline", action="store_true",
+                        help="also write timeline.png per row: truth behaviour, eye openness and injected model errors "
+                             "over time")
+    parser.add_argument("--gif", action="store_true",
+                        help="also write preview.gif per row: the camera view, truth boxes green, model boxes red (slow "
+                             "and large for long rows)")
+    parser.add_argument("--gif-every", type=int, default=3, metavar="N", help="--gif: draw every Nth frame (default 3)")
+    parser.add_argument("--gif-scale", type=float, default=0.4, metavar="S",
+                        help="--gif: size relative to the camera image (default 0.4)")
+
+
+def _picture_kwargs(a) -> dict:
+    return {"timeline": a.timeline, "gif": a.gif, "gif_every": a.gif_every, "gif_scale": a.gif_scale}
+
+
+def _picture_note(a) -> str:
+    names = [n for k, n in (("timeline", "timeline.png"), ("gif", "preview.gif")) if getattr(a, k)]
+    return f", plus {' and '.join(names)} per row" if names else ""
 
 
 def _pipeline_args(parser):
@@ -648,6 +671,7 @@ def main(argv=None):
     q.add_argument("--layout", default=None,
                    help="frame_yaml layout YAML (class ids, thresholds); default: configs/export.yaml's. Its path "
                         "and sha256 are written to every row.json")
+    _picture_args(q)
     _pipeline_args(q)
     q = cs.add_parser("verify", help="compare two exported runs: fingerprint (code, configs, entries), row ids, "
                                      "and every row's output (structure exact, numbers within --tol)")
@@ -666,6 +690,7 @@ def main(argv=None):
     q.add_argument("--layout", default=None,
                    help="also write each row as frame_yaml (questions/<row>/labels) with this layout's class ids "
                         "and thresholds")
+    _picture_args(q)
     _pipeline_args(q)
     q.add_argument("--seed", type=int, default=None,
                    help="seed of the parameter draws of an exam with `mode: random` (a private seed = a held-out exam)")

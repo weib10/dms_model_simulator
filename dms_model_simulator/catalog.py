@@ -648,7 +648,32 @@ def _layout_info(layout) -> dict | None:
     return {"layout": str(p), "layout_sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
 
 
-def _run_row(r: dict, run_dir: str, layout: dict | None = None, pipeline: dict | None = None) -> dict:
+def _row_pictures(sim, d: Path, row_id: str, pictures: dict) -> dict:
+    """Write the pictures asked for into the row directory and remove the others (left by an earlier run, they
+    would show an older output). timeline.png: viz.plot_timeline (truth behaviour, eye openness, injected model
+    errors over time). preview.gif: the camera view of every `every`-th frame at `scale` (truth boxes green, model
+    boxes red). Returns {"timeline": path, "gif": path} of the files written."""
+    from .repro import PICTURE_FILES
+    want = [k for k in PICTURE_FILES if pictures.get(k)]
+    for k, name in PICTURE_FILES.items():
+        if k not in want:
+            (d / name).unlink(missing_ok=True)
+    if not want:
+        return {}
+    from . import viz                                   # matplotlib: only when a picture is asked for
+    out = {k: str(d / PICTURE_FILES[k]) for k in want}
+    if "timeline" in out:
+        viz.plt.close(viz.plot_timeline(sim.records, out["timeline"], title=row_id))
+    if "gif" in out:
+        every = pictures["every"]
+        frames = [viz.draw_camera_view(rec, sim.camera, sim.cabin, pictures["scale"]).quantize(
+            method=viz.Image.Quantize.FASTOCTREE) for rec in sim.records[::every]]   # 1 byte / pixel while they wait
+        viz.save_gif(frames, out["gif"], sim.behavior.fps / every)
+    return out
+
+
+def _run_row(r: dict, run_dir: str, layout: dict | None = None, pipeline: dict | None = None,
+             pictures: dict | None = None) -> dict:
     from .behavior_card import write_card
     from .events import road_box
     from .export import export_scenario, load_config
@@ -673,21 +698,32 @@ def _run_row(r: dict, run_dir: str, layout: dict | None = None, pipeline: dict |
             # post-processing needs, not an answer
             "road_box": None if box is None else {"yaw_deg": [box[0], box[1]], "pitch_deg": [box[2], box[3]]},
             **(layout or {})}
+    pics = _row_pictures(sim, d, r["row_id"], pictures or {})
+    if pics:
+        info["pictures"] = pics
     (d / "row.json").write_text(json.dumps(info, indent=1) + "\n", encoding="utf-8", newline="\n")
     return info
 
 
 def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, layout=None,
-        include_face: bool | None = None, labels: str | None = None) -> list[dict]:
+        include_face: bool | None = None, labels: str | None = None, timeline: bool = False, gif: bool = False,
+        gif_every: int = 3, gif_scale: float = 0.4) -> list[dict]:
     """Export every manifest row under <run>/rows/<row_id>/: frame_yaml directory, pipeline / truth / full JSONL and
     the behaviour card (card.md, card.json); then write rows.tsv (write_row_list). jobs: parallel processes.
     layout: frame_yaml layout YAML (class ids, per-class thresholds) instead of configs/export.yaml's; its path and
     sha256 go into every row.json, since the layout changes what a post-processing program sees.
     include_face / labels: the pipeline JSONL's face box and label mode (as for `dms-sim run`; None = the defaults
-    of configs/export.yaml). Neither changes the truth or the row ids."""
+    of configs/export.yaml). Neither changes the truth or the row ids.
+    timeline / gif: also write timeline.png / preview.gif per row (_row_pictures; paths under row.json `pictures`).
+    They are drawn from the row's own simulation and change no other file. gif_every: draw every Nth frame;
+    gif_scale: size relative to the camera image. The GIF is the slow, large one: at the defaults a 13 s row takes
+    a few seconds and 1 MB, a 5-minute row over a minute and 20 MB."""
     run_dir = Path(run_dir).resolve()
     lay = _layout_info(layout)
     pipe = {"include_face": include_face, "labels": labels}
+    if int(gif_every) < 1 or not float(gif_scale) > 0:
+        raise CatalogError(f"gif_every must be >= 1 and gif_scale > 0, got {gif_every!r} and {gif_scale!r}")
+    pics = {"timeline": bool(timeline), "gif": bool(gif), "every": int(gif_every), "scale": float(gif_scale)}
     sel = [x.upper() for x in entries or []]
     rows = [r for r in load_manifest(run_dir)["rows"]
             if not sel or "ALL" in sel or r["entry"] in sel or r["category"] in sel or r["family"] in sel
@@ -696,12 +732,13 @@ def run(run_dir, entries: list[str] | None = None, jobs: int = 1, log=print, lay
     if jobs > 1:
         from concurrent.futures import ProcessPoolExecutor
         with ProcessPoolExecutor(jobs) as ex:
-            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows), [lay] * len(rows), [pipe] * len(rows)):
+            for info in ex.map(_run_row, rows, [str(run_dir)] * len(rows), [lay] * len(rows), [pipe] * len(rows),
+                               [pics] * len(rows)):
                 done.append(info)
                 log(f"{info['row_id']}: {info['frames']} frames")
     else:
         for r in rows:
-            info = _run_row(r, str(run_dir), lay, pipe)
+            info = _run_row(r, str(run_dir), lay, pipe, pics)
             done.append(info)
             log(f"{info['row_id']}: {info['frames']} frames")
     if entries:   # partial run: list every row of this manifest exported so far (not rows of an earlier one)

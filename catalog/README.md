@@ -53,6 +53,7 @@ dms-sim catalog expand BND PHN --out runs/r1 # 展開成具體劇本 + runs/r1/m
 dms-sim catalog run runs/r1 --jobs 4         # 每列匯出到 runs/r1/rows/<row_id>/，並寫 rows.tsv
 dms-sim catalog run runs/r1 --layout my_layout.yaml   # frame_yaml 改用自己的類別 id 與門檻；layout 路徑與 sha256 記進每列 row.json
 dms-sim catalog run runs/r1 --include-face            # pipeline JSONL 帶臉框（--labels mapped：改用 layout 的類別）
+dms-sim catalog run runs/r1 --timeline --gif          # 每列多出 timeline.png、preview.gif（預設都不出）
 dms-sim catalog expand NEG --level large --out runs/h1        # 只要最難的一級（預設三級都出，row id 帶難度）
 dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直接覆蓋參數（值用 YAML 解析；只套到有這個參數的條目）
 ```
@@ -63,6 +64,11 @@ dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直
 - `<stem>.pipeline.jsonl`、`<stem>.truth.jsonl`、`<stem>.jsonl`（真值與模型輸出並排，含誤差標記）
 - `card.md`、`card.json`：行為卡（行為時間軸＋注入的模型誤差）
 - `row.json`：路徑、幀數、`road_box`（這一列「看路」的視線範圍，車身座標的 yaw／pitch，度）
+- `timeline.png`（`--timeline`）：真值視線區域、眼睛開合度、真值行為標籤、注入的模型誤差，對時間畫成一張圖
+- `preview.gif`（`--gif`）：相機畫面，真值框綠色、模型框紅色。`--gif-every N` 每 N 幀畫一張（預設 3），`--gif-scale` 是相對相機影像的大小（預設 0.4）。
+  13 s 的一列約 1 MB、幾秒；300 s 的一列約 20 MB、一分多鐘
+
+圖用這一列自己的模擬結果畫，不改其他檔案；`catalog verify` 不比圖。重跑時沒指定的圖會刪掉（免得留著舊輸出的圖）。
 
 `rows.tsv` 每列一行：row_id、labels 目錄、truth、card、fps。run 目錄放短路徑（如 `runs/`），Windows 的 260 字元上限會讓長路徑失敗。
 

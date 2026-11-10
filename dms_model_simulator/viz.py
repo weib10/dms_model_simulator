@@ -599,7 +599,8 @@ def plot_timeline(records: list[dict], path: str | Path | None = None, pipeline:
         def bars(ax, names, flags_of, colors, ylabel):
             for i, n in enumerate(names):
                 spans = [(t[a], (t[b - 1] - t[a]) + dt) for a, b in segments(flags_of(n))]
-                ax.broken_barh(spans, (i - 0.32, 0.64), facecolors=colors.get(n, _TL_MUTED), edgecolor=_TL_SURFACE, lw=1)
+                c = colors.get(n, _TL_MUTED)            # edge in the bar's colour: a blink in a 5-minute row is
+                ax.broken_barh(spans, (i - 0.32, 0.64), facecolors=c, edgecolor=c, lw=0.8)   # narrower than a pixel
             ax.set_yticks(range(len(names))); ax.set_yticklabels(names)
             ax.set_ylim(-0.6, max(len(names), 1) - 0.4); ax.invert_yaxis()
             ax.set_ylabel(ylabel, color=_TL_INK2)

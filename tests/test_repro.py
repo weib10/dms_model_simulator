@@ -76,6 +76,13 @@ def test_verify_same_and_different_runs(tmp_path):
     assert any("head_pose/yaw" in p for p in probs) and any("items" in p for p in probs)
 
 
+def test_verify_ignores_row_pictures(tmp_path):
+    a, b = _run(tmp_path / "a"), _run(tmp_path / "b")
+    C.run(b, log=lambda *_: None, timeline=True, gif=True)
+    assert list(b.rglob("timeline.png")) and list(b.rglob("preview.gif"))
+    assert repro.compare_runs(a, b)["same"]
+
+
 def test_verify_reports_a_changed_entry(tmp_path):
     a = _run(tmp_path / "a")
     e = _entry()

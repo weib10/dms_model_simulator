@@ -61,12 +61,17 @@ runs/A/
   key/                      the answer side
     answer_key.md           every row: when each behaviour is on, in seconds
     rows/<row_id>/          truth per frame, full JSONL with error flags, behaviour card
+      timeline.png          with --timeline: gaze zone, eye openness, behaviour labels, injected errors over time
+      preview.gif           with --gif: the camera view, truth boxes green, model boxes red
 ```
 
 - Feed your program `questions/` only. `key/` is not secret (anyone can rebuild it), which is why an exam meant to
   catch tuning to the questions is built with `mode: random` and a private `--seed`.
 - `--camera` builds the exam for another camera position, `--layout` / `--labels mapped` / `--include-face` write the
   model output with your class ids, thresholds and face box. None of them changes the truth.
+- `--timeline` / `--gif` add a picture of every row to `key/` and `answer_key.md` shows them under the row: the
+  quickest way to explain a row to someone who will not read JSONL. They change nothing else (`--gif-every`,
+  `--gif-scale` set the GIF's frame step and size; the GIFs of a 40-row exam take a few minutes and ~50 MB).
 - `road_box` is calibration, not an answer: the range of vehicle-frame gaze yaw / pitch (degrees) that counts as
   looking at the road in this row. A few rows widen it (a traffic light above the windscreen, a junction scan).
 - `fingerprint_id` identifies the build (code version, configs, entries). An answer sheet names the build it was
@@ -80,6 +85,7 @@ The answer to a row is what the driver does in it, frame by frame. Four views of
 |---|---|
 | all rows at a glance | `key/answer_key.md`: per row, the spans in seconds where each behaviour label is on, and which part of that the camera has no evidence of |
 | one row's script | `key/rows/<row_id>/card.md`: what the driver was told to do when, and the model errors injected where |
+| one row as a picture | `key/rows/<row_id>/timeline.png` and `preview.gif`, when built with `--timeline` / `--gif` |
 | every frame | `key/rows/<row_id>/*.truth.jsonl`: `events` holds the six labels, `observable` what the camera can show (fields: [SPEC.md](SPEC.md)) |
 | the truth in your own format | `dms-sim exam oracle runs/A --out DIR`: `DIR/<row_id>.jsonl` has the same lines as your answer file, to compare one by one |
 

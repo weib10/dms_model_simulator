@@ -74,6 +74,7 @@ python -m venv .venv && .venv/Scripts/pip install -e ".[test]"     # Linux / mac
 dms-sim demo --scenario phone_distraction --out out/demo           # every camera: outputs, cards, timelines, GIFs
 dms-sim export --scenario phone_distraction --camera dash_right --format frame_yaml --profile bad --out out/x
 dms-sim catalog expand POS-PHN --out runs/r1 && dms-sim catalog run runs/r1 --jobs 4   # one card per row
+dms-sim catalog run runs/r1 --jobs 4 --timeline --gif              # and a timeline picture + camera-view GIF per row
 ```
 
 More commands:
@@ -158,6 +159,7 @@ dms-sim exam grade runs/A answers --out report      # report.md + report.json
   checks an installation.
 - Truth frames no detector could see (a phone in the lap, a mouth behind a hand) do not count against a signal.
 - `--camera`, `--layout`, `--labels mapped` and `--include-face` build the same exam for your camera and classes.
+- `--timeline` and `--gif` add a picture of every row to the answer side; `answer_key.md` then shows them.
 - `examples/naive_reader.py` reads one frame at a time and raises no alerts: a format example and a baseline, not a
   reference post-processing.
 
@@ -269,6 +271,10 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   timestamp / frame index / size / object count are written as 0.
 - **frame_yaml**: `<stem>.frames/labels/<frame>.yaml` with `detections` (class_id, confidence, left, top, width,
   height, class_name) and `timestamp_msec`. `--image render` adds the camera view per frame.
+- **Pictures of a catalog or exam row** (`catalog run` / `exam build` with `--timeline`, `--gif`; off by default):
+  `timeline.png` (truth gaze zone, eye openness, truth behaviour labels and injected model errors over time) and
+  `preview.gif` (the camera view, truth boxes green, model boxes red). They are drawn from the row's own
+  simulation, change no other file and are left out of `catalog verify`. A GIF of a 5-minute row is about 20 MB.
 
 ## Reproducibility
 
