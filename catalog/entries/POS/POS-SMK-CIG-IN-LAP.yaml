@@ -1,9 +1,15 @@
 id: POS-SMK-CIG-IN-LAP
 number: 64
 title: "兩口之間：菸夾在手上、手放在大腿（10 / 6 / 3 s）"
+title_en: "Between puffs: cigarette between the fingers, hand resting on the lap (10 / 6 / 3 s)"
+short: "菸夾在手上放大腿"
+short_en: "Cigarette in the hand, resting on the lap"
+brief: {small: "夾著 10 s", medium: "夾著 6 s", large: "夾著 3 s"}
+brief_en: {small: "Held 10 s", medium: "Held 6 s", large: "Held 3 s"}
 summary: "抽菸真的在進行：兩口之間菸夾在手上（文獻：每口約 1.6 s、間隔約 27 s，Krebs 2016），真值 smoking 整段為真。
-  難度 = 多難認出來：菸離臉很遠、在大腿上，菸框小又常在畫面外。small 10 s、medium 6 s、large 3 s。
+  難認的原因：菸離臉很遠、在大腿上，只有 overhead_console 拍得到。三級只差夾著的時間：small 10 s、medium 6 s、large 3 s（越短越難）。
   大腿上的菸只有 overhead_console 拍得到，dash_right、steering_column 都看不到（對照用）。原本是 NEG（N23），2026-11-10 改為 POS。"
+summary_en: "Smoking is really going on: between puffs the cigarette is held in the hand (literature: each puff about 1.6 s, about 27 s apart, Krebs 2016), and the ground truth smoking is true throughout. Why it is hard: the cigarette is far from the face, on the lap, and only overhead_console can see it. The levels differ only in how long it is held: small 10 s, medium 6 s, large 3 s (shorter is harder). A cigarette on the lap is only visible to overhead_console; neither dash_right nor steering_column can see it (as a control). Originally a NEG entry (N23); changed to POS on 2026-11-10."
 status: ready
 source: written
 tags: [smoking]

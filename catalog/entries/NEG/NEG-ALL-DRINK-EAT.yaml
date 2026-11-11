@@ -1,11 +1,17 @@
 id: NEG-ALL-DRINK-EAT
 number: 79
 title: "喝水、吃東西（手拿東西到嘴邊）：每口喝 1.5 / 3 / 5 s，吃東西 1 / 2 / 4 口"
+title_en: "Drinking and eating (hand brings something to the mouth): each sip 1.5 / 3 / 5 s, eating 1 / 2 / 4 bites"
+short: "喝水、吃東西"
+short_en: "Drinking and eating"
+brief: {small: "每口喝 1.5 s（仰 5° / 10°），吃 1 口 1 s", medium: "每口喝 3 s（仰 10° / 15°），吃 2 口各 1.5 s", large: "每口喝 5 s（仰 15° / 20°），吃 4 口各 2 s", all: "杯子、瓶子各喝一口（括號是仰頭角度），吃的每口之間 2 s"}
+brief_en: {small: "Sips of 1.5 s (head back 5° / 10°), 1 bite of 1 s", medium: "Sips of 3 s (head back 10° / 15°), 2 bites of 1.5 s", large: "Sips of 5 s (head back 15° / 20°), 4 bites of 2 s", all: "One sip from a cup and one from a bottle (head-tilt angles in brackets); 2 s between bites"}
 summary: "對照：打哈欠（嘴張大 3–6 s，喝東西時嘴被杯子擋住）、抽菸（手反覆到嘴邊）、講電話（瓶子貼臉）。
   杯子、瓶子貼在嘴上（held，手在 at_mouth）仰頭喝，每口 small 1.5 s、medium 3 s、large 5 s，仰頭杯子 5 / 10 / 15°、瓶子 10 / 15 / 20°；
   吃東西 = 手到嘴、沒拿東西，small 1 口 1 s、medium 2 口 1.5 s、large 4 口 2 s（像抽菸的節奏），每口之間 2 s。
-  杯子、瓶子只遮住嘴和下半臉（從方向盤柱的低角度可能擋到一隻眼）。ctx_fp 讓模擬模型在手到嘴邊時報假香菸框、
+  杯子、瓶子遮住嘴和下半臉，也會擋掉一隻眼：dash_right 擋左眼（瓶子整段、杯子大部分時間），steering_column 擋右眼（瓶子每級整段、杯子在 large 大部分時間），medium、large 喝瓶子時左眼也被擋到一部分。ctx_fp 讓模擬模型在手到嘴邊時報假香菸框、
   瓶子貼嘴時報假手機框（configs/emulator.yaml contextual_false_positives）。"
+summary_en: "Reference: yawning (mouth wide open for 3–6 s; when drinking, the mouth is hidden by the cup), smoking (hand repeatedly to the mouth), phone call (bottle against the face). A cup or bottle against the mouth (held, hand at_mouth), head tilted back to drink; each sip small 1.5 s, medium 3 s, large 5 s; head tilt with a cup 5 / 10 / 15°, with a bottle 10 / 15 / 20°. Eating = hand to the mouth, holding nothing: small 1 bite of 1 s, medium 2 bites of 1.5 s, large 4 bites of 2 s (like a smoking rhythm), 2 s between bites. A cup or bottle covers the mouth and lower face and also hides one eye: the left eye on dash_right (the whole time with the bottle, most of the time with the cup), the right eye on steering_column (the whole time with the bottle at every level, most of the time with the cup at large); at medium and large the bottle also partly covers the left eye. ctx_fp makes the simulated model report a false cigarette box when the hand is at the mouth, and a false phone box when the bottle is against the mouth (configs/emulator.yaml contextual_false_positives)."
 status: ready
 source: written
 tags: [hand_near_face, drinking, eating, occlusion]

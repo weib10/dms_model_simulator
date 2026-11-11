@@ -1,12 +1,19 @@
 id: BND-DRW-SINGLE-CLOSURE
 number: 37
 title: "正常開車中單次閉眼，閉眼時間從 0.3 s 掃到 8 s（1 s、3 s 門檻兩側加密）"
+title_en: "A single eye closure during normal driving, closure time swept from 0.3 s to 8 s (extra steps around the 1 s and 3 s thresholds)"
+short: "單次閉眼時間掃描"
+short_en: "Single eye-closure duration sweep"
+brief: {all: "閉眼 0.3–8 s 共 16 種，1 s、3 s 兩側各差一幀"}
+brief_en: {all: "One closure of 0.3–8 s in 16 steps, one frame either side of 1 s and of 3 s"}
 summary: "前 7 s 正常，閉眼一次，再睜眼 5 s。看閉眼多久開始被當成疲勞、睜眼後多久解除。眨眼降到每分鐘 6 次，少一點眨眼貼著閉眼段、把閉眼拉長。
   對照門檻：微睡約 1 s、睡著 3 s（Euro NCAP）；0.95 / 1.0 / 1.05 s 和 2.95 / 3.0 / 3.05 s 夾住門檻（前後各差一幀）。原本的 BND-DRW-LONG-CLOSURE-ENDS（1.2 s、8 s）併進來。"
+summary_en: "Normal for the first 7 s, one eye closure, then eyes open for 5 s. Checks how long a closure must last before it counts as drowsiness, and how long after the eyes open it clears. Blinks are reduced to 6 per minute, so fewer blinks land right next to the closure and lengthen it. Reference threshold: microsleep about 1 s, asleep 3 s (Euro NCAP); 0.95 / 1.0 / 1.05 s and 2.95 / 3.0 / 3.05 s bracket the thresholds (one frame either side). The former BND-DRW-LONG-CLOSURE-ENDS (1.2 s, 8 s) is merged into this entry."
 status: ready
 source: written
 tags: [closure, duration, sleepiness]
 behaviors: [V05]
+standards: {STD-A: [R20]}
 params:
   closure_s: {grid: [0.3, 0.6, 0.8, 0.95, 1.0, 1.05, 1.2, 1.5, 2.0, 2.5, 2.95, 3.0, 3.05, 4.0, 6.0, 8.0]}
 template:

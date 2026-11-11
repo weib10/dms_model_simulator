@@ -1,12 +1,19 @@
 id: POS-DRW-NCAP-SLEEP
 number: 26
 title: "Euro NCAP 睡著（sleep）：閉眼 8 / 6 / 3.5 s、頭花 1.2 s 慢慢往前點"
+title_en: "Euro NCAP asleep (sleep): eyes closed for 8 / 6 / 3.5 s, head slowly nods forward over 1.2 s"
+short: "睡著，頭慢慢垂下"
+short_en: "Falling asleep, head slowly droops"
+brief: {small: "閉 8 s，頭低 25°", medium: "閉 6 s，頭低 20°", large: "閉 3.5 s，頭低 10°", all: "頭花 1.2 s 慢慢垂下"}
+brief_en: {small: "Closed 8 s, head down 25°", medium: "Closed 6 s, head down 20°", large: "Closed 3.5 s, head down 10°", all: "The head takes 1.2 s to droop"}
 summary: "Euro NCAP 把閉眼 3 s 以上算睡著（1–3 s 是微睡，見 POS-DRW-MICROSLEEP）。眼睛一開始就閉上，頭在 1.2 s 內慢慢垂下（醒來抬頭也是 1.2 s）。
   對照門檻：連續閉眼 3 s。medium 閉 6 s、頭往前點 20°；small 8 s、25°；large 3.5 s、10°（剛過睡著門檻）。"
+summary_en: "Euro NCAP counts eye closure of 3 s or more as asleep (1–3 s is microsleep, see POS-DRW-MICROSLEEP). The eyes close right at the start, and the head slowly droops over 1.2 s (raising it on waking also takes 1.2 s). Reference threshold: continuous eye closure 3 s. medium closed 6 s, head nods forward 20°; small 8 s, 25°; large 3.5 s, 10° (just past the asleep threshold)."
 status: ready
 source: written
 tags: [ncap, closure, sleep]
 behaviors: [V06]
+standards: {STD-A: [R8, R20]}
 params:
   close_s: {levels: {small: 8.0, medium: 6.0, large: 3.5}}
   nod: {levels: {small: -25, medium: -20, large: -10}}

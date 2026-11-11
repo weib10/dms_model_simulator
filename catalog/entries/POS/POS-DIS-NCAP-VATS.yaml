@@ -1,10 +1,16 @@
 id: POS-DIS-NCAP-VATS
 number: 6
 title: "Euro NCAP 短分心（VATS）：反覆看中控 2 / 1.5 / 1 s、回路面 1 / 1 / 1.5 s，任一 30 s 內累計離開路面 20 / 18 / 12 s"
+title_en: "Euro NCAP short distraction (VATS): repeated looks at the centre display 2 / 1.5 / 1 s, back to the road 1 / 1 / 1.5 s, 20 / 18 / 12 s off road in total within any 30 s"
+short: "反覆短看中控（累計分心）"
+short_en: "Repeated short looks at the centre display"
+brief: {small: "看 2 s、回路面 1 s，×12（20 s）", medium: "看 1.5 s、回路面 1 s，×12（18 s）", large: "看 1 s、回路面 1.5 s，×12（12 s）", all: "括號是任一 30 s 內累計離開路面的時間"}
+brief_en: {small: "2 s look, 1 s back on the road, ×12 (20 s)", medium: "1.5 s look, 1 s back on the road, ×12 (18 s)", large: "1 s look, 1.5 s back on the road, ×12 (12 s)", all: "In brackets: the most time off the road within any 30 s"}
 summary: "VATS（visual attention time sharing）是每次都很短、但 30 s 內累計離開路面超過 10 s 的反覆瞥視。看中控（右下約 33°），頭照預設增益轉約 21°、低約 10°，轉頭 0.35 s；
   回路面至少 1 s，頭來得及回正、視線真的回到路上。
   對照門檻：任一 30 s 視窗內累計離開路面 10 s，單次在長分心 3 s 以下。12 次瞥視：small 每次 2 s、回路面 1 s（任一 30 s 最多 20 s）；
   medium 1.5 s、1 s（18 s）；large 1 s、1.5 s（12 s，剛過門檻）。"
+summary_en: "VATS (visual attention time sharing) is repeated glancing where each look is short, but the time off road adds up to more than 10 s within 30 s. Looking at the centre display (down and to the right, about 33°): with the default gain the head turns about 21° and drops about 10°; head turn 0.35 s. Back on the road for at least 1 s, so the head has time to return to centre and the gaze really returns to the road. Reference threshold: 10 s off road in total within any 30 s window, each single look under the 3 s long distraction. 12 glances: small 2 s each, 1 s back on the road (at most 20 s in any 30 s); medium 1.5 s, 1 s (18 s); large 1 s, 1.5 s (12 s, just past the threshold)."
 status: ready
 source: written
 tags: [ncap, short_distraction, glance, accumulation]

@@ -1,13 +1,20 @@
 id: POS-DRW-NCAP-UNRESPONSIVE
 number: 27
-title: "Euro NCAP 無反應駕駛：閉眼、頭垂到胸前 12 / 10 / 7 s 不動"
+title: "Euro NCAP 無反應駕駛：閉眼 12 / 10 / 7 s，頭花 1.5 s 垂到胸前後不動"
+title_en: "Euro NCAP unresponsive driver: eyes closed for 12 / 10 / 7 s, head drooping to the chest over 1.5 s and then motionless"
+short: "睡著不醒，頭垂到胸前"
+short_en: "Asleep and unresponsive, head on the chest"
+brief: {small: "閉眼垂頭 12 s", medium: "閉眼垂頭 10 s", large: "閉眼垂頭 7 s", all: "頭垂 45°（花 1.5 s 垂下），到結尾都沒醒"}
+brief_en: {small: "Eyes closed, head down 12 s", medium: "Eyes closed, head down 10 s", large: "Eyes closed, head down 7 s", all: "Head down 45° (takes 1.5 s), does not wake before the end"}
 summary: "睡著後一直沒回應，頭花 1.5 s 垂下。真車上頭低 45° 時眼睛可能被眉骨擋住、甚至整張臉偵測不到；模擬器沒有這種遮擋：
   頭垂 45° 時兩台預設相機的臉框、兩個眼框（閉眼）、嘴框照樣輸出。看不到眼框的情況要另外用 profile（例如 no_eyes）做。
   對照門檻：睡著（閉眼 3 s 以上）之後對警示約 3 s 沒反應，合計約 6 s。small 12 s、medium 10 s、large 7 s；頭一律垂 45°。"
+summary_en: "Asleep and not responding; the head droops over 1.5 s. In a real car, with the head down 45° the eyes may be hidden by the brow ridge, and the whole face may even go undetected; the simulator has no such occlusion: with the head drooped 45°, both default cameras still output the face box, both eye boxes (closed) and the mouth box. Cases where the eye boxes are not visible need a separate profile (for example no_eyes). Reference threshold: asleep (eyes closed 3 s or more), then no response to the warning for about 3 s, about 6 s in total. small 12 s, medium 10 s, large 7 s; the head always droops 45°."
 status: ready
 source: written
 tags: [ncap, closure, sleep, unresponsive, head_down]
 behaviors: [V06]
+standards: {STD-A: [R20]}
 params:
   hold_s: {levels: {small: 12.0, medium: 10.0, large: 7.0}}
 template:

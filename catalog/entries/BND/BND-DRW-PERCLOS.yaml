@@ -1,14 +1,21 @@
 id: BND-DRW-PERCLOS
 number: 36
 title: "反覆短閉眼（每次 0.5 s）持續 60 s 以上，閉眼比例從 50% 掃到 14%"
+title_en: "Repeated short eye closures (0.5 s each) for 60 s or more, eyes-closed ratio swept from 50% to 14%"
+short: "長時間反覆短閉眼"
+short_en: "Long run of repeated short closures"
+brief: {all: "每次閉 0.5 s，反覆 60–63 s；閉眼比例 50% 到 14% 共 6 種"}
+brief_en: {all: "Eyes closed 0.5 s at a time for 60–63 s; closed share 50% / 40% / 33% / 25% / 20% / 14%"}
 summary: "閉眼 0.5 s、睜眼 open_s 為一輪，重複到滿 60 s（open_s 3 s 那列 18 輪 = 63 s）；閉眼比例 = 0.5 / (0.5 + open_s)：50% / 40% / 33% / 25% / 20% / 14%。
   每次閉眼都很短，只有看「一段時間內閉眼比例」的規則才會有反應。PERCLOS 一般用 60 s 視窗（P80：一分鐘內眼睛閉合 80% 以上的時間比例），
   所以這段反覆閉眼至少一整個 60 s 視窗長，視窗裡的比例就是上面的值（差不到一輪；另有每分鐘 2 次的眨眼）。
   模板不能做運算，輪數跟著 open_s 變，所以每個比例寫成一整個 repeat 區塊（各一列）。"
+summary_en: "One cycle is 0.5 s eyes closed and open_s eyes open, repeated until 60 s is filled (the open_s 3 s row has 18 cycles = 63 s); eyes-closed ratio = 0.5 / (0.5 + open_s): 50% / 40% / 33% / 25% / 20% / 14%. Each closure is very short, so only rules that look at 'the eyes-closed ratio over a period of time' will react. PERCLOS usually uses a 60 s window (P80: the proportion of time within one minute that the eyes are at least 80% closed), so the repeated closures last at least one full 60 s window, and the ratio inside the window is the value above (off by less than one cycle; there are also 2 blinks per minute). Templates cannot do arithmetic, and the number of cycles changes with open_s, so each ratio is written as its own repeat block (one row each)."
 status: ready
 source: written
 tags: [closure, perclos]
 behaviors: [V05]
+standards: {STD-A: [R18]}
 params:
   pattern:
     grid:     # 0.5 s closed + open_s open, repeated to at least 60 s

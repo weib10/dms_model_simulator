@@ -1,13 +1,20 @@
 id: POS-DRW-BASIC-CLOSURE
 number: 23
 title: "基本款：專心開車 8 s 後閉眼 4 / 3 / 1.5 s，再睜眼"
+title_en: "Basic: 8 s of attentive driving, then eyes closed for 4 / 3 / 1.5 s, then open again"
+short: "閉眼（基本款）"
+short_en: "Eyes closed (basic)"
+brief: {small: "閉 4 s，開合度 0", medium: "閉 3 s，開合度 0.05", large: "閉 1.5 s，開合度 0.15"}
+brief_en: {small: "Closed 4 s, openness 0", medium: "Closed 3 s, openness 0.05", large: "Closed 1.5 s, openness 0.15"}
 summary: "疲勞家族的基本款：一次明確的長閉眼，睜眼後恢復正常。
   對照門檻：閉眼 = 開合度 < 0.2，持續約 1 s 以上才算（眨眼 0.1–0.4 s）。small 閉 4 s、開合度 0；medium 3 s、0.05；
-  large 1.5 s、0.15（仍在 0.2 以下，但眼框不像全閉）。"
+  large 1.5 s、0.15（仍在 0.2 以下，但沒有全閉，開合度離門檻只差 0.05）。"
+summary_en: "The basic entry of the drowsiness family: one clear long eye closure, back to normal after the eyes open. Reference threshold: eyes closed = openness < 0.2, counting only if it lasts about 1 s or more (a blink is 0.1–0.4 s). small closed 4 s, openness 0; medium 3 s, 0.05; large 1.5 s, 0.15 (still below 0.2, but not fully closed: the openness is just 0.05 under the threshold)."
 status: ready
 source: written
 tags: [basic, closure]
 behaviors: [V05]
+standards: {STD-A: [R20]}
 params:
   close_s: {levels: {small: 4.0, medium: 3.0, large: 1.5}}
   openness: {levels: {small: 0.0, medium: 0.05, large: 0.15}}

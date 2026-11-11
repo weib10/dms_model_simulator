@@ -1,14 +1,21 @@
 id: NEG-YWN-SINGING
 number: 47
 title: "唱歌：短音節加長音（長音嘴 0.35 / 0.6 / 0.7，拉 0.4 / 1.2 / 2.0 s）"
+title_en: "Singing: short syllables plus a long note (long-note mouth 0.35 / 0.6 / 0.7, held 0.4 / 1.2 / 2.0 s)"
+short: "唱歌"
+short_en: "Singing"
+brief: {small: "5 句共 9.5 s，長音 0.4 s、嘴 0.35", medium: "7 句共 18.9 s，長音 1.2 s、嘴 0.6", large: "8 句共 28 s，長音 2.0 s、嘴 0.7"}
+brief_en: {small: "5 phrases, 9.5 s; long note 0.4 s, mouth 0.35", medium: "7 phrases, 18.9 s; long note 1.2 s, mouth 0.6", large: "8 phrases, 28 s; long note 2.0 s, mouth 0.7"}
 summary: "對照：打哈欠（嘴張到 0.9、持續 3–6 s）與模型的嘴開合判斷門檻（約 0.55）。每句兩個短音節（各 0.3 s，嘴 small 0.25、medium 0.35、large 0.4，
   中間合上 0.2 s）再一個長音：長音嘴 small 0.35 拉 0.4 s、medium 0.6 拉 1.2 s、large 0.7 拉 2.0 s，句尾合上 0.5 s。
   medium、large 的長音超過 0.55，模型會報張嘴 1.2 / 2.0 s，跟哈欠的差別只剩時長（哈欠 3 s 以上）與張得沒那麼大。
   共 5 / 7 / 8 句，持續約 9.5 / 19 / 28 s。"
+summary_en: "Reference: yawning (mouth open to 0.9 for 3–6 s) and the model's mouth-open threshold (about 0.55). Each phrase is two short syllables (0.3 s each, mouth small 0.25, medium 0.35, large 0.4, closed 0.2 s in between) followed by a long note: long-note mouth small 0.35 held 0.4 s, medium 0.6 held 1.2 s, large 0.7 held 2.0 s, mouth closed 0.5 s at the end of the phrase. In medium and large the long note exceeds 0.55 and the model reports mouth open for 1.2 / 2.0 s; the only differences from a yawn are the duration (a yawn is 3 s or more) and the smaller opening. 5 / 7 / 8 phrases in total, lasting about 9.5 / 19 / 28 s."
 status: ready
 source: written
 tags: [mouth, singing]
 behaviors: [N16]
+standards: {STD-A: []}
 params:
   syl: {levels: {small: 0.25, medium: 0.35, large: 0.4}}
   peak: {levels: {small: 0.35, medium: 0.6, large: 0.7}}

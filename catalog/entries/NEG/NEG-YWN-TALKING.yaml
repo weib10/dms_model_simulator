@@ -1,14 +1,21 @@
 id: NEG-YWN-TALKING
 number: 48
-title: "講話：嘴一開一合（約 2.4 Hz，峰值 0.3 / 0.4 / 0.5，偶爾張大到 0.35 / 0.45 / 0.6）持續 5 / 10 / 15 s"
+title: "講話：嘴一開一合（約 2.4 Hz，重音峰值 0.3 / 0.4 / 0.5，偶爾張大到 0.35 / 0.45 / 0.6）持續 5 / 10 / 15 s"
+title_en: "Talking: mouth opening and closing (about 2.4 Hz, stressed-syllable peak 0.3 / 0.4 / 0.5, occasionally wide to 0.35 / 0.45 / 0.6) for 5 / 10 / 15 s"
+short: "講話"
+short_en: "Talking"
+brief: {small: "講 5 s，嘴最大 0.35", medium: "講 10 s，嘴最大 0.45", large: "講 15 s，嘴最大 0.6"}
+brief_en: {small: "5 s of talking, mouth peak 0.35", medium: "10 s of talking, mouth peak 0.45", large: "15 s of talking, mouth peak 0.6"}
 summary: "對照：打哈欠（嘴張到 0.9、持續 3–6 s）與模型的嘴開合判斷門檻（約 0.55）。講話的嘴不規則地一開一合（文獻：講話時嘴的開合 2–7 Hz）：
   每句 2.5 s，嘴在 0.1 與峰值之間切換，每段 0.15–0.2 s，一句 6 個音節（約 2.4 Hz），句尾停 0.45 s。
-  峰值 small 0.3 / 0.2、medium 0.4 / 0.3、large 0.5 / 0.4，每句有一個音節張大 0.3 s（0.35 / 0.45 / 0.6）：
+  峰值分重音和輕音兩種（重音 / 輕音）：small 0.3 / 0.2、medium 0.4 / 0.3、large 0.5 / 0.4；另外每句有一個音節張大 0.3 s（0.35 / 0.45 / 0.6）：
   large 的張大越過 0.55，模型會短暫報張嘴（每次 0.3 s，哈欠要好幾秒）。持續 2 / 4 / 6 句（5 / 10 / 15 s）。"
+summary_en: "Reference: yawning (mouth open to 0.9 for 3–6 s) and the model's mouth-open threshold (about 0.55). When talking, the mouth opens and closes irregularly (literature: mouth movement during speech 2–7 Hz): each sentence is 2.5 s, the mouth switches between 0.1 and the peak, each step 0.15–0.2 s, 6 syllables per sentence (about 2.4 Hz), with a 0.45 s pause at the end of the sentence. There are two peaks, for stressed and unstressed syllables (stressed / unstressed): small 0.3 / 0.2, medium 0.4 / 0.3, large 0.5 / 0.4; in addition one syllable per sentence opens wide for 0.3 s (0.35 / 0.45 / 0.6): in large the wide opening crosses 0.55 and the model briefly reports mouth open (0.3 s each time; a yawn takes several seconds). Lasts 2 / 4 / 6 sentences (5 / 10 / 15 s)."
 status: ready
 source: written
 tags: [talking, mouth]
 behaviors: [N15]
+standards: {STD-A: []}
 params:
   hi: {levels: {small: 0.3, medium: 0.4, large: 0.5}}       # stressed syllable
   mid: {levels: {small: 0.2, medium: 0.3, large: 0.4}}      # unstressed syllable

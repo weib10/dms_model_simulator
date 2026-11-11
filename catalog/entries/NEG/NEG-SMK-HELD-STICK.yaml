@@ -1,10 +1,16 @@
 id: NEG-SMK-HELD-STICK
 number: 69
 title: "嘴裡叼東西（沒用手扶）：牙籤 / 棒棒糖 / 筆（3 / 6 / 10 s）"
+title_en: "Something held in the mouth (no hand): toothpick / lollipop / pen (3 / 6 / 10 s)"
+short: "嘴裡叼著細長東西"
+short_en: "Something thin held in the mouth"
+brief: {small: "叼牙籤 3 s", medium: "叼棒棒糖 6 s", large: "叼筆 10 s", all: "手在方向盤；另跑一版會誤報成香菸"}
+brief_en: {small: "Toothpick 3 s", medium: "Lollipop 6 s", large: "Pen 10 s", all: "Hands on the wheel; also run with a model that may report it as a cigarette"}
 summary: "對照：抽菸（嘴邊一根約 8 cm、直徑 9 mm 的細長物）。叼著的東西越來越像菸：small 牙籤（6 cm、直徑 2.4 mm）、medium 棒棒糖的細棍
   （7 cm、直徑 3 mm）、large 筆（14 cm、直徑 10 mm，粗細最接近菸的 9 mm），
   時間 3 / 6 / 10 s，手在方向盤上，真值 smoking 全程為否。profile ctx_fp 打開情境誤報：筆（和吸管）有較高機率被報成菸框，
   牙籤、棒棒糖較低（configs/emulator.yaml 的 stick_in_mouth_as_cigarette、thin_stick_in_mouth_as_cigarette）。"
+summary_en: "Reference: smoking (a thin object about 8 cm long and 9 mm in diameter at the mouth). The object looks more and more like a cigarette: small a toothpick (6 cm, 2.4 mm diameter), medium a lollipop stick (7 cm, 3 mm diameter), large a pen (14 cm, 10 mm diameter, the closest in thickness to a cigarette's 9 mm), for 3 / 6 / 10 s, hands on the wheel, the ground truth smoking false throughout. Profile ctx_fp turns on contextual false positives: a pen (and a straw) has a higher chance of being reported as a cigarette box, a toothpick or lollipop a lower one (stick_in_mouth_as_cigarette and thin_stick_in_mouth_as_cigarette in configs/emulator.yaml)."
 status: ready
 source: written
 tags: [held_object, mouth, false_positive]

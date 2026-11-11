@@ -1,14 +1,21 @@
 id: NEG-DRW-LOOKDOWN-EYES-OPEN
 number: 32
 title: "低頭看大腿 1.0 / 1.8 / 2.6 s，眼睛是睜開的"
+title_en: "Looking down at the lap for 1.0 / 1.8 / 2.6 s, eyes open"
+short: "低頭看大腿，眼睛睜著"
+short_en: "Looking down at the lap, eyes open"
+brief: {small: "低頭 1.0 s", medium: "低頭 1.8 s", large: "低頭 2.6 s", all: "低頭一次；另跑一版模擬模型把睜眼認成閉眼"}
+brief_en: {small: "Looking down 1.0 s", medium: "Looking down 1.8 s", large: "Looking down 2.6 s", all: "One look down; also run with a model that mistakes open eyes for closed"}
 summary: "對照門檻：低頭長分心 3 s（V03），以及閉眼（低頭時眼框變小）。低頭一次 small 1.0 s、medium 1.8 s、large 2.6 s，
   都在 3 s 以下，是正常的短暫低頭。低頭時眼框變小，真實模型常把睜眼認成閉眼。eye_flip 讓模擬模型在低頭、
   眼框變小時成段報成閉眼，nominal 不翻，兩個對照。翻轉是隨機的，模型雜訊 seed 0–2 在 large 低頭 52 幀裡只翻 1 / 5 / 0 幀，
   所以這條跑 10 個 seed（0–9）。"
+summary_en: "Reference threshold: looking-down long distraction 3 s (V03), and eye closure (the eye box shrinks when looking down). One look down, small 1.0 s, medium 1.8 s, large 2.6 s, all under 3 s: a normal brief look down. When looking down the eye box shrinks, and real models often mistake open eyes for closed. eye_flip makes the simulated model report closed eyes in stretches when looking down with a small eye box; nominal does not flip; the two form a comparison. The flips are random: with model-noise seeds 0–2, only 1 / 5 / 0 of the 52 frames of the large look-down flip, so this entry runs 10 seeds (0–9)."
 status: ready
 source: written
 tags: [look_down, class_flip]
 behaviors: [N12]
+standards: {STD-A: [R1]}
 params:
   look_s: {levels: {small: 1.0, medium: 1.8, large: 2.6}}
 template:

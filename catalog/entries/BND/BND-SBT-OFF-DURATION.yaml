@@ -1,7 +1,13 @@
 id: BND-SBT-OFF-DURATION
 number: 75
 title: "沒繫安全帶的時間從 0.5 s 掃到 10 s"
+title_en: "Time with the seat belt unbuckled swept from 0.5 s to 10 s"
+short: "沒繫安全帶時間掃描"
+short_en: "Unbuckled duration sweep"
+brief: {all: "沒繫 0.5 / 1 / 2 / 4 / 6 / 10 s，前後各繫著 3 s"}
+brief_en: {all: "Unbuckled 0.5 / 1 / 2 / 4 / 6 / 10 s, buckled for 3 s before and after"}
 summary: "手在方向盤、不擋安全帶，只改變沒繫的時間長短。"
+summary_en: "Hands on the wheel, not blocking the seat belt; only the length of time unbuckled changes."
 status: ready
 source: written
 tags: [seatbelt, duration]

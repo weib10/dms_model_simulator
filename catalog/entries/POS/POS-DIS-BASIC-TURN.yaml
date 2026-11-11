@@ -1,9 +1,15 @@
 id: POS-DIS-BASIC-TURN
 number: 1
 title: "基本款：頭向右轉 60° 看乘客 7 s，再回正（60 / 60 / 45°，8 / 7 / 3.5 s）"
+title_en: "Basic: head turned right 60° to look at the passenger for 7 s, then back to centre (60 / 60 / 45°, 8 / 7 / 3.5 s)"
+short: "轉頭看乘客（基本款）"
+short_en: "Head turn to the passenger (basic)"
+brief: {small: "頭轉 60°，看 8 s", medium: "頭轉 60°，看 7 s", large: "頭轉 45°，看 3.5 s"}
+brief_en: {small: "Head turned 60°, 8 s", medium: "Head turned 60°, 7 s", large: "Head turned 45°, 3.5 s"}
 summary: "分心家族的基本款：角度大、時間長，回正後恢復正常。只用 dash_right、只轉右邊：從這台相機看右轉時臉的變化最穩定。
   轉頭和回正各 0.35 s（真人大角度轉頭約 0.3–0.6 s）。
   對照門檻：長分心，連續離開路面 3 s。small 頭轉 60° 8 s、medium 60° 7 s、large 45° 3.5 s（剛過門檻）。"
+summary_en: "The basic entry of the distraction family: large angle, long duration, back to normal after returning to centre. Only dash_right, only turning right: from this camera the face changes most consistently on a right turn. Turning and returning take 0.35 s each (a real large-angle head turn takes about 0.3–0.6 s). Reference threshold: long distraction, eyes off road continuously for 3 s. small head turned 60° for 8 s, medium 60° for 7 s, large 45° for 3.5 s (just past the threshold)."
 status: ready
 source: written
 tags: [basic, head_turn]

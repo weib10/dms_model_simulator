@@ -1,14 +1,21 @@
 id: NEG-DRW-HAND-AT-EYE
 number: 31
 title: "揉眼睛、推眼鏡：右手指節擋住右眼（0.7 / 1.5 / 2.5 s，1 / 2 / 3 次）"
+title_en: "Rubbing the eyes or pushing up glasses: right-hand knuckles cover the right eye (0.7 / 1.5 / 2.5 s, 1 / 2 / 3 times)"
+short: "揉眼睛、推眼鏡"
+short_en: "Rubbing the eyes or pushing up glasses"
+brief: {small: "手擋右眼 0.7 s ×1", medium: "手擋右眼 1.5 s ×2", large: "手擋右眼 2.5 s ×3", all: "眼睛其實睜著，每次之間 3 s"}
+brief_en: {small: "Hand over the right eye 0.7 s ×1", medium: "Hand over the right eye 1.5 s ×2", large: "Hand over the right eye 2.5 s ×3", all: "The eyes are actually open; 3 s between times"}
 summary: "對照門檻：閉眼約 1 s（眼框不見或變扁）。眼睛其實是睜開的（真值不閉眼，所以再久也不會越過閉眼門檻），但右眼被手擋住：
   dash_right、steering_column 都偵測不到右眼，dash_right 的左眼與臉也會被擋掉一部分（擋多少看 hand_scale）。
   每次 small 0.7 s、medium 1.5 s、large 2.5 s（文獻：摸眼約 1 s、揉眼可到數秒），共 1 / 2 / 3 次，中間 3 s。
   medium、large 比 1 s 的閉眼門檻長：把「眼框不見」當閉眼的後處理會在這裡誤報微睡。"
+summary_en: "Reference threshold: eye closure about 1 s (eye box missing or flattened). The eyes are actually open (the ground truth is not eyes closed, so however long it lasts it never crosses the eye-closure threshold), but the right eye is covered by the hand: neither dash_right nor steering_column detects the right eye, and on dash_right the left eye and face are also partly blocked (how much depends on hand_scale). Each time small 0.7 s, medium 1.5 s, large 2.5 s (literature: touching the eye about 1 s, rubbing can last several seconds), 1 / 2 / 3 times in total, 3 s in between. Medium and large are longer than the 1 s eye-closure threshold: post-processing that treats a missing eye box as eyes closed will report a false microsleep here."
 status: ready
 source: written
 tags: [hand_near_face, occlusion, rub_eyes]
 behaviors: [N13]
+standards: {STD-A: [R1]}
 params:
   hand_scale: {fixed: 1.0}          # hand size (configs/cabin.yaml driver.hand_scale); --param hand_scale=0.8
   rub_s: {levels: {small: 0.7, medium: 1.5, large: 2.5}}

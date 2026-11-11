@@ -1,11 +1,17 @@
 id: NEG-PHN-PHONE-MOUNT
 number: 58
-title: "手機放在儀表板的手機架上（導航）：偶爾看一眼，最後伸手點一下（1.0 / 1.5 / 2.0 s）"
+title: "手機放在出風口的手機架上（導航）：偶爾看一眼，最後伸手點一下（1.0 / 1.5 / 2.0 s）"
+title_en: "Phone in an air-vent mount (navigation): occasional glances, then a final reach to tap it (1.0 / 1.5 / 2.0 s)"
+short: "看車架上的手機"
+short_en: "Looking at a mounted phone"
+brief: {small: "看 0.5 s ×3，點 1.0 s", medium: "看 1.0 s ×3，點 1.5 s", large: "看 1.5 s ×3，點 2.0 s"}
+brief_en: {small: "0.5 s looks ×3, 1.0 s tap", medium: "1.0 s looks ×3, 1.5 s tap", large: "1.5 s looks ×3, 2.0 s tap"}
 summary: "對照：手拿手機（V09）。畫面裡有手機框，但沒用手拿、不在大腿也不貼耳，真值 phone_use 全程為否。
-  看手機架每次 small 0.5 s、medium 1.0 s、large 1.5 s，共 3 次，中間回路面 3 s；最後一次邊看邊伸右手點手機架上的手機
+  看手機架每次 small 0.5 s、medium 1.0 s、large 1.5 s，共 3 次，每次之後回路面 3 s；接著第 4 次看，邊看邊伸右手點手機架上的手機
   （手在手機前面，hand: mount），small 1.0 s、medium 1.5 s、large 2.0 s：手和手機框在一起，是最像手拿手機的情況。
   large 累計看手機架 6.5 s、單次最長 2.0 s，都在 VATS 10 s、長分心 3 s 以下。
   出風口的手機架只有 center_stack 相機拍得到（會有手機框），dash_right 拍不到（對照用）。"
+summary_en: "Reference: hand-held phone (V09). There is a phone box in the image, but the phone is not held, not on the lap and not at the ear; the ground truth phone_use is false throughout. Each look at the mount small 0.5 s, medium 1.0 s, large 1.5 s, 3 times, each followed by 3 s on the road; then a fourth look, on which the right hand reaches out to tap the phone in the mount (hand in front of the phone, hand: mount), small 1.0 s, medium 1.5 s, large 2.0 s: hand and phone box together, the case that looks most like a hand-held phone. Large: 6.5 s looking at the mount in total, longest single look 2.0 s, both under VATS 10 s and long distraction 3 s. A phone mount on the air vent is only visible to the center_stack camera (which shows a phone box); dash_right cannot see it (as a control)."
 status: ready
 source: written
 tags: [phone, glance]

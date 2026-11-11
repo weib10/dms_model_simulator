@@ -1,9 +1,16 @@
 id: NEG-DIS-ADJUST-MIRROR
 number: 9
-title: "調後照鏡：手握住後照鏡、眼睛看著鏡子（1 / 2 / 2.8 s）"
+title: "調後照鏡：手握住後照鏡、眼睛看著鏡子（1 / 2 / 2.8 s），之後不用手再看一眼（0.6 s）"
+title_en: "Adjusting the rear-view mirror: hand gripping the mirror, eyes on the mirror (1 / 2 / 2.8 s), then one more look without the hand (0.6 s)"
+short: "手調後照鏡"
+short_en: "Adjusting the rear-view mirror by hand"
+brief: {small: "手握鏡子看 1 s", medium: "手握鏡子看 2 s", large: "手握鏡子看 2.8 s", all: "3 s 後再看一次鏡子 0.6 s（不用手）"}
+brief_en: {small: "Hand on the mirror, 1 s look", medium: "Hand on the mirror, 2 s look", large: "Hand on the mirror, 2.8 s look", all: "3 s later one more 0.6 s look at the mirror (no hand)"}
 summary: "對照門檻：Euro NCAP 長分心 3 s。眼睛離開路面看鏡子 small 1 s、medium 2 s、large 2.8 s，手離開方向盤。
+  回路面 3 s 後再看一次後照鏡 0.6 s（手在方向盤上），兩次合計離路 1.6 / 2.6 / 3.4 s，單次都在 3 s 以下。
   後照鏡相機（rearview_mirror）的鏡頭就在鏡子上，手一握住整張臉都被擋（真值臉框遮擋 1.0，模型輸出裡臉、眼、嘴都沒有）；
   dash_right 看到的是轉頭看鏡子，手在它的畫面外。"
+summary_en: "Reference threshold: Euro NCAP long distraction 3 s. Eyes off road looking at the mirror small 1 s, medium 2 s, large 2.8 s, hand off the wheel. After 3 s on the road, one more 0.6 s look at the rear-view mirror (hand on the wheel); the two looks add up to 1.6 / 2.6 / 3.4 s off road, each single look under 3 s. The rear-view mirror camera (rearview_mirror) has its lens right on the mirror, so once the hand grips it the whole face is blocked (ground-truth face-box occlusion 1.0; no face, eyes or mouth in the model output); dash_right sees a head turn towards the mirror, with the hand outside its frame."
 status: ready
 source: written
 tags: [mirror, hand_off_wheel, occlusion]

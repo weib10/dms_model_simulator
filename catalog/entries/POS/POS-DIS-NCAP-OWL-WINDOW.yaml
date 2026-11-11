@@ -1,9 +1,15 @@
 id: POS-DIS-NCAP-OWL-WINDOW
 number: 5
 title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看駕駛側車窗（左約 73°）5 / 4 / 3.5 s，頭轉 30°–75°"
+title_en: "Euro NCAP long distraction (owl, head follows): head turned to look at the driver-side window (about 73° left) for 5 / 4 / 3.5 s, head turn 30°–75°"
+short: "轉頭看駕駛側車窗"
+short_en: "Head turn to the driver-side window"
+brief: {small: "看 5 s", medium: "看 4 s", large: "看 3.5 s", all: "每級都跑頭轉 30° / 45° / 60° / 75°，其餘靠眼睛"}
+brief_en: {small: "5 s look", medium: "4 s look", large: "3.5 s look", all: "Each level runs head turns of 30° / 45° / 60° / 75°; the eyes make up the rest"}
 summary: "視線目標 driver_window 在左約 73°（看左側鏡是正常行為 N02，見 NEG-DIS-MIRROR-CHECK）。角度掃描的是頭轉多少、其餘由眼睛補：30° 時眼睛補約 43°，75° 頭轉滿、眼睛幾乎不動；轉頭 0.35 s。
   dash_right 在駕駛右前方，往左轉是背向相機：30° 起左眼框就看不到，75° 連嘴框也沒了。steering_column 在正前方當對照：60° 起左眼框看不到。
   對照門檻：Euro NCAP 長分心，連續離開路面 3 s。角度每個各一列；看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。"
+summary_en: "The gaze target driver_window is about 73° to the left (looking at the left side mirror is normal behaviour N02, see NEG-DIS-MIRROR-CHECK). The angle sweep is how far the head turns, with the eyes making up the rest: at 30° the eyes make up about 43°; at 75° the head turns all the way and the eyes barely move; head turn 0.35 s. dash_right is in front of the driver to the right, so turning left is turning away from the camera: from 30° the left eye box is not visible, and at 75° the mouth box is gone too. steering_column, straight ahead, serves as a control: from 60° the left eye box is not visible. Reference threshold: Euro NCAP long distraction, eyes off road continuously for 3 s. One row per angle; look duration: medium follows the protocol with 4 s, small 5 s, large 3.5 s."
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, blind_spot]

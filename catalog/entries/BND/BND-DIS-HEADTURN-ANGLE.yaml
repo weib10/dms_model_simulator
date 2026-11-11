@@ -1,7 +1,13 @@
 id: BND-DIS-HEADTURN-ANGLE
 number: 19
 title: "頭轉 4 s，角度從 ±15° 掃到 ±60°"
+title_en: "Head turned for 4 s, angle swept from ±15° to ±60°"
+short: "轉頭角度掃描"
+short_en: "Head-turn angle sweep"
+brief: {all: "轉頭 4 s，左右各 15° / 20° / 30° / 40° / 50° / 60°（12 種）"}
+brief_en: {all: "Head turned for 4 s, left and right 15° / 20° / 30° / 40° / 50° / 60°: 12 angles"}
 summary: "同一段轉頭換不同角度，兩台相機、左右分開。看轉多大角度開始被當成分心；角度換成框的變化要看相機位置。眼睛跟著頭看過去；±15°、±20° 的視線還在路面範圍內（road_left / road_right 約 ±22°），真值算在路上，±30° 起算離開路面。"
+summary_en: "The same head turn at different angles, on two cameras, left and right separately. Checks at what angle a turn starts to count as distraction; how the angle shows up as box changes depends on the camera position. The eyes follow the head; at ±15° and ±20° the gaze is still inside the road area (road_left / road_right are about ±22°), so the ground truth counts it as on road; from ±30° it counts as eyes off road."
 status: ready
 source: written
 tags: [head_turn, angle]

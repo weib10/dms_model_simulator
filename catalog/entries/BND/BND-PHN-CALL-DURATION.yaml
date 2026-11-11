@@ -1,7 +1,13 @@
 id: BND-PHN-CALL-DURATION
 number: 59
 title: "講電話的時間從 0.25 s 掃到 6 s"
+title_en: "Phone call duration swept from 0.25 s to 6 s"
+short: "講電話時間掃描"
+short_en: "Phone-call duration sweep"
+brief: {all: "講 0.25 / 0.5 / 1 / 2 / 3 / 4 / 6 s"}
+brief_en: {all: "Calls of 0.25 / 0.5 / 1 / 2 / 3 / 4 / 6 s"}
 summary: "手機貼耳（兩台相機都看得到），通話時間由短到長。看講多久開始被當成講手機。"
+summary_en: "Phone at the ear (visible on both cameras), call time from short to long. Checks how long a call must last before it counts as a phone call."
 status: ready
 source: written
 tags: [phone, call, duration]

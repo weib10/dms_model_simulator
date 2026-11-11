@@ -1,8 +1,14 @@
 id: CLR-SBT-REBUCKLE
 number: 76
 title: "解開安全帶 10 / 8 / 3 s、繫回 10 / 8 / 3 s、再解開一次"
+title_en: "Seat belt unbuckled for 10 / 8 / 3 s, buckled again for 10 / 8 / 3 s, then unbuckled again"
+short: "解開、繫回、再解開"
+short_en: "Unbuckled, buckled, unbuckled again"
+brief: {small: "解開 10 s、繫回 10 s", medium: "解開 8 s、繫回 8 s", large: "解開 3 s、繫回 3 s", all: "共解開 2 次"}
+brief_en: {small: "10 s off, 10 s on", medium: "8 s off, 8 s on", large: "3 s off, 3 s on", all: "Unbuckled twice"}
 summary: "看繫回後有沒有解除、第二次解開有沒有再觸發。
   對照：沒繫安全帶的真值沒有時長門檻。每次解開 small 10 s、medium 8 s、large 3 s；中間繫回 small 10 s、medium 8 s、large 3 s（最短，但仍明確繫上）。"
+summary_en: "Checks whether it clears after the belt is buckled again and whether the second unbuckling triggers again. Reference: the unbuckled-seat-belt ground truth has no duration threshold. Each unbuckling small 10 s, medium 8 s, large 3 s; buckled in between small 10 s, medium 8 s, large 3 s (the shortest, but still clearly buckled)."
 status: ready
 source: written
 tags: [seatbelt, clear, rearm]

@@ -1,12 +1,19 @@
 id: CLR-DRW-CLOSURE-REARM
 number: 39
 title: "閉眼 3 / 2.5 / 1.5 s、睜眼 15 / 12 / 5 s、再閉眼一次"
+title_en: "Eyes closed for 3 / 2.5 / 1.5 s, open for 15 / 12 / 5 s, then closed again"
+short: "閉眼、睜開、再閉眼"
+short_en: "Eyes closed, open, then closed again"
+brief: {small: "閉 3 s、睜 15 s", medium: "閉 2.5 s、睜 12 s", large: "閉 1.5 s、睜 5 s", all: "共閉眼 2 次"}
+brief_en: {small: "Closed 3 s, open 15 s", medium: "Closed 2.5 s, open 12 s", large: "Closed 1.5 s, open 5 s", all: "Two closures"}
 summary: "兩次明確的閉眼，中間睜眼。看第一次睜眼後有沒有解除、第二次閉眼有沒有再觸發。
   對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。每次閉眼 small 3 s、medium 2.5 s、large 1.5 s；中間睜眼 small 15 s、medium 12 s、large 5 s（最短，但仍明確睜開）。"
+summary_en: "Two clear eye closures with the eyes open between them. Checks whether it clears after the eyes first open and whether the second closure triggers again. Reference threshold: eyes closed (openness < 0.2) for about 1 s or more. Each closure small 3 s, medium 2.5 s, large 1.5 s; eyes open in between small 15 s, medium 12 s, large 5 s (the shortest, but still clearly open)."
 status: ready
 source: written
 tags: [closure, clear, rearm]
 behaviors: [V05]
+standards: {STD-A: []}
 params:
   close_s: {levels: {small: 3.0, medium: 2.5, large: 1.5}}
   gap_s: {levels: {small: 15.0, medium: 12.0, large: 5.0}}

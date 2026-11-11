@@ -1,10 +1,16 @@
 id: NEG-DIS-MIRROR-CHECK
 number: 14
 title: "正常開車，短暫看左右鏡、後照鏡、儀表（看鏡子每次 0.5 / 0.7–0.9 / 1.4 s）"
+title_en: "Normal driving with brief looks at the side mirrors, rear-view mirror and instrument cluster (each mirror look 0.5 / 0.7–0.9 / 1.4 s)"
+short: "看鏡子、儀表"
+short_en: "Checking mirrors and instruments"
+brief: {small: "每次 0.5 s（儀表 0.4 s），中間回前方 2 s", medium: "每次 0.6–0.9 s，中間回前方 1.5 s", large: "鏡子 1.4 s、儀表 1.8 s，中間回前方 1 s", all: "依序看左鏡、後照鏡、儀表、右鏡各一次"}
+brief_en: {small: "0.5 s each (cluster 0.4 s), 2 s ahead in between", medium: "0.6–0.9 s each, 1.5 s ahead in between", large: "Mirrors 1.4 s, cluster 1.8 s, 1 s ahead in between", all: "Left mirror, rear-view mirror, cluster, right mirror, once each"}
 summary: "對照門檻：看鏡子的正常上限 1.5 s（N02）、短瞥上限 2 s（N03）、長分心 3 s。由 scenarios/mirror_check.yaml 改寫成模板，
   medium 就是原劇本（左鏡 0.8、後照鏡 0.7、儀表 0.6、右鏡 0.9 s）。看鏡子每次 small 0.5 s、large 1.4 s，
-  看儀表 small 0.4 s、large 1.8 s；中間回前方 small 2.0 s、medium 1.5 s、large 1.0 s（large 離開路面累計 6 s，在 9 s 內）。
+  看儀表 small 0.4 s、large 1.8 s；中間回前方 small 2.0 s、medium 1.5 s、large 1.0 s（large 從第一次看鏡子到最後一次看完共 9 s，其中離開路面累計 6 s）。
   看鏡子是正常駕駛，但會有短暫轉頭。"
+summary_en: "Reference threshold: normal limit for a mirror look 1.5 s (N02), short-glance limit 2 s (N03), long distraction 3 s. Rewritten as a template from scenarios/mirror_check.yaml; medium is the original scenario (left mirror 0.8, rear-view mirror 0.7, instrument cluster 0.6, right mirror 0.9 s). Each mirror look small 0.5 s, large 1.4 s; instrument cluster small 0.4 s, large 1.8 s; back to straight ahead in between small 2.0 s, medium 1.5 s, large 1.0 s (large: 9 s from the first mirror look to the end of the last one, of which 6 s in total is off the road). Mirror checks are normal driving, but involve brief head turns."
 status: ready
 source: written
 tags: [mirror, glance, existing]

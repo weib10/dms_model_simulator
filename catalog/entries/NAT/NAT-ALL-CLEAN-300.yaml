@@ -1,12 +1,19 @@
 id: NAT-ALL-CLEAN-300
 number: 86
 title: "300 s 日常駕駛：看路、看鏡子、看儀表，沒有手機、疲勞、抽菸、未繫"
+title_en: "300 s of everyday driving: watching the road, mirrors and instrument cluster; no phone, drowsiness, smoking or unbuckled seat belt"
+short: "長時間日常駕駛，無違規"
+short_en: "Long everyday drive, no violations"
+brief: {all: "隨機產生 300 s，只看路、鏡子、儀表、中控、乘客，沒有違規"}
+brief_en: {all: "300 s generated at random: road, mirrors, cluster, display, passenger only; no violations"}
 summary: "誤報率的基準線。用 gen-scenario 產生，四種片段的頻率都設 0；看鏡子、看乘客會有短暫轉頭。
   離開路面的目標不會直接相接（中間一定回到路面），鏡子最長 1.5 s、儀表、中控、乘客最長 2 s，所以任何 seed 都沒有違規。"
+summary_en: "Baseline for the false-positive rate. Generated with gen-scenario, with the frequency of all four kinds of episode set to 0; looking at mirrors or the passenger involves brief head turns. Off-road targets never follow one another directly (the gaze always returns to the road in between); mirrors last at most 1.5 s, and the instrument cluster, centre display and passenger at most 2 s, so no seed contains a violation."
 status: ready
 source: generated
 tags: [natural, false_alarm]
 behaviors: [N01, N02, N03, N07]
+standards: {STD-A: [R1]}
 generator:
   duration_s: 300
   config:

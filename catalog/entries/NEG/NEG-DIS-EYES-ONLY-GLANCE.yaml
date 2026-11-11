@@ -1,9 +1,15 @@
 id: NEG-DIS-EYES-ONLY-GLANCE
 number: 10
-title: "只動眼睛的短瞥：頭不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照）"
+title: "只動眼睛的短瞥：頭幾乎不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照）"
+title_en: "Eyes-only short glance: head almost still, eyes glance at the instrument cluster or centre display (normal counterpart of POS-DIS-NCAP-LIZARD)"
+short: "只用眼睛瞄儀表和中控"
+short_en: "Eyes only, brief glances at cluster/display"
+brief: {small: "每次 0.6 s ×4（累計 2.4 s）", medium: "每次 1.2 s ×4（累計 4.8 s）", large: "每次 2.0 s ×4（累計 8 s）", all: "儀表、中控輪流各 2 次，頭幾乎不動，中間回路面 2 s"}
+brief_en: {small: "0.6 s each ×4 (2.4 s in total)", medium: "1.2 s each ×4 (4.8 s in total)", large: "2.0 s each ×4 (8 s in total)", all: "Cluster and display in turn, 2 times each, head almost still, 2 s on the road in between"}
 summary: "對照：lizard 長分心（只動眼睛 4 s）。頭姿固定在正前方附近，視線看儀表、中控各一次為一輪，
   每次 small 0.6 s、medium 1.2 s、large 2.0 s（剛好在儀表短瞥的 2 s 上限），共 2 輪（large 累計 8 s，VATS 門檻 10 s），
   中間回路面 2 s。只有框、沒有視線輸出時幾乎看不出來。"
+summary_en: "Reference: lizard long distraction (eyes only, 4 s). Head pose fixed near straight ahead; one round is the gaze going once to the instrument cluster and once to the centre display, each look small 0.6 s, medium 1.2 s, large 2.0 s (exactly at the 2 s limit for a short glance at the instrument cluster), 2 rounds in total (large cumulative 8 s, VATS threshold 10 s), back on the road for 2 s in between. With boxes only and no gaze output it is nearly invisible."
 status: ready
 source: written
 tags: [glance, gaze_only]

@@ -1,12 +1,19 @@
 id: NEG-DRW-SQUINT
 number: 35
 title: "瞇眼（陽光或習慣）：開合度 0.5 / 0.35 / 0.25，持續 15 s"
+title_en: "Squinting (sunlight or habit): openness 0.5 / 0.35 / 0.25 for 15 s"
+short: "瞇眼"
+short_en: "Squinting"
+brief: {small: "開合度 0.5", medium: "開合度 0.35", large: "開合度 0.25", all: "瞇 15 s，照常眨眼"}
+brief_en: {small: "Openness 0.5", medium: "Openness 0.35", large: "Openness 0.25", all: "Squinting for 15 s, normal blinking"}
 summary: "對照門檻：模擬器的閉眼門檻（開合度 < 0.2）。眼睛是睜開的，只是比較小：開合度 small 0.5、medium 0.35、large 0.25
   （貼著 0.2 但在上面），持續 15 s，期間照常眨眼。"
+summary_en: "Reference threshold: the simulator's eye-closure threshold (openness < 0.2). The eyes are open, just narrower: openness small 0.5, medium 0.35, large 0.25 (close to 0.2 but above it), for 15 s, with normal blinking throughout."
 status: ready
 source: written
 tags: [squint]
 behaviors: [N11]
+standards: {STD-A: [R1]}
 params:
   openness: {levels: {small: 0.5, medium: 0.35, large: 0.25}}
 template:

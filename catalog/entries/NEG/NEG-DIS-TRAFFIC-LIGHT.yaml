@@ -1,9 +1,15 @@
 id: NEG-DIS-TRAFFIC-LIGHT
 number: 17
 title: "抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1.0 / 2.0 / 2.8 s"
+title_en: "Looking up at a traffic light: gaze elevation 10° / 20° / 30° (head turns about half), 1.0 / 2.0 / 2.8 s"
+short: "抬頭看紅綠燈"
+short_en: "Looking up at a traffic light"
+brief: {small: "仰角 10°，看 1.0 s", medium: "仰角 20°，看 2.0 s", large: "仰角 30°，看 2.8 s", all: "看 2 次，中間回前方 3 s；算在看路"}
+brief_en: {small: "Looking up 10°, 1.0 s", medium: "Looking up 20°, 2.0 s", large: "Looking up 30°, 2.8 s", all: "2 looks, 3 s ahead in between; counts as on the road"}
 summary: "紅綠燈在擋風玻璃上緣外，看它仍算在看路（這條把 tl_* 加進 on_road_targets，真值全程在路上）。
   對照門檻：長分心 3 s（只看頭姿的後處理會把抬頭當分心）。頭姿往上偏、視線離開正前方，仰角與時長越大越像：
   small 10° 1.0 s、medium 20° 2.0 s、large 30° 2.8 s（貼著 3 s 但不到），看兩次，中間回前方 3 s。"
+summary_en: "The traffic light is above the top edge of the windscreen; looking at it still counts as watching the road (this entry adds tl_* to on_road_targets, so the ground truth is on road throughout). Reference threshold: long distraction 3 s (post-processing that only looks at head pose will treat looking up as distraction). The head pose tilts upward and the gaze leaves straight ahead; the larger the elevation and the longer the look, the closer it gets: small 10° 1.0 s, medium 20° 2.0 s, large 30° 2.8 s (close to 3 s but not reaching it); two looks, 3 s looking ahead in between."
 status: ready
 source: written
 tags: [look_up, traffic_light]

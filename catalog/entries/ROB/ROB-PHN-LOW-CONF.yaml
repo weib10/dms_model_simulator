@@ -1,7 +1,13 @@
 id: ROB-PHN-LOW-CONF
 number: 62
 title: "手機框分數偏低，講電話 6 s"
+title_en: "Low phone-box scores, phone call for 6 s"
+short: "手機框分數偏低"
+short_en: "Phone detected with low confidence"
+brief: {all: "講電話 6 s；另跑一版手機框分數壓在常見門檻附近"}
+brief_en: {all: "6 s call; also run with phone-box scores pushed down near common thresholds"}
 summary: "low_conf 讓手機框的分數落在常見輸出門檻附近，套用門檻時部分幀的手機框會消失。"
+summary_en: "low_conf puts the phone-box scores near common output thresholds, so when a threshold is applied the phone box disappears in some frames."
 status: ready
 source: written
 tags: [robustness, phone, conf]

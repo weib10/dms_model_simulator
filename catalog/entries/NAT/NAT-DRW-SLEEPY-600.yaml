@@ -1,13 +1,21 @@
 id: NAT-DRW-SLEEPY-600
 number: 42
 title: "600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段）"
+title_en: "600 s of drowsy driving: only drowsiness episodes turned on (about 0.6 per minute)"
+short: "長時間睏倦駕駛"
+short_en: "Long drowsy drive"
+brief: {all: "隨機產生 600 s，只有疲勞片段（閉眼、哈欠），平均每分鐘 0.6 段"}
+brief_en: {all: "600 s generated at random, drowsiness episodes only (closures, yawns), about 0.6 per minute"}
 summary: "長時間、反覆出現的疲勞片段（閉眼、哈欠）。看疲勞相關的輸出被切成幾段、走勢如何。
   只有疲勞：不看大腿，離開路面的目標不直接相接、看鏡子最長 1.5 s、儀表中控乘客最長 2 s，所以沒有長分心混進來
-  （偶爾短瞥湊起來，任一 30 s 內最多約 9.9 s，貼著 VATS 10 s）。兩次閉眼偶爾會接在一起，連續閉眼可達約 3 s（NCAP 的睡著，V06）。"
+  （偶爾短瞥湊起來，任一 30 s 內最多約 9.9 s，貼著 VATS 10 s）。兩次閉眼偶爾會接在一起，連續閉眼可達 3.0 s（剛好到 NCAP 睡著的 3 s 門檻）：
+  約 15% 的行為 seed 會出現，這條跑的 seed 0 沒有（最長一次閉眼 1.5 s）。"
+summary_en: "Long, recurring drowsiness episodes (eye closures, yawns). Checks how many pieces the drowsiness-related output is split into and how it trends. Drowsiness only: no looking at the lap, off-road targets never follow one another directly, mirror looks last at most 1.5 s, and the instrument cluster, centre display and passenger at most 2 s, so no long distraction gets mixed in (occasional short glances add up to at most about 9.9 s in any 30 s, just under the VATS 10 s). Two eye closures occasionally run together, giving continuous eye closure of up to 3.0 s (exactly NCAP's 3 s asleep threshold): this happens in about 15% of behaviour seeds, not in seed 0, which this entry runs (its longest closure is 1.5 s)."
 status: ready
 source: generated
 tags: [natural, drowsy]
-behaviors: [V05, V07, V06, N01, N02, N03, N07]
+behaviors: [V05, V07, N01, N02, N03, N07]
+standards: {STD-A: [R8]}
 generator:
   duration_s: 600
   config:

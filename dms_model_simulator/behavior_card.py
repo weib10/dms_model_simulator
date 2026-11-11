@@ -28,6 +28,24 @@ SEGMENT_WORDS = {   # segment key -> how it reads on the card
     "seatbelt": "安全帶：{}",
     "held": "嘴邊拿著：{}",
 }
+SEGMENT_WORDS_EN = {   # the same in English (the gallery's English page; card.md / card.json stay Chinese)
+    "target": "looks at {}",
+    "head_pose": "head yaw/pitch/roll = {}°",
+    "eye_openness": "eye openness {}",
+    "closure": "eyes closed {}",
+    "yawn": "yawns",
+    "blink": "blinks {}",
+    "mouth_openness": "mouth openness {}",
+    "hand": "hand: {}",
+    "phone": "phone: {}",
+    "cigarette": "cigarette: {}",
+    "seatbelt": "seat belt: {}",
+    "held": "holding at the mouth: {}",
+}
+WORDS = {   # language -> (segment words, separator, text of a segment in the default state)
+    "zh": (SEGMENT_WORDS, "；", "（預設狀態）"),
+    "en": (SEGMENT_WORDS_EN, "; ", "(default state)"),
+}
 DEFAULT_STATE = {"hand": "wheel", "phone": "none", "cigarette": "none", "seatbelt": "on", "held": "none"}
 MAX_RUNS_LISTED = 12
 
@@ -46,9 +64,12 @@ def _runs(flags: list[bool]) -> list[tuple[int, int]]:
     return out
 
 
-def _seg_text(seg: dict) -> str:
+def seg_text(seg: dict, lang: str = "zh") -> str:
+    """A segment in plain words (one rule for every language): the keys in SEGMENT_WORDS order, states at their
+    default left out. Takes a segment as written or the `keys` of a card.json timeline line."""
+    words, sep, empty = WORDS[lang]
     parts = []
-    for k, fmt in SEGMENT_WORDS.items():
+    for k, fmt in words.items():
         if k not in seg or k == "duration":
             continue
         v = seg[k]
@@ -63,7 +84,7 @@ def _seg_text(seg: dict) -> str:
         elif isinstance(v, list):
             v = "[" + ", ".join(str(x) for x in v) + "]"
         parts.append(fmt.format(v))
-    return "；".join(parts) or "（預設狀態）"
+    return sep.join(parts) or empty
 
 
 def timeline(sim) -> list[dict]:
@@ -76,7 +97,7 @@ def timeline(sim) -> list[dict]:
             continue
         keys = {k: v for k, v in seg.items() if k != "duration"}
         out.append({"index": i, "t0": round(float(s["start"]), 3), "t1": round(float(s["end"]), 3),
-                    "f0": f0, "f1": f1, "keys": keys, "text": _seg_text(seg)})
+                    "f0": f0, "f1": f1, "keys": keys, "text": seg_text(seg)})
     return out
 
 

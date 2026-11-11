@@ -1,11 +1,17 @@
 id: NEG-DIS-ADJUST-HVAC
 number: 8
 title: "調冷氣、音響：右手伸到中控台，視線在中控與路面之間來回"
+title_en: "Adjusting the air conditioning or audio: right hand reaches to the centre console, gaze moves back and forth between the centre display and the road"
+short: "調冷氣、音響"
+short_en: "Adjusting the air conditioning or audio"
+brief: {small: "看中控 0.8 s ×2（累計 1.6 s）", medium: "看中控 1.5 s ×3（累計 4.5 s）", large: "看中控 2.5 s ×3（累計 7.5 s）", all: "手一直在中控台（只有開頭、結尾各 3 s 在方向盤），每次看完回路面 1.5 s"}
+brief_en: {small: "0.8 s looks at the display ×2 (1.6 s in total)", medium: "1.5 s looks at the display ×3 (4.5 s in total)", large: "2.5 s looks at the display ×3 (7.5 s in total)", all: "Hand on the console for all looks and returns (on the wheel the first and last 3 s); 1.5 s on the road between"}
 summary: "對照門檻：Euro NCAP 長分心 3 s、VATS（30 s 內累計 10 s）。手離開方向盤（像拿手機），視線單次看中控 small 0.8 s、
-  medium 1.5 s、large 2.5 s，共 2 / 3 / 3 次（累計 1.6 / 4.5 / 7.5 s），中間回路面 1.5 s，手一直在中控台上。
+  medium 1.5 s、large 2.5 s，共 2 / 3 / 3 次（累計 1.6 / 4.5 / 7.5 s），中間回路面 1.5 s，這段期間手一直在中控台上（開頭和結尾各 3 s 在方向盤）。
   large 單次 2.5 s 超過儀表／中控短瞥的 2 s 指引（N03），但這是調整中控（N24），仍在長分心 3 s 以下。
   中控台上的手每台相機都拍不到；拍得到方向盤的相機（steering_column、overhead_console）看到的是手從方向盤上消失，
   dash_right 看到的是頭往右下轉。"
+summary_en: "Reference threshold: Euro NCAP long distraction 3 s, VATS (10 s in total within 30 s). The hand leaves the wheel (like picking up a phone); each single look at the centre display small 0.8 s, medium 1.5 s, large 2.5 s, 2 / 3 / 3 times in total (cumulative 1.6 / 4.5 / 7.5 s), back on the road for 1.5 s in between, hand on the centre console all that time (on the wheel for the first and last 3 s). The large single look of 2.5 s exceeds the 2 s guideline for short glances at the instrument cluster / centre display (N03), but this is adjusting the centre console (N24), still under the 3 s long distraction. The hand on the centre console is not visible to any camera; cameras that can see the wheel (steering_column, overhead_console) see the hand disappear from the wheel, and dash_right sees the head turn down and to the right."
 status: ready
 source: written
 tags: [hand_off_wheel, glance, hvac]

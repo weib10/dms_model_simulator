@@ -1,0 +1,35 @@
+# 外部法規的標記：條目的 `standards: {STD-A: [R8, R20]}` 指到這裡（見 README.md「標準」）。
+#
+# 這個檔只放代號：每個標準一個中性代號（STD-A），底下是要求項目的編號（R1、R2…）和 coverage。
+# 法規的名稱、摘要、條號、要求的內容都不放在這裡。同一個資料夾可以有本機私用的 standards.local.yaml
+# （不進 git），補上名稱與每項要求的說明；總覽頁（dms-sim catalog gallery）有它就用，沒有就只顯示代號。
+#
+# coverage: partial      = 目錄有條目跟這項有關（至少一條條目要引用它）
+#           gap          = 模擬器補得起來，但目前沒有條目（不能有條目引用）
+#           out_of_scope = 要靠真人、車輛訊號、HMI 或文件，模擬器管不到（不能有條目引用）
+# 條目標的是「相關」，不是「符合」。
+
+standards:
+  STD-A:
+    requirements:
+      R1: {coverage: partial}
+      R2: {coverage: out_of_scope}
+      R3: {coverage: out_of_scope}
+      R4: {coverage: gap}
+      R5: {coverage: gap}
+      R6: {coverage: gap}
+      R7: {coverage: out_of_scope}
+      R8: {coverage: partial}
+      R9: {coverage: out_of_scope}
+      R10: {coverage: out_of_scope}
+      R11: {coverage: out_of_scope}
+      R12: {coverage: partial}
+      R13: {coverage: out_of_scope}
+      R14: {coverage: out_of_scope}
+      R15: {coverage: out_of_scope}
+      R16: {coverage: out_of_scope}
+      R17: {coverage: out_of_scope}
+      R18: {coverage: partial}
+      R19: {coverage: out_of_scope}
+      R20: {coverage: partial}
+      R21: {coverage: out_of_scope}

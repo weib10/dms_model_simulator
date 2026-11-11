@@ -1,7 +1,13 @@
 id: NEG-ALL-BASIC-CLEAN-30
 number: 78
 title: "基本款：30 s 只看前方、正常眨眼"
+title_en: "Basic: 30 s of looking straight ahead, normal blinking"
+short: "只看前方（乾淨基準）"
+short_en: "Looking ahead only (clean baseline)"
+brief: {all: "30 s 看前方、正常眨眼，沒有任何行為"}
+brief_en: {all: "30 s looking ahead with normal blinking, no behaviour at all"}
 summary: "全家族的乾淨基準，和其他 basic 條目成對：那幾條有行為、這條什麼都沒有。沒有看鏡子、沒有手部動作；後處理在這條有反應，先查這條。"
+summary_en: "The clean baseline for all families, paired with the other basic entries: those have a behaviour, this one has nothing. No mirror looks, no hand movements; if post-processing reacts here, check this entry first."
 status: ready
 source: written
 tags: [basic, baseline]

@@ -1,12 +1,19 @@
 id: NEG-DRW-SNEEZE
 number: 34
 title: "打噴嚏、咳嗽：短閉眼＋頭往前點＋嘴張開"
-summary: "對照：微睡（開合度 < 0.2、約 1 s 以上；眨眼 0.1–0.4 s）。每次閉眼 small 0.3 s、medium 0.45 s、large 0.6 s，
+title_en: "Sneezing or coughing: short eye closure + head nods forward + mouth opens"
+short: "打噴嚏、咳嗽"
+short_en: "Sneezing or coughing"
+brief: {small: "閉眼 0.3 s、低頭 5°，1 次", medium: "閉眼 0.45 s、低頭 10°，2 次", large: "閉眼 0.6 s、低頭 20°，3 次", all: "每次嘴張開（最大 0.5），之間回正 1.5 s"}
+brief_en: {small: "Eyes shut 0.3 s, head down 5°, once", medium: "Eyes shut 0.45 s, head down 10°, twice", large: "Eyes shut 0.6 s, head down 20°, 3 times", all: "Mouth opens each time (up to 0.5); 1.5 s back to normal between"}
+summary: "對照：微睡（開合度 < 0.2、約 1 s 以上；眨眼 0.1–0.4 s）。每次先微張嘴（0.35）0.3 s，接著閉眼 small 0.3 s、medium 0.45 s、large 0.6 s，
   同時低頭 5 / 10 / 20°、嘴張到 0.5；small 1 次、medium 2 次、large 3 次（連續噴嚏），中間回正 1.5 s。"
+summary_en: "Reference: microsleep (openness < 0.2, about 1 s or more; a blink is 0.1–0.4 s). Each time the mouth first opens slightly (0.35) for 0.3 s, then the eyes close: small 0.3 s, medium 0.45 s, large 0.6 s, with the head dropping 5 / 10 / 20° and the mouth opening to 0.5; small 1 time, medium 2 times, large 3 times (sneezes in a row), back to centre for 1.5 s in between."
 status: ready
 source: written
 tags: [look_down, mouth, sneeze]
 behaviors: [N14]
+standards: {STD-A: [R1]}
 params:
   close_s: {levels: {small: 0.3, medium: 0.45, large: 0.6}}
   nod: {levels: {small: -5, medium: -10, large: -20}}

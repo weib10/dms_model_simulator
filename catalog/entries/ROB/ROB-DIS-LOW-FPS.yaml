@@ -1,9 +1,15 @@
 id: ROB-DIS-LOW-FPS
 number: 22
 title: "15 fps 時頭向右轉 60°，持續時間從 1 s 掃到 8 s"
+title_en: "Head turned right 60° at 15 fps, duration swept from 1 s to 8 s"
+short: "低幀率（15 fps）轉頭"
+short_en: "Head-turn duration sweep at 15 fps"
+brief: {all: "15 fps，頭右轉 60° 1 / 2 / 3 / 4 / 5 / 6 / 8 s"}
+brief_en: {all: "15 fps, head turned right 60° for 1 / 2 / 3 / 4 / 5 / 6 / 8 s"}
 summary: "和 BND-DIS-HEADTURN-DURATION 同一個劇本（前 10 s 看前方、頭轉 60°、回正 3 s，轉入轉出各 0.1 s），改成 15 fps。後處理若用時間戳計時，結果應該和 20 fps 一樣；若數幀數就會不同。
   時長只取 15 fps 下是整數幀的值（1–6、8 s）；BND 那條的 0.5、2.5、2.95、3.05、3.5 s 在 15 fps 不是整數幀，所以沒有。
   fps 是條目層級的設定，不能當參數掃，要比較別的幀率就另開一條。"
+summary_en: "The same scenario as BND-DIS-HEADTURN-DURATION (looking ahead for the first 10 s, head turned 60°, back to centre for 3 s, turning in and out 0.1 s each), changed to 15 fps. If post-processing times with timestamps, the result should be the same as at 20 fps; if it counts frames, it will differ. Only durations that are a whole number of frames at 15 fps are used (1–6, 8 s); the 0.5, 2.5, 2.95, 3.05 and 3.5 s of the BND entry are not whole frames at 15 fps, so they are left out. fps is an entry-level setting and cannot be swept as a parameter; to compare another frame rate, add a separate entry."
 status: ready
 source: written
 tags: [robustness, frame_rate, head_turn]

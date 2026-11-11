@@ -1,14 +1,21 @@
 id: POS-DRW-CLOSURE-HEAD-TURNED
 number: 24
 title: "頭向左轉 35° 時閉眼 3 s（20 / 35 / 45°，4 / 3 / 1.5 s）"
+title_en: "Eyes closed for 3 s with the head turned 35° left (20 / 35 / 45°, 4 / 3 / 1.5 s)"
+short: "頭轉向左時閉眼"
+short_en: "Eyes closed with the head turned left"
+brief: {small: "頭左轉 20°，閉 4 s", medium: "頭左轉 35°，閉 3 s", large: "頭左轉 45°，閉 1.5 s"}
+brief_en: {small: "Head 20° left, closed 4 s", medium: "Head 35° left, closed 3 s", large: "Head 45° left, closed 1.5 s"}
 summary: "臉側轉時眼框變小、比較難判開閉。先轉頭 1 s（轉頭 0.35 s，眼睛睜開、仍看路），再閉眼。
   往左轉：兩台預設相機上眼框都隨角度變小（往右轉會轉向 dash_right，眼框反而變大）。dash_right 在右前方：右眼框隨角度變小，左眼框 35° 起就看不到；
   steering_column 在正前方：左眼框隨角度變小，右眼框大小差不多。
   對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。small 頭轉 20°、閉 4 s；medium 35°、3 s；large 45°、1.5 s（眼框最小、閉眼比門檻長 0.5 s）。"
+summary_en: "When the face is turned sideways the eye boxes shrink and open or closed is harder to judge. First the head turns for 1 s (head turn 0.35 s, eyes open, still watching the road), then the eyes close. Turning left: on both default cameras the eye boxes shrink with the angle (turning right would face dash_right, and the eye boxes would get larger instead). dash_right is in front to the right: the right eye box shrinks with the angle, and the left eye box is not visible from 35°; steering_column is straight ahead: the left eye box shrinks with the angle, and the right eye box stays about the same size. Reference threshold: eye closure (openness < 0.2) of about 1 s or more. small head turned 20°, closed 4 s; medium 35°, 3 s; large 45°, 1.5 s (the smallest eye box, closure 0.5 s longer than the threshold)."
 status: ready
 source: written
 tags: [closure, head_turn, interaction]
 behaviors: [V05]
+standards: {STD-A: [R20]}
 params:
   close_s: {levels: {small: 4.0, medium: 3.0, large: 1.5}}
   yaw: {levels: {small: 20, medium: 35, large: 45}}

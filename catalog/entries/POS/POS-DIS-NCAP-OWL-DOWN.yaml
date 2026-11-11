@@ -1,10 +1,16 @@
 id: POS-DIS-NCAP-OWL-DOWN
 number: 3
 title: "Euro NCAP 長分心（owl，往下看）：看大腿、中控或乘客腳踏區 5 / 4 / 3.5 s"
+title_en: "Euro NCAP long distraction (owl, looking down): looking at the lap, centre display or passenger footwell for 5 / 4 / 3.5 s"
+short: "低頭看大腿、中控或腳踏區"
+short_en: "Looking down: lap, display or footwell"
+brief: {small: "看 5 s", medium: "看 4 s", large: "看 3.5 s", all: "每級都跑大腿、中控、乘客腳踏區三種"}
+brief_en: {small: "5 s look", medium: "4 s look", large: "3.5 s look", all: "Each level runs three areas: lap, centre display, passenger footwell"}
 summary: "頭往下（看中控、腳踏區時也往右轉），轉頭 0.35 s。三個區域各一列：大腿（最常見，頭 [-5, -35, 0]，幾乎只有低頭）、中控 [-30, -25, 0]、乘客腳踏區 [-45, -35, 0]。
   低頭的部分在 dash_right 的臉框上變化很小，看大腿那列幾乎只剩低頭；steering_column 在正前方下方，低頭看得比較清楚，當對照。
   對照門檻：Euro NCAP 長分心，連續離開路面 3 s 以上。看的時間 medium 照 protocol 4 s、small 5 s、large 3.5 s。
   模板不能做運算，所以那一段寫成同一段 0.5 s 重複 n 次（small 10、medium 8、large 7 次），跟一整段逐幀相同，不是停頓。"
+summary_en: "Head down (also turned right when looking at the centre display or footwell), head turn 0.35 s. One row for each of the three areas: lap (most common, head [-5, -35, 0], almost only looking down), centre display [-30, -25, 0], passenger footwell [-45, -35, 0]. The looking-down part changes the face box on dash_right very little, so in the lap row almost only the look down is left; steering_column, straight ahead and below, sees looking down more clearly and serves as a control. Reference threshold: Euro NCAP long distraction, eyes off road continuously for 3 s or more. Look duration: medium follows the protocol with 4 s, small 5 s, large 3.5 s. Templates cannot do arithmetic, so that segment is written as the same 0.5 s segment repeated n times (small 10, medium 8, large 7 times), identical frame by frame to one continuous segment, not a pause."
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction, look_down, blind_spot]

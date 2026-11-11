@@ -1,14 +1,21 @@
 id: NEG-ALL-HAND-OVER-HAND
 number: 81
-title: "轉彎交叉換手：手臂掃過方向盤上緣，擋住方向盤柱相機（每次約 0.2 / 0.4 / 0.7 s，2 / 4 / 6 次）"
+title: "轉彎交叉換手：手臂掃過方向盤上緣，擋住方向盤柱相機（每次掃過 0.2 / 0.4 / 0.7 s，2 / 4 / 6 次）"
+title_en: "Hand-over-hand steering in a turn: the arm sweeps across the top of the wheel and blocks the steering-column camera (each sweep 0.2 / 0.4 / 0.7 s, 2 / 4 / 6 times)"
+short: "轉彎交叉換手擋到相機"
+short_en: "Hand-over-hand steering blocks the camera"
+brief: {small: "掃過 0.2 s（臉全擋 0.1 s）×2", medium: "掃過 0.4 s（全擋 0.2 s）×4", large: "掃過 0.7 s（全擋 0.4 s）×6", all: "視線在左前路面；每次之間手回方向盤 0.6 s"}
+brief_en: {small: "0.2 s sweep (face fully hidden 0.1 s) ×2", medium: "0.4 s sweep (fully hidden 0.2 s) ×4", large: "0.7 s sweep (fully hidden 0.4 s) ×6", all: "Gaze on the road ahead left; hand back on the wheel 0.6 s between times"}
 summary: "對照：漏框、臉不見（不是閉眼、不是分心）。路口左轉：視線在左前路面（仍在路上），右手從左到右掃過方向盤上緣，
-  手在正中間時 steering_column 整張臉被擋（偵測不到臉、眼、嘴），在左側時擋一部分，在右側時不擋。每次遮擋 = 左 + 中 + 右：
+  手在正中間時 steering_column 整張臉被擋（偵測不到臉、眼、嘴），在左側時擋一部分，在右側時不擋。每次掃過 = 左 + 中 + 右：
   small 0.05 + 0.1 + 0.05 s、medium 0.1 + 0.2 + 0.1 s、large 0.15 + 0.4 + 0.15 s，共 2 / 4 / 6 次，中間手回方向盤 0.6 s。
   dash_right 看不到這隻手（對照用）。"
+summary_en: "Reference: missed box, face not visible (not eye closure, not distraction). Left turn at an intersection: the gaze is on the road ahead to the left (still on road), and the right hand sweeps from left to right across the top of the wheel; with the hand in the middle the whole face is blocked on steering_column (no face, eyes or mouth detected), on the left it blocks part of the face, and on the right it blocks nothing. Each sweep = left + middle + right: small 0.05 + 0.1 + 0.05 s, medium 0.1 + 0.2 + 0.1 s, large 0.15 + 0.4 + 0.15 s, 2 / 4 / 6 times in total, with the hand back on the wheel for 0.6 s in between. dash_right cannot see this hand (as a control)."
 status: ready
 source: written
 tags: [occlusion, hand_over_hand]
 behaviors: [N26, N05]
+standards: {STD-A: [R12]}
 params:
   hand_scale: {fixed: 1.0}          # hand size (configs/cabin.yaml driver.hand_scale); --param hand_scale=0.8
   side_s: {levels: {small: 0.05, medium: 0.1, large: 0.15}}

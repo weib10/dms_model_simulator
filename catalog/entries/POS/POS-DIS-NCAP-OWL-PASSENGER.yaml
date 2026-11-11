@@ -1,8 +1,14 @@
 id: POS-DIS-NCAP-OWL-PASSENGER
 number: 4
 title: "Euro NCAP 長分心（owl，頭跟著轉）：轉頭看乘客 5 / 4 / 3.5 s"
+title_en: "Euro NCAP long distraction (owl, head follows): head turned to look at the passenger for 5 / 4 / 3.5 s"
+short: "轉頭看乘客（NCAP 測法）"
+short_en: "Head turn to the passenger (NCAP protocol)"
+brief: {small: "頭轉 60°，看 5 s", medium: "頭轉 60°，看 4 s", large: "頭轉 45°，看 3.5 s"}
+brief_en: {small: "Head turned 60°, 5 s", medium: "Head turned 60°, 4 s", large: "Head turned 45°, 3.5 s"}
 summary: "視線離開路面 3 s 以上，頭和眼一起轉（轉頭 0.35 s）。看乘客是水平方向的經典區域，從 dash_right 看是往相機那側轉。駕駛側車窗見 POS-DIS-NCAP-OWL-WINDOW，往下看見 POS-DIS-NCAP-OWL-DOWN。
   對照門檻：Euro NCAP 長分心，連續離開路面 3 s。medium 照 protocol 看 4 s、頭轉 60°；small 5 s、60°；large 3.5 s、45°。"
+summary_en: "Gaze off road for 3 s or more, head and eyes turning together (head turn 0.35 s). Looking at the passenger is the classic horizontal area; from dash_right the head turns towards the camera side. For the driver-side window see POS-DIS-NCAP-OWL-WINDOW; for looking down see POS-DIS-NCAP-OWL-DOWN. Reference threshold: Euro NCAP long distraction, eyes off road continuously for 3 s. medium follows the protocol: look 4 s, head turned 60°; small 5 s, 60°; large 3.5 s, 45°."
 status: ready
 source: written
 tags: [ncap, head_turn, long_distraction]

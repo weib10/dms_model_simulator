@@ -1,12 +1,20 @@
 id: ROB-DRW-EYE-FLIP
 number: 40
-title: "睜眼被認成閉眼，每次平均 0.5 s 或 2 s"
-summary: "62.5 s 的正常開車（30 s 睜眼、一次真的 2.5 s 閉眼、30 s 睜眼），模擬模型把睜眼報成閉眼：eye_flip_0p5s / eye_flip_2s 約 5% 的幀，
-  每次的長度是平均值（0.5 s / 2 s），不是上下限，個別一次可以更短或更長。眨眼和漏框會切斷翻轉，所以這條把眨眼降到每分鐘 2 次。"
+title: "睜眼被認成閉眼（設定每次平均 0.5 s 或 2 s）"
+title_en: "Open eyes reported as closed (set to 0.5 s or 2 s on average each time)"
+short: "睜眼被誤報成閉眼"
+short_en: "Open eyes falsely reported as closed"
+brief: {all: "62.5 s，中間真的閉眼 2.5 s；誤報設定每次平均 0.5 s 或 2 s"}
+brief_en: {all: "62.5 s with one real 2.5 s closure; false closed-eye reports set to average 0.5 s or 2 s each"}
+summary: "62.5 s 的正常開車（30 s 睜眼、一次真的 2.5 s 閉眼、30 s 睜眼），模擬模型把睜眼報成閉眼：eye_flip_0p5s / eye_flip_2s 設定約 5% 的幀，
+  每次的長度設定為平均值（0.5 s / 2 s），不是上下限，個別一次可以更短或更長。眨眼和漏框會切斷翻轉，所以這條把眨眼降到每分鐘 2 次。
+  這條 62.5 s 裡輸出的翻轉實際平均約 0.45 s / 1.25 s（30 個模型雜訊 seed），這條跑的 seed 0–4 睜眼的幀被翻成閉眼的約 2–7%。"
+summary_en: "62.5 s of normal driving (30 s eyes open, one real 2.5 s eye closure, 30 s eyes open), with the simulated model reporting open eyes as closed: eye_flip_0p5s / eye_flip_2s set to about 5% of frames; the length of each flip is set as an average (0.5 s / 2 s), not a lower or upper limit, so a single flip can be shorter or longer. Blinks and missed boxes cut flips short, so this entry reduces blinks to 2 per minute. Within this 62.5 s run the flips seen in the output average about 0.45 s / 1.25 s (over 30 model-noise seeds), and seeds 0–4, which this entry runs, flip about 2–7% of the open-eye frames."
 status: ready
 source: written
 tags: [robustness, class_flip]
 behaviors: [C03, N01, V05]
+standards: {STD-A: []}
 template:
   behavior: {blink: {rate_per_min: 2}}
   segments:

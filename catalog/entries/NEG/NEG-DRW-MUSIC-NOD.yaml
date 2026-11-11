@@ -1,12 +1,19 @@
 id: NEG-DRW-MUSIC-NOD
 number: 33
 title: "跟著音樂點頭：頭規律地上下點，眼睛一直看路"
+title_en: "Nodding to music: head nods up and down regularly, eyes always on the road"
+short: "跟著音樂點頭"
+short_en: "Nodding to music"
+brief: {small: "點頭 5°，持續 8 s", medium: "點頭 10°，持續 12 s", large: "點頭 15°，持續 16 s", all: "每拍 0.5 s，眼睛睜著看路"}
+brief_en: {small: "5° nods for 8 s", medium: "10° nods for 12 s", large: "15° nods for 16 s", all: "0.5 s per beat, eyes open on the road"}
 summary: "對照：微睡時的低頭、垂頭（V05、V06）。每拍頭往下 small 5°、medium 10°、large 15° 再回正，一拍 0.5 s，
   持續 small 8 s、medium 12 s、large 16 s。眼睛睜開、視線在路上。"
+summary_en: "Reference: the head dropping or drooping during microsleep (V05, V06). Each beat the head goes down small 5°, medium 10°, large 15° and back, 0.5 s per beat, lasting small 8 s, medium 12 s, large 16 s. Eyes open, gaze on the road."
 status: ready
 source: written
 tags: [look_down, head_nod]
 behaviors: [N27]
+standards: {STD-A: [R1]}
 params:
   nod: {levels: {small: -5, medium: -10, large: -15}}
   beats: {levels: {small: 16, medium: 24, large: 32}}

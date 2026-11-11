@@ -1,11 +1,18 @@
 id: ROB-ALL-NCAP-FACE-MASK
 number: 85
 title: "Euro NCAP 遮擋（口罩）：嘴框完全偵測不到"
+title_en: "Euro NCAP occlusion (face mask): mouth box never detected"
+short: "戴口罩（看不到嘴）"
+short_en: "Face mask (mouth not detected)"
+brief: {all: "看不到嘴框：閉眼 3 s、轉頭看乘客 4 s、哈欠 4 s；另跑一版有嘴框（nominal）對照"}
+brief_en: {all: "No mouth box: eyes closed 3 s, head turned to passenger 4 s, yawn 4 s; also a run with the mouth box (nominal)"}
 summary: "模擬器沒有口罩幾何，用 profile no_mouth（嘴框偵測率 0）近似；同一串行為含閉眼、轉頭、哈欠（劇本哈欠 4 s，真值 yawning 為真）。這只近似「嘴的輸出缺失」，沒有模擬口罩對臉框、頭姿的影響。"
+summary_en: "The simulator has no face-mask geometry, so profile no_mouth (mouth-box detection rate 0) approximates it; the same sequence of behaviours includes eye closure, head turn and yawn (scenario yawn 4 s, ground truth yawning true). This only approximates 'missing mouth output'; it does not simulate the mask's effect on the face box or head pose."
 status: ready
 source: written
 tags: [ncap, occlusion, mask, robustness]
 behaviors: [C02, V05, V01, V07]
+standards: {STD-A: []}
 template:
   behavior: {transition_head_s: 0.1}
   segments:

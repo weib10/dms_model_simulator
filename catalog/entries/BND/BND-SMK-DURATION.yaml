@@ -1,7 +1,13 @@
 id: BND-SMK-DURATION
 number: 70
 title: "菸含在嘴上（手在方向盤）的時間從 0.25 s 掃到 5 s"
+title_en: "Cigarette held in the mouth (hands on the wheel), duration swept from 0.25 s to 5 s"
+short: "叼菸時間掃描"
+short_en: "Cigarette-in-mouth duration sweep"
+brief: {all: "叼菸 0.25 / 0.5 / 1 / 2 / 3 / 5 s，手在方向盤"}
+brief_en: {all: "Cigarette in the mouth 0.25 / 0.5 / 1 / 2 / 3 / 5 s, hands on the wheel"}
 summary: "嘴與菸都沒被遮，只改變含菸的時間長短。"
+summary_en: "Neither the mouth nor the cigarette is covered; only the length of time the cigarette is held in the mouth changes."
 status: ready
 source: written
 tags: [smoking, duration]

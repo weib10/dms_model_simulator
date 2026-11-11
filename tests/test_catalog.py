@@ -11,7 +11,9 @@ PR = {"nominal": {}}
 
 
 def _entry(**kw):
-    e = {"id": "BND-PHN-TEST", "number": 1, "title": "t", "summary": "call of call_s seconds", "status": "ready", "behaviors": ["V08"],
+    e = {"id": "BND-PHN-TEST", "number": 1, "title": "t", "title_en": "t", "short": "t", "short_en": "t",
+         "brief": {"all": "b"}, "brief_en": {"all": "b"}, "summary": "call of call_s seconds",
+         "summary_en": "call of call_s seconds", "status": "ready", "behaviors": ["V08"],
          "params": {"call_s": {"grid": [1.0, 2.0, 3.0]}},
          "template": {"segments": [{"target": "road_ahead", "duration": 2.0},
                                    {"target": "road_ahead", "duration": "${call_s}", "hand": "call", "phone": "call"},
@@ -46,6 +48,22 @@ def test_repo_index_current():
     p = C.CATALOG_DIR / "INDEX.md"
     assert p.exists(), "catalog/INDEX.md is missing: run dms-sim catalog index"
     assert p.read_text(encoding="utf-8") == C.index_markdown(entries), "catalog/INDEX.md is stale: run dms-sim catalog index"
+
+
+def test_repo_review_current():
+    """The four review files are committed: they must match the catalog (line endings aside: git may check them
+    out with CRLF). They use the public markers only."""
+    entries, beh, std = C.load_entries(), C.load_behaviors(), C.load_standards()
+    for lg, (md, csv_name) in C.REVIEW_FILES.items():
+        p, q = C.CATALOG_DIR / md, C.CATALOG_DIR / csv_name
+        assert p.exists() and q.exists(), "catalog/REVIEW* missing: run dms-sim catalog review"
+        assert p.read_text(encoding="utf-8") == C.review_markdown(entries, beh, std, lg), \
+            f"catalog/{md} is stale: run dms-sim catalog review"
+        raw = q.read_bytes()
+        assert raw.startswith(b"\xef\xbb\xbf"), f"catalog/{csv_name} needs a BOM (Excel)"
+        assert raw[3:].decode("utf-8").replace("\r\n", "\n") == C.review_csv(entries, beh, std, lg), \
+            f"catalog/{csv_name} is stale: run dms-sim catalog review"
+    assert C.validate_catalog(entries) == []
 
 
 def test_repo_profile_stacks_resolve_to_known_keys():
@@ -382,9 +400,9 @@ def test_gallery_lists_the_whole_catalog_with_the_pictures_of_the_run(tmp_path):
     page = G.gallery_html(tmp_path, entries=[ran, other, planned])
     assert "這一列沒有圖" in page and "<img" not in page and f'href="rows/{rid}/card.md"' in page
     C.run(tmp_path, log=lambda *a: None, timeline=True, gif=True)
-    out = G.write_gallery(tmp_path, entries=[ran, other, planned])
+    out, out_en = G.write_gallery(tmp_path, entries=[ran, other, planned])
     page = out.read_text(encoding="utf-8")
-    assert out == tmp_path / "index.html" and b"\r" not in out.read_bytes()
+    assert (out, out_en) == (tmp_path / "index.html", tmp_path / "index.en.html") and b"\r" not in out.read_bytes()
     assert f'src="rows/{rid}/timeline.png"' in page and f'src="rows/{rid}/preview.gif"' in page
     assert f'href="scenarios/{Path(man["rows"][0]["scenario"]).name}"' in page
     assert str(tmp_path) not in page                                          # relative links only
@@ -399,7 +417,8 @@ def test_gallery_lists_the_whole_catalog_with_the_pictures_of_the_run(tmp_path):
     assert [page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST")] == sorted(
         page.index(f'id="e-{i}"') for i in ("NEG-DIS-TEST", "POS-PHN-TEST", "BND-PHN-TEST"))
     assert "目錄有 3 條情境" in page and "這次的 run 跑了 1 條、1 列，1 列有圖" in page
-    assert page.count('class="view') == 1 + 2 + 3                             # home, two families, three entries
+    # home, a page per standard, two families, three entries
+    assert page.count('class="view') == 1 + len(C.load_standards()) + 2 + 3
 
 
 def test_gallery_numbers_position_star_and_sources(tmp_path):
@@ -446,6 +465,299 @@ def test_gallery_numbers_position_star_and_sources(tmp_path):
     assert "#045" not in orphan and "這一家族第 2／3 條" in orphan and '<span class="rg">#46, 90</span>' in page
 
 
+# ---- standards (catalog/standards.yaml) and the English page ------------------------------------------------
+def _bi(zh, en):
+    return {"zh": zh, "en": en}
+
+
+def escape_html(s: str) -> str:
+    from html import escape
+    return escape(s)
+
+
+STD = {"STD-1": {"title": _bi("標準一", "Standard one"), "summary": _bi("摘要一", "Summary one"),
+                 "not_covered": _bi("不涵蓋一", "Not covered one"), "source": "https://example.org/std1",
+                 "checked": "2026-11-11", "requirements": {
+                     "R1": {"clause": "§1", "text": _bi("要求一", "Text one"), "coverage": "partial",
+                            "gap": _bi("缺口一", "Gap one")},
+                     "R2": {"clause": "§2", "text": _bi("要求二", "Text two"), "coverage": "gap",
+                            "gap": _bi("缺口二", "Gap two")},
+                     "R3": {"clause": "§3", "text": _bi("要求三", "Text three"), "coverage": "out_of_scope",
+                            "gap": _bi("缺口三", "Gap three")}}}}
+
+
+def test_repo_standards_valid_and_consistent():
+    from collections import Counter
+    st, entries = C.load_standards(), C.load_entries()
+    assert C.validate_standards(st, entries) == []
+    reqs = st["STD-A"]["requirements"]
+    assert list(reqs) == [f"R{i}" for i in range(1, 22)]
+    assert Counter(r["coverage"] for r in reqs.values()) == {"partial": 5, "gap": 3, "out_of_scope": 13}
+    related = {e["id"] for e in C.standard_entries(entries, "STD-A")}
+    assert {e["id"] for e in entries if C.family(e) in ("DRW", "YWN")} <= related     # the marked families: all
+    assert not any(C.family(e) in ("DIS", "PHN", "SMK", "SBT") for e in entries if e["id"] in related)
+    overlay = C.load_standards_overlay()                       # the maintainer's local names, when present
+    if overlay is not None:
+        assert C.validate_standards_overlay(overlay, st) == []
+
+
+def test_repo_public_standards_hold_markers_only():
+    """The public file names no standard and holds no text: {id: {requirements: {Rn: {coverage}}}} and nothing
+    else. Names and texts belong in the git-ignored overlay, which only the gallery merges in."""
+    raw = C.load_yaml(C.CATALOG_DIR / "standards.yaml")
+    assert set(raw) == {"standards"} and raw["standards"]
+    for sid, s in raw["standards"].items():
+        assert set(s) == {"requirements"}, sid
+        assert all(isinstance(r, dict) and set(r) == {"coverage"} for r in s["requirements"].values()), sid
+    assert C.load_standards() == raw["standards"]                              # the default ignores the overlay
+    assert "catalog/standards.local.yaml" in (C.ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert C.standards_local_path() == C.CATALOG_DIR / "standards.local.yaml"
+
+
+def _write_yaml(p: Path, d: dict) -> Path:
+    import yaml
+    p.write_text(yaml.safe_dump(d, allow_unicode=True, sort_keys=False), encoding="utf-8")
+    return p
+
+
+def _markers(std: dict) -> dict:
+    """The public part of a standards registry: requirement ids and coverage only."""
+    return {sid: {"requirements": {rid: {"coverage": r["coverage"]} for rid, r in s["requirements"].items()}}
+            for sid, s in std.items()}
+
+
+def _overlay(std: dict, name: str = "Name One") -> dict:
+    """The local part: everything but coverage, plus a display name."""
+    return {sid: {"name": name, **{k: v for k, v in s.items() if k != "requirements"},
+                  "requirements": {rid: {k: v for k, v in r.items() if k != "coverage"}
+                                   for rid, r in s["requirements"].items()}} for sid, s in std.items()}
+
+
+def test_load_standards_with_the_local_overlay(tmp_path):
+    pub = _write_yaml(tmp_path / "standards.yaml", {"standards": _markers(STD)})
+    assert C.load_standards(pub) == C.load_standards(pub, local=True) == _markers(STD)     # no overlay file yet
+    assert C.load_standards_overlay(C.standards_local_path(pub)) is None
+    _write_yaml(C.standards_local_path(pub), {"standards": _overlay(STD)})
+    assert C.load_standards(pub) == _markers(STD)                                          # default: public only
+    merged = C.load_standards(pub, local=True)
+    assert merged == {"STD-1": {**STD["STD-1"], "name": "Name One"}}                     # deep-merged, coverage kept
+    assert C.standard_label("STD-1", merged["STD-1"]) == "Name One" and C.standard_label("STD-1", STD["STD-1"]) == "STD-1"
+    other = _write_yaml(tmp_path / "elsewhere.yaml", {"standards": {"STD-1": {"name": "Other"}}})
+    assert C.load_standards(pub, local=other)["STD-1"] == {**_markers(STD)["STD-1"], "name": "Other"}  # explicit path
+    assert C.load_standards(tmp_path / "missing.yaml", local=True) == {}                  # no public file, nothing
+    stray = _write_yaml(tmp_path / "stray.yaml", {"standards": {"STD-9": {"name": "x"}, "STD-1": {
+        "coverage": "x", "requirements": {"R1": {"coverage": "gap", "clause": "§9"}, "R9": {"clause": "§9"}}}}})
+    got = C.load_standards(pub, local=stray)          # only adds to what the public file has; coverage stays its own
+    assert set(got) == {"STD-1"} and "coverage" not in got["STD-1"] and set(got["STD-1"]["requirements"]) == {
+        "R1", "R2", "R3"} and got["STD-1"]["requirements"]["R1"] == {"coverage": "partial", "clause": "§9"}
+
+
+def test_validate_standards_public_markers_and_optional_texts():
+    one = [_entry(id="POS-DRW-A", standards={"STD-1": ["R1"]})]
+    assert C.validate_standards(_markers(STD), one) == []
+    bad = _markers(STD)
+    bad["STD-1"].update(name=" ", title={"zh": "只有中文"})
+    bad["STD-1"]["requirements"]["R1"]["clause"] = ""
+    errs = C.validate_standards(bad, one)
+    for s in ("STD-1: name must be a non-empty string", "STD-1: title needs a non-empty text per language",
+              "STD-1 R1: clause must be a non-empty string"):
+        assert any(s in x for x in errs), s
+    assert C.validate_standards({"STD-1": {"requirements": {}}}) == ["STD-1: missing requirements"]
+
+
+def test_validate_standards_overlay():
+    pub = _markers(STD)
+    assert C.validate_standards_overlay(_overlay(STD), pub) == [] and C.validate_standards_overlay({}, pub) == []
+    ov = _overlay(STD)
+    ov["STD-9"] = {"name": "x"}                                                  # a standard the public file lacks
+    ov["STD-1"]["requirements"]["R9"] = {"clause": "§9"}                         # a requirement it lacks
+    ov["STD-1"]["requirements"]["R1"]["coverage"] = "partial"                    # coverage: public file only
+    del ov["STD-1"]["name"], ov["STD-1"]["requirements"]["R2"]["gap"], ov["STD-1"]["requirements"]["R3"]
+    errs = C.validate_standards_overlay(ov, pub)
+    for s in ("STD-9: not in standards.yaml", "STD-1 R9: not in standards.yaml",
+              "STD-1 R1: coverage belongs in standards.yaml only", "STD-1: missing name",
+              "STD-1 R2: gap needs a non-empty text per language", "STD-1 R3: missing (every requirement"):
+        assert any(s in x for x in errs), (s, errs)
+    ov = _overlay(STD)
+    ov["STD-1"]["coverage"] = "x"
+    del ov["STD-1"]["summary"]
+    errs = C.validate_standards_overlay(ov, pub)
+    assert "STD-1: coverage belongs in standards.yaml only" in errs
+    assert any("STD-1: summary needs a non-empty text" in x for x in errs)
+
+
+def test_validate_entry_standards():
+    ok = lambda v, **kw: C.validate(_entry(standards=v, **kw), PR, standards=STD)
+    assert ok({"STD-1": ["R1"]}) == [] and ok({"STD-1": []}) == []
+    assert any("'NOPE' is not in catalog/standards.yaml" in x for x in ok({"NOPE": []}))
+    assert any("has no requirement 'R9'" in x for x in ok({"STD-1": ["R9"]}))
+    assert any("needs a list" in x for x in ok({"STD-1": "R1"}))
+    assert any("lists 'R1' twice" in x for x in ok({"STD-1": ["R1", "R1"]}))
+    assert any("must be a mapping" in x for x in ok(["STD-1"]))
+    assert any("not in catalog/standards.yaml" in x for x in ok({"NOPE": []}, status="planned", needs=["x"]))
+    assert any("title_en must be a non-empty string" in x for x in ok({"STD-1": []}, title_en=""))
+    assert C.validate(_entry(title_en="A call", summary_en="call of call_s seconds"), PR) == []
+
+
+def test_validate_english_texts_are_required():
+    no = lambda *keys, **kw: {k: v for k, v in _entry(**kw).items() if k not in keys}
+    assert any("missing title_en" in x for x in C.validate(no("title_en"), PR))
+    assert any("missing summary_en" in x for x in C.validate(no("summary_en"), PR))
+    assert C.validate(no("summary", "summary_en"), PR) == []                   # no summary, no summary_en
+    assert any("summary_en without summary" in x for x in C.validate(no("summary"), PR))
+    beh = C.load_behaviors()
+    assert all(b.get("name_en") for b in beh.values())
+    v = {k: dict(b) for k, b in beh.items()}
+    del v["V08"]["name_en"]
+    v["V01"]["name_en"] = " "
+    errs = C.validate_behaviors(v)
+    assert "V08: missing name_en" in errs and "V01: name_en must be a non-empty string" in errs
+
+
+def test_validate_standards_structure_and_coverage():
+    one = [_entry(id="POS-DRW-A", standards={"STD-1": ["R1"]})]
+    assert C.validate_standards(STD, one) == [] and C.validate_standards(STD) == []
+    assert C.validate_standards(STD, []) == ["STD-1 R1: coverage partial but no entry lists it"]
+    two = one + [_entry(id="POS-DRW-B", standards={"STD-1": ["R2", "R3"]})]
+    assert C.validate_standards(STD, two) == ["STD-1 R2: coverage gap but listed by POS-DRW-B",
+                                              "STD-1 R3: coverage out_of_scope but listed by POS-DRW-B"]
+    broken = copy.deepcopy(STD)
+    del broken["STD-1"]["summary"]["en"]
+    broken["STD-1"]["source"] = ""
+    broken["STD-1"]["requirements"]["R2"]["coverage"] = "full"
+    del broken["STD-1"]["requirements"]["R3"]["clause"]                    # texts are optional: no error
+    errs = C.validate_standards(broken)
+    for s in ("STD-1: summary needs a non-empty text per language", "STD-1: source must be a non-empty string",
+              "STD-1 R2: coverage must be one of"):
+        assert any(s in x for x in errs), s
+    assert not any("R3" in x for x in errs)
+
+
+def test_gallery_standard_page_and_marks(tmp_path):
+    from dms_model_simulator import gallery as G
+    es = [_short(id="POS-DRW-A", number=1, standards={"STD-1": ["R1"]}),
+          _short(id="POS-DRW-B", number=2, standards={"STD-1": []}), _short(id="POS-PHN-C", number=3)]
+    C.expand(es[:1], tmp_path, "boundary", profiles=PR)
+    page = G.gallery_html(tmp_path, entries=es, standards=STD)
+    sec = lambda i, p=page: p[p.index(f'id="{i}"'):].split("</section>")[0]
+    s = sec("std-STD-1")
+    # the standard's own page: what it is and does not cover, requirements in three groups (the last one folded)
+    assert "<h1>標準一</h1>" in s and "摘要一" in s and "不涵蓋一" in s and "目錄有 2 條情境標了跟這個標準的關係" in s
+    assert [s.index(x) for x in ("目錄有相關情境", "還沒有情境", "模擬器管不到")] == sorted(
+        s.index(x) for x in ("目錄有相關情境", "還沒有情境", "模擬器管不到"))
+    assert '<details class="more"><summary><h2>模擬器管不到</h2></summary>' in s and "缺口三" in s
+    r1 = s[s.index('id="std-STD-1-R1"'):].split("</tr>")[0]
+    assert '<a href="#e/POS-DRW-A" title="t">#001</a>' in r1 and "缺口一" in r1 and "§1" in r1 and "要求一" in r1
+    assert "POS-DRW-B" not in r1 and "缺口二" in s
+    assert '另外 1 條跟這個標準管的主題有關，沒有對到特定一項：<a href="#e/POS-DRW-B" title="t">#002</a>' in s
+    assert '<a href="https://example.org/std1">標準全文</a>（2026-11-11 查證）' in s
+    # an entry on the bar; on the home page one line and a count per map cell, no requirement table
+    assert '<a class="std" href="#s/STD-1" data-f="s/STD-1">STD-1</a>' in page
+    home = sec("home")
+    assert '2 條情境標了跟 <a href="#s/STD-1">STD-1</a> 哪幾項要求有關' in home
+    assert "R1" not in home and "目前沒有逐條對應" not in home
+    assert home.count('<span class="sm" title="2 條跟 STD-1 有關">STD-1 · 2</span>') == 2   # DRW x POS, DRW total
+    # marks: family list line, family column, entry title; the entry page says which requirements
+    assert '<span class="t">★ t<span class="sm">STD-1</span></span>' in sec("g-DRW")
+    assert '<span class="no">#001</span><span class="sm">STD-1</span> ★ t</a>' in page[page.index('id="s-DRW"'):]
+    a, b, c = sec("e-POS-DRW-A"), sec("e-POS-DRW-B"), sec("e-POS-PHN-C")
+    assert '<h1><span class="no">#001</span> t <a class="sm" href="#s/STD-1">STD-1</a></h1>' in a
+    assert '<a href="#s/STD-1">標準一</a>' in a and "<li>R1（§1）：要求一</li>" in a
+    assert "跟這個標準管的主題有關，沒有對到特定一項。" in b and "<li>R1" not in b
+    assert '<h1><span class="no">#003</span> t</h1>' in c and "stdbox" not in c and 'class="sm"' not in sec("g-PHN")
+    # the same in English
+    en = G.gallery_html(tmp_path, entries=es, standards=STD, lang="en")
+    s = sec("std-STD-1", en)
+    assert "<h1>Standard one</h1>" in s and "Summary one" in s and "Scenarios in the catalog" in s
+    assert "<h2>Out of the simulator&#x27;s reach</h2>" in s and "Gap one" in s and "(checked 2026-11-11)" in s
+    assert "<li>R1 (§1): Text one</li>" in sec("e-POS-DRW-A", en) and "STD-1 · 2" in sec("home", en)
+
+
+def test_gallery_standard_page_with_markers_only(tmp_path):
+    """Without the local overlay a standard is an id with requirement ids: the page says so, lists the ids and the
+    related entries, and holds none of the overlay's texts."""
+    from dms_model_simulator import gallery as G
+    es = [_short(id="POS-DRW-A", number=1, standards={"STD-1": ["R1"]}),
+          _short(id="POS-DRW-B", number=2, standards={"STD-1": []}), _short(id="POS-PHN-C", number=3)]
+    C.expand(es[:1], tmp_path, "boundary", profiles=PR)
+    for lg, intro, ent in (("zh", G.TEXT["zh"]["std_intro"], "STD-1</a>：R1</p>"),
+                           ("en", G.TEXT["en"]["std_intro"], "STD-1</a>: R1</p>")):
+        page = G.gallery_html(tmp_path, entries=es, standards=_markers(STD), lang=lg)
+        sec = lambda i, p=page: p[p.index(f'id="{i}"'):].split("</section>")[0]
+        s = sec("std-STD-1")
+        assert "<h1>STD-1</h1>" in s and escape_html(intro) in s
+        r1 = s[s.index('id="std-STD-1-R1"'):].split("</tr>")[0]
+        assert '<a href="#e/POS-DRW-A" title="t">#001</a>' in r1
+        assert '<b id="std-STD-1-R2">R2</b>' in s and '<b id="std-STD-1-R3">R3</b>' in s
+        assert "#002</a>" in s                                                   # topic only: still listed
+        assert ent in sec("e-POS-DRW-A") and '<a class="sm" href="#s/STD-1">STD-1</a>' in sec("e-POS-DRW-A")
+        for text in ("標準一", "Standard one", "摘要一", "Summary one", "§1", "要求一", "Text one", "缺口一",
+                     "Gap one", "example.org", "2026-11-11", "R1（", "R1 ("):
+            assert text not in page, (lg, text)
+        assert '<a class="std" href="#s/STD-1" data-f="s/STD-1">STD-1</a>' in page
+
+
+def test_gallery_shows_the_local_name_of_a_standard(tmp_path):
+    from dms_model_simulator import gallery as G
+    es = [_short(id="POS-DRW-A", number=1, standards={"STD-1": ["R1"]})]
+    C.expand(es, tmp_path, "boundary", profiles=PR)
+    pub = _write_yaml(tmp_path / "standards.yaml", {"standards": _markers(STD)})
+    _write_yaml(C.standards_local_path(pub), {"standards": _overlay(STD)})
+    page = G.gallery_html(tmp_path, entries=es, standards=C.load_standards(pub, local=True))
+    assert '<a class="std" href="#s/STD-1" data-f="s/STD-1">Name One</a>' in page    # label = name, route = id
+    assert '<a class="sm" href="#s/STD-1">Name One</a>' in page and "Name One · 1" in page
+    assert "<h1>標準一</h1>" in page and "<li>R1（§1）：要求一</li>" in page and "example.org/std1" in page
+    assert G.TEXT["zh"]["std_intro"] not in page
+
+
+def test_gallery_two_languages_link_each_other(tmp_path, monkeypatch):
+    from dms_model_simulator import gallery as G
+    e = _short(id="POS-PHN-A", title="講電話", title_en="On the phone", summary="中文說明", summary_en="English summary",
+               short="講電話", short_en="On the phone")
+    f = _short(id="POS-PHN-B", number=2, title="只有中文")
+    del f["title_en"]                                                      # a page shows the Chinese when English is missing
+    C.expand([e], tmp_path, "boundary", profiles=PR)
+    C.run(tmp_path, log=lambda *a: None)
+    real = C.load_behaviors()
+    monkeypatch.setattr(C, "load_behaviors", lambda path=None: {**real, "V08": {**real["V08"], "name_en": "Phone call"}})
+    zh, en = G.write_gallery(tmp_path, entries=[e, f], standards={})
+    pz, pe = zh.read_text(encoding="utf-8"), en.read_text(encoding="utf-8")
+    assert '<html lang="zh-Hant">' in pz and '<html lang="en">' in pe
+    # each page links to the other; the script adds the current #... so the link lands on the same place
+    assert 'id="lang" href="index.en.html" data-file="index.en.html"' in pz
+    assert 'id="lang" href="index.html" data-file="index.html"' in pe
+    assert all("lang.href=lang.dataset.file+location.hash" in p for p in (pz, pe))
+    # English page: the entry's and the behaviour's English, the script built from the card keys; Chinese if missing
+    assert '<h1><span class="no">#001</span> On the phone</h1>' in pe and "English summary" in pe
+    assert "V08 Phone call" in pe and "只有中文" in pe
+    assert "looks at road_ahead; hand: call; phone: call" in pe and "看 road_ahead" not in pe
+    assert '<h1><span class="no">#001</span> 講電話</h1>' in pz and "看 road_ahead" in pz and "English summary" not in pz
+    for zh_text in ("情境總覽", "搜尋", "劇本", "這條情境的說明", "相機", "手機", "行為真的發生", "找不到"):
+        assert zh_text not in pe, zh_text
+    assert "Phone</a>" in pe and "Behaviour happens" in pe and "No match" in pe
+    # --lang writes only that page
+    en.unlink()
+    assert G.write_gallery(tmp_path, entries=[e], lang="zh", standards={}) == [zh] and not en.exists()
+    with pytest.raises(ValueError, match="lang must be one of"):
+        G.gallery_html(tmp_path, lang="fr")
+
+
+def test_gallery_texts_have_the_same_keys_in_every_language():
+    import re
+    from dms_model_simulator import gallery as G
+
+    def shape(v):
+        if isinstance(v, dict):
+            return {k: shape(x) for k, x in v.items()}
+        if isinstance(v, (list, tuple)):
+            return [shape(x) for x in v]
+        return sorted(set(re.findall(r"\{(\w*)\}", v)))                  # the placeholders of a text
+    assert set(G.TEXT) == set(G.LANGS) == set(G.FILES)
+    assert shape(G.TEXT["en"]) == shape(G.TEXT["zh"])
+    assert set(C.CATEGORIES_EN) == set(C.CATEGORIES) and set(C.FAMILIES_EN) == set(C.FAMILIES)
+    assert all(": " in v for v in C.CATEGORIES_EN.values())
+
+
 def test_partial_run_lists_rows_of_the_current_manifest(tmp_path):
     e1, e2 = _short(), _short(id="POS-PHN-TEST")
     man = C.expand([e1, e2], tmp_path, "boundary", profiles=PR)
@@ -482,11 +794,25 @@ def test_run_needs_a_manifest(tmp_path):
 def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     from dms_model_simulator import cli
     monkeypatch.setattr(C, "load_entries", lambda root=None: [_short()])
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False: {})   # the repo's need the repo's entries
+    monkeypatch.setattr(C, "load_standards_overlay", lambda path=None: None)      # and the maintainer's local file
     capsys.readouterr()
     cli.main(["catalog", "list"])
     assert "#001  BND-PHN-TEST" in capsys.readouterr().out
     cli.main(["catalog", "validate", "BND"])
     assert "BND-PHN-TEST: ok" in capsys.readouterr().out
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False: STD)  # coverage: against the whole catalog
+    with pytest.raises(SystemExit):
+        cli.main(["catalog", "validate", "BND"])
+    out = capsys.readouterr().out
+    assert "STD-1 R1: coverage partial but no entry lists it" in out and "standards.local.yaml" not in out
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False: _markers(STD))
+    monkeypatch.setattr(C, "load_standards_overlay", lambda path=None: {"STD-1": {"name": "x"}})   # incomplete
+    with pytest.raises(SystemExit):
+        cli.main(["catalog", "validate", "BND"])
+    assert "standards.local.yaml: \n  STD-1: title needs" in capsys.readouterr().out
+    monkeypatch.setattr(C, "load_standards_overlay", lambda path=None: None)
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False: {})
     cli.main(["catalog", "expand", "BND", "--out", str(tmp_path), "--profile", "nominal"])
     assert "1 rows from 1 entries" in capsys.readouterr().out
     cli.main(["catalog", "run", str(tmp_path)])
@@ -499,12 +825,32 @@ def test_cli_catalog_expand_and_run(tmp_path, monkeypatch, capsys):
     assert "plus timeline.png per row" in capsys.readouterr().out
     assert (Path(t["card"]).parent / "timeline.png").exists()
     cli.main(["catalog", "gallery", str(tmp_path), "--title", "T"])
-    assert "index.html" in capsys.readouterr().out and "<title>T</title>" in (tmp_path / "index.html").read_text("utf-8")
+    out = capsys.readouterr().out
+    assert "index.html" in out and "index.en.html" in out and "standards: none, markers only" in out
+    assert "<title>T</title>" in (tmp_path / "index.html").read_text("utf-8")
+    # the local overlay: used when the file exists, not with --no-local; the page shows the name it brings
+    monkeypatch.setattr(C, "load_standards_overlay", lambda path=None: {"STD-1": {"name": "Local name"}})
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False:
+                        {"STD-1": {"name": "Local name", **_markers(STD)["STD-1"]} if local else _markers(STD)["STD-1"]})
+    cli.main(["catalog", "gallery", str(tmp_path), "--lang", "zh"])
+    assert "standards: STD-1 with local names" in capsys.readouterr().out
+    assert ">Local name</a>" in (tmp_path / "index.html").read_text("utf-8")
+    cli.main(["catalog", "gallery", str(tmp_path), "--lang", "zh", "--no-local"])
+    assert "standards: STD-1, markers only" in capsys.readouterr().out
+    assert "Local name" not in (tmp_path / "index.html").read_text("utf-8")
+    monkeypatch.setattr(C, "load_standards_overlay", lambda path=None: None)
+    monkeypatch.setattr(C, "load_standards", lambda path=None, local=False: {})
+    assert '<html lang="en">' in (tmp_path / "index.en.html").read_text("utf-8")
+    cli.main(["catalog", "gallery", str(tmp_path), "--lang", "en"])
+    assert "index.en.html" in capsys.readouterr().out
     cli.main(["catalog", "index", "--out", str(tmp_path / "INDEX.md")])
     assert "BND-PHN-TEST" in (tmp_path / "INDEX.md").read_text(encoding="utf-8")
 
 
 # ---- difficulty levels, repeat blocks, parameter overrides --------------------------------------------------
+LV_BRIEF = {"small": "1 glance", "medium": "2 glances", "large": "3 glances"}
+
+
 def _lv_entry(**kw):
     """call_s and gap_s follow the row's level; side is an ordinary choice."""
     base = dict(params={"call_s": {"levels": {"small": 0.5, "medium": 1.0, "large": 2.0}},
@@ -512,7 +858,9 @@ def _lv_entry(**kw):
                         "side": {"choice": ["a", "b"]}},
                 template={"segments": [{"target": "road_ahead", "duration": "${gap_s}"},
                                        {"target": "road_ahead", "duration": "${call_s}", "hand": "call",
-                                        "phone": "call"}]})
+                                        "phone": "call"}]},
+                brief={"small": "call 0.5 s", "medium": "call 1 s", "large": "call 2 s"},
+                brief_en={"small": "call 0.5 s", "medium": "call 1 s", "large": "call 2 s"})
     return _entry(**{**base, **kw})
 
 
@@ -563,7 +911,7 @@ def test_repeat_blocks_expand_and_validate():
                 {"repeat": 2, "segments": [], "target": "x"}):
         with pytest.raises(C.CatalogError):
             C.expand_repeats([bad])
-    e = _entry(params={"n": {"levels": {"small": 1, "medium": 2, "large": 3}}},
+    e = _entry(params={"n": {"levels": {"small": 1, "medium": 2, "large": 3}}}, brief=LV_BRIEF, brief_en=LV_BRIEF,
                template={"segments": [{"target": "road_ahead", "duration": 1.0},
                                       {"repeat": "${n}", "segments": [{"target": "passenger", "duration": 0.5},
                                                                       {"target": "road_ahead", "duration": 1.0}]}]})
@@ -618,3 +966,168 @@ def test_validate_event_override_keys_and_scripted_yawn_overlaps():
     overlap = _entry(params={}, template={"segments": [seg(yawn={"start": True, "duration_s": 3.0}),
                                                        seg(yawn={"start": True, "duration_s": 2.0})]})
     assert any("still runs" in e for e in C.validate(overlap, PR))
+
+
+# ---- short names, level table, review table ------------------------------------------------------------------
+def test_validate_short_and_brief():
+    ok = lambda **kw: C.validate(_entry(**kw), PR)
+    has = lambda errs, s: any(s in x for x in errs)
+    assert ok() == [] and C.validate(_lv_entry(), PR) == []
+    no = {k: v for k, v in _entry().items() if k not in ("short", "brief_en")}
+    errs = C.validate(no, PR)
+    assert has(errs, "missing short") and has(errs, "missing brief_en")
+    assert has(ok(short=" "), "short must be a non-empty string")
+    assert has(ok(short="字" * 15), "short has 15 characters (at most 14)") and ok(short="字" * 14) == []
+    assert has(ok(short_en="x" * 46), "short_en has 46 characters (at most 45)")
+    # without levels: exactly `all`; with levels: small, medium, large and optionally all
+    assert has(ok(brief={"small": "a"}, brief_en={"small": "a"}), "without levels needs exactly all")
+    lv = dict(LV_BRIEF)
+    assert C.validate(_lv_entry(brief={**lv, "all": "x"}, brief_en={**lv, "all": "x"}), PR) == []
+    errs = C.validate(_lv_entry(brief={"small": "a", "large": "c"}, brief_en={"all": "a"}), PR)
+    assert has(errs, "brief keys ['large', 'small']: need small, medium, large") and has(errs, "different keys")
+    assert has(ok(brief={"all": "字" * 51}), "brief.all has 51 characters (at most 50)")
+    assert ok(brief={"all": "字" * 50}, brief_en={"all": "x" * 110}) == []
+    assert has(C.validate(_lv_entry(brief={**lv, "small": "字" * 37}), PR), "brief.small has 37 characters (at most 36)")
+    assert has(C.validate(_lv_entry(brief_en={**lv, "large": "x" * 81}), PR), "brief_en.large has 81 characters")
+    assert has(ok(brief={"all": ""}), "brief.all must be a non-empty string")
+    assert has(ok(brief="x"), "brief must be a mapping")
+    assert C.SHORT_MAX == {"zh": 14, "en": 45}
+    assert C.BRIEF_MAX == {"level": {"zh": 36, "en": 80}, "all": {"zh": 50, "en": 110}}
+
+
+def test_validate_catalog_short_names_unique():
+    a, b = _entry(id="POS-PHN-A", short="同名"), _entry(id="POS-PHN-B", number=2, short="同名", short_en="u")
+    assert C.validate_catalog([a, _entry(id="POS-PHN-C", number=3, short="別名", short_en="v")]) == []
+    assert C.validate_catalog([a, b]) == ["short '同名' is used by both POS-PHN-A and POS-PHN-B"]
+    c = _entry(id="POS-PHN-C", number=3, short="別名")                    # short_en "t", as a's
+    assert C.validate_catalog([a, c]) == ["short_en 't' is used by both POS-PHN-A and POS-PHN-C"]
+
+
+def _review_fixture():
+    beh = {"V08": {"name": "講電話", "name_en": "Phone call"}, "N28": {"name": "手機放車架"}}
+    es = [_lv_entry(id="NEG-PHN-LV", number=12, short="有|直線", short_en="With | bar", behaviors=["N28", "V08"],
+                    brief={**LV_BRIEF, "all": "每級兩台相機"}, brief_en={**LV_BRIEF, "all": "two cameras"},
+                    standards={"STD-1": ["R1", "R2"]}),
+          _entry(id="POS-PHN-ONE", number=3, short="不分級", short_en="No levels", brief={"all": "講 1 s"},
+                 brief_en={"all": "1 s call"}, standards={"STD-1": []}),
+          _entry(id="POS-PHN-PLAN", number=7, short="還沒做", short_en="Not yet", status="planned", needs=["x"])]
+    return es, beh
+
+
+def test_review_table_both_languages():
+    es, beh = _review_fixture()
+    std = _markers(STD)
+    zh, en = C.review_rows(es, beh, std, "zh"), C.review_rows(es, beh, std, "en")
+    assert zh[0] == ["編號", "短名", "類別", "行為", "small", "medium", "large", "每級相同／不分級", "標記", "ID", "確認", "備註"]
+    assert en[0] == ["No.", "Short name", "Kind", "Behaviours", "small", "medium", "large",
+                     "Same at every level, or no levels", "Marker", "ID", "OK?", "Comment"]
+    assert [r[0] for r in zh[1:]] == ["#003", "#007", "#012"]                        # by number
+    assert zh[1] == ["#003", "不分級", "行為有發生", "V08 講電話", "", "", "", "講 1 s", "STD-1", "POS-PHN-ONE", "", ""]
+    assert zh[2][1] == "還沒做（未完成）" and en[2][1] == "Not yet (planned)"
+    assert zh[3] == ["#012", "有|直線", "像但不是", "N28 手機放車架；V08 講電話", "1 glance", "2 glances", "3 glances",
+                     "每級兩台相機", "STD-1: R1, R2", "NEG-PHN-LV", "", ""]
+    assert en[3][2:4] == ["Looks like it, is not", "N28 手機放車架; V08 Phone call"]    # no name_en: the Chinese
+    assert en[1][7] == "1 s call" and en[3][1] == "With | bar"
+    md = C.review_markdown(es, beh, std, "zh")
+    assert md.startswith("# 情境審閱表\n\n") and "目錄的 3 條全在這一張表" in md and "`dms-sim catalog review`" in md
+    assert "| #012 | 有\\|直線 | 像但不是 |" in md and "| `NEG-PHN-LV` |  |  |" in md      # | escaped, id in backticks
+    assert md.count("\n| #") == 3 and "|---|" + "---|" * 11 in md
+    md_en = C.review_markdown(es, beh, std, "en")
+    assert md_en.startswith("# Scenario review table\n") and "With \\| bar" in md_en and "all 3 are in" in md_en
+    text = C.review_csv(es, beh, std, "en")
+    assert list(csv.reader(text.splitlines())) == en and text == C.review_csv(es, beh, std, "en")
+    assert set(C.KINDS) == set(C.CATEGORIES)
+    with pytest.raises(C.CatalogError, match="lang must be one of"):
+        C.review_rows(es, beh, std, "fr")
+
+
+def test_review_never_shows_the_local_name(tmp_path, monkeypatch):
+    """The review files are committed: even with an overlay next to the public file, the marker is the public id."""
+    import shutil
+    from dms_model_simulator import cli
+    es, beh = _review_fixture()
+    cat = tmp_path / "cat"
+    cat.mkdir()
+    _write_yaml(cat / "standards.yaml", {"standards": _markers(STD)})
+    _write_yaml(cat / "standards.local.yaml", {"standards": _overlay(STD, name="SECRET-NAME")})
+    shutil.copy(C.CATALOG_DIR / "behaviors.yaml", cat / "behaviors.yaml")
+    monkeypatch.setattr(C, "CATALOG_DIR", cat)
+    monkeypatch.setattr(C, "load_entries", lambda root=None: es)
+    assert C.load_standards(local=True)["STD-1"]["name"] == "SECRET-NAME"            # the overlay is there
+    cli.main(["catalog", "review", "--out-dir", str(tmp_path / "out")])
+    files = sorted((tmp_path / "out").iterdir())
+    assert [p.name for p in files] == ["REVIEW.csv", "REVIEW.en.csv", "REVIEW.en.md", "REVIEW.md"]
+    for p in files:
+        t = p.read_text(encoding="utf-8-sig")
+        assert "SECRET" not in t and "標準一" not in t and "STD-1: R1, R2" in t, p.name
+    assert (tmp_path / "out" / "REVIEW.csv").read_bytes().startswith(b"\xef\xbb\xbf")
+    assert not (tmp_path / "out" / "REVIEW.md").read_bytes().startswith(b"\xef\xbb\xbf")
+    # a merged registry passed in by mistake still gives the id
+    assert C.review_rows(es, beh, C.load_standards(local=True))[3][8] == "STD-1: R1, R2"
+
+
+def test_gallery_short_names_and_levels(tmp_path):
+    from dms_model_simulator import gallery as G
+    es = [_lv_entry(id="POS-PHN-A", number=45, title="很長的標題：講電話", title_en="A long title: on the phone",
+                    short="講電話", short_en="On the phone",
+                    brief={**LV_BRIEF, "all": "兩台相機"}, brief_en={**LV_BRIEF, "all": "two cameras"}),
+          _entry(id="POS-PHN-B", number=46, title="另一個很長的標題", short="第二條", short_en="Second",
+                 brief={"all": "講 1 s"}, brief_en={"all": "1 s call"})]
+    C.expand(es[1:], tmp_path, "boundary", profiles=PR)
+    cases = (("zh", "很長的標題：講電話", "講電話", "第二條", "講 1 s", "兩台相機"),
+             ("en", "A long title: on the phone", "On the phone", "Second", "1 s call", "two cameras"))
+    for lg, long_a, short_a, short_b, all_b, all_a in cases:
+        page = G.gallery_html(tmp_path, entries=es, standards={}, lang=lg)
+        sec = lambda i, p=page: p[p.index(f'id="{i}"'):].split("</section>")[0]
+        g = sec("g-PHN")
+        assert f'<span class="no">#045</span><span class="t">★ {short_a}</span>' in g and long_a not in g
+        side = page[page.index('id="s-PHN"'):].split("</nav>")[0]
+        assert f'<span class="no">#045</span> ★ {short_a}</a>' in side and f'title="{long_a}"' in side
+        a, b = sec("e-POS-PHN-A"), sec("e-POS-PHN-B")
+        assert f'<h1><span class="no">#045</span> {short_a}</h1>\n<p class="sub">{long_a}</p>' in a
+        assert escape_html(G.TEXT[lg]["lv_lead"]) in a or G.TEXT[lg]["lv_lead"] in a
+        assert "<tr><th>small</th><td>1 glance</td></tr><tr><th>medium</th><td>2 glances</td></tr>" in a
+        assert f'<tr><th>{G.TEXT[lg]["lv_all"]}</th><td>{all_a}</td></tr>' in a
+        assert f'<p class="lv1"><b>{G.TEXT[lg]["lv_one"]}</b>{all_b}</p>' in b and "lvbox" not in b
+        assert f"#046 {short_b} →</a>" in a and f"← #045 {short_a}</a>" in b                   # previous / next
+        index = json.loads(page.split("const INDEX=")[1].split(";\ndocument")[0])
+        assert index[0][1] == f"#045 {short_a}" and index[0][0] == "POS-PHN-A"
+        assert all(t in index[0][2] for t in ("pos-phn-a", "講電話", "on the phone", "很長的標題", "a long title"))
+    # an entry known only from the manifest has no short name: its title, no subtitle
+    page = G.gallery_html(tmp_path, entries=es[:1], standards={})
+    orphan = page[page.index('id="e-POS-PHN-B"'):].split("</section>")[0]
+    assert 'class="sub"' not in orphan and "<h1> 另一個很長的標題</h1>" in orphan
+
+
+def test_gallery_premise_and_note(tmp_path):
+    from dms_model_simulator import gallery as G
+    es = [_short(id="POS-DRW-A", number=1, standards={"STD-1": ["R1", "R2"]})]
+    C.expand(es, tmp_path, "boundary", profiles=PR)
+    plain = {lg: G.gallery_html(tmp_path, entries=es, standards=STD, lang=lg) for lg in ("zh", "en")}
+    std = copy.deepcopy(STD)
+    std["STD-1"]["premise"] = _bi("前提一", "Premise one")
+    std["STD-1"]["requirements"]["R1"]["note"] = _bi("我們讀成三秒", "We read it as 3 s")
+    assert C.validate_standards(std) == []
+    assert C.validate_standards_overlay(_overlay(std), _markers(std)) == []           # optional, accepted
+    assert C.validate_standards_overlay(_overlay(STD), _markers(STD)) == []           # and not required
+    bad = _overlay(std)
+    bad["STD-1"]["premise"] = {"zh": "只有中文"}
+    bad["STD-1"]["requirements"]["R1"]["note"] = "x"
+    errs = C.validate_standards_overlay(bad, _markers(std))
+    assert any("STD-1: premise needs a non-empty text" in x for x in errs)
+    assert any("STD-1 R1: note needs a non-empty text" in x for x in errs)
+    assert any("STD-1: premise needs" in x for x in C.validate_standards({"STD-1": {**std["STD-1"], "premise": {}}}))
+    cases = (("zh", "我們的前提（條文沒有確認）", "我們的解讀：", "前提一", "我們讀成三秒", "要求一"),
+             ("en", "Our premise (the text does not confirm it)", "Our reading: ", "Premise one",
+              "We read it as 3 s", "Text one"))
+    for lg, head, lead, prem, note, text in cases:
+        page = G.gallery_html(tmp_path, entries=es, standards=std, lang=lg)
+        s = page[page.index('id="std-STD-1"'):].split("</section>")[0]
+        box = f'<div class="premise"><p class="ph">{head}</p><p>{prem}</p></div>'
+        assert box in s and s.index(box) > s.index('<p class="lead">')                # right under the summary
+        r1 = s[s.index('id="std-STD-1-R1"'):].split("</tr>")[0]
+        n = f'<span class="note"><b>{lead}</b>{note}</span>'
+        assert n in r1 and r1.index(n) > r1.index(text)
+        e = page[page.index('id="e-POS-DRW-A"'):].split("</section>")[0]
+        assert n + "</li>" in e and 'class="note"' not in s[s.index('id="std-STD-1-R2"'):]
+        assert 'class="premise"' not in plain[lg] and 'class="note"' not in plain[lg]       # without them: as before

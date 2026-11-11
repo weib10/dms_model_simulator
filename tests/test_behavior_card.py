@@ -122,3 +122,19 @@ def test_markdown_caps_the_listed_runs():
     n_runs = len(c["errors"]["dropped"])
     assert n_runs > 12
     assert f"另有 {n_runs - 12} 段較短的未列出" in markdown(c)
+
+
+def test_segment_text_one_rule_per_language():
+    from dms_model_simulator.behavior_card import SEGMENT_WORDS, SEGMENT_WORDS_EN, WORDS, seg_text
+    assert list(SEGMENT_WORDS_EN) == list(SEGMENT_WORDS) and set(WORDS) == {"zh", "en"}
+    tl = timeline(_sim())
+    # card.json keeps the Chinese text exactly as before (same seed, same bytes)
+    assert [x["text"] for x in tl] == ["看 road_ahead", "看 road_ahead；手：call；手機：call",
+                                       "看 passenger；頭 yaw/pitch/roll = [30, 0, 0]°"]
+    assert [seg_text(x["keys"]) for x in tl] == [x["text"] for x in tl]   # rebuilt from the keys alone
+    assert [seg_text(x["keys"], "en") for x in tl] == [
+        "looks at road_ahead", "looks at road_ahead; hand: call; phone: call",
+        "looks at passenger; head yaw/pitch/roll = [30, 0, 0]°"]
+    assert seg_text({"target": "road_ahead", "yawn": {"start": True}, "seatbelt": "off", "hand": "wheel"}, "en") == \
+        "looks at road_ahead; yawns; seat belt: off"                      # default states left out, as in Chinese
+    assert seg_text({}, "en") == "(default state)" and seg_text({}) == "（預設狀態）"

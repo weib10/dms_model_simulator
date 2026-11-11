@@ -365,9 +365,10 @@ def parse_param_overrides(items: list[str]) -> dict:
 
 
 def cmd_catalog(a):
-    """Scenario catalog (catalog/, see catalog/README.md): list / show / validate / index / expand / run / gallery."""
+    """Scenario catalog (catalog/, see catalog/README.md): list / show / validate / index / review / expand / run /
+    gallery."""
     from . import catalog as C
-    if a.action in ("list", "show", "validate", "index", "expand"):
+    if a.action in ("list", "show", "validate", "index", "review", "expand"):
         entries = C.load_entries()
     if a.action == "list":
         sel = C.select(entries, a.select, a.status, a.tag)
@@ -387,8 +388,23 @@ def cmd_catalog(a):
             errs = C.validate(e, pr)
             bad += bool(errs)
             print(f"{e.get('id')}: " + ("ok" if not errs else "\n  " + "\n  ".join(errs)))
+        errs = C.validate_catalog(entries)                            # across entries: unique short names
+        bad += bool(errs)
+        print("short names: " + ("ok" if not errs else "\n  " + "\n  ".join(errs)))
+        std = C.load_standards()                                      # the public markers only
+        errs = C.validate_standards(std, entries)                     # coverage: always against the whole catalog
+        bad += bool(errs)
+        print("standards.yaml: " + ("ok" if not errs else "\n  " + "\n  ".join(errs)))
+        overlay = C.load_standards_overlay()                          # local names and texts, when the file exists
+        if overlay is not None:
+            errs = C.validate_standards_overlay(overlay, std)
+            bad += bool(errs)
+            print(f"{C.LOCAL_STANDARDS}: " + ("ok" if not errs else "\n  " + "\n  ".join(errs)))
         if bad:
             raise SystemExit(f"{bad} invalid entr{'y' if bad == 1 else 'ies'}")
+    elif a.action == "review":                                       # public markers only, never the overlay
+        for p in C.write_review(a.out_dir, entries, C.load_behaviors(), C.load_standards()):
+            print(f"wrote {p}")
     elif a.action == "index":
         out = Path(a.out or C.CATALOG_DIR / "INDEX.md")
         out.write_text(C.index_markdown(entries), encoding="utf-8", newline="\n")
@@ -427,7 +443,11 @@ def cmd_catalog(a):
         print(f"exported {len(done)} rows; paths in {a.run_dir}/rows.tsv, one card.md per row{_picture_note(a)}")
     elif a.action == "gallery":
         from .gallery import write_gallery
-        print(f"wrote {write_gallery(a.run_dir, title=a.title)} (open it in a browser)")
+        local = not a.no_local and C.load_standards_overlay() is not None
+        std = C.load_standards(local=local)
+        print("standards: " + (", ".join(std) or "none") + (" with local names" if local else ", markers only"))
+        for p in write_gallery(a.run_dir, title=a.title, lang=a.lang, standards=std):
+            print(f"wrote {p} (open it in a browser)")
 
 
 def cmd_exam(a):
@@ -635,7 +655,8 @@ def main(argv=None):
     _variant_arg(ex)
     _profile_arg(ex)
     ex.set_defaults(fn=cmd_export)
-    cg = sub.add_parser("catalog", help="scenario catalog: list / show / validate / index / expand / run / gallery "
+    cg = sub.add_parser("catalog", help="scenario catalog: list / show / validate / index / review / expand / run / "
+                                        "gallery "
                                         "(see catalog/README.md)")
     cs = cg.add_subparsers(dest="action", required=True)
 
@@ -651,6 +672,9 @@ def main(argv=None):
     q = cs.add_parser("show", help="print entries' YAML"); _sel(q, "+")
     q = cs.add_parser("validate", help="check entries (schema, templates, targets, frame-aligned durations)"); _sel(q)
     q = cs.add_parser("index", help="write catalog/INDEX.md"); q.add_argument("--out", default=None)
+    q = cs.add_parser("review", help="write the review table of every entry: REVIEW.md, REVIEW.en.md, REVIEW.csv, "
+                                     "REVIEW.en.csv (generated, committed like INDEX.md)")
+    q.add_argument("--out-dir", default=None, help="folder to write them to (default: catalog/)")
     q = cs.add_parser("expand", help="entries -> concrete scenarios + manifest.json"); _sel(q); _filters(q)
     q.add_argument("--out", required=True, help="run directory, e.g. runs/r1")
     q.add_argument("--mode", choices=["boundary", "grid", "random"], default="boundary",
@@ -676,9 +700,13 @@ def main(argv=None):
                         "and sha256 are written to every row.json")
     _picture_args(q)
     _pipeline_args(q)
-    q = cs.add_parser("gallery", help="write RUN_DIR/index.html: the whole catalog on one page, each entry with the "
-                                      "pictures, script and behaviour card of its rows in this run")
+    q = cs.add_parser("gallery", help="write RUN_DIR/index.html (Chinese) and RUN_DIR/index.en.html (English): the "
+                                      "whole catalog, each entry with the pictures, script and behaviour card of its "
+                                      "rows in this run, and a page per standard (catalog/standards.yaml)")
     q.add_argument("run_dir"); q.add_argument("--title", default=None, help="page title")
+    q.add_argument("--lang", choices=["zh", "en"], default=None, help="write only this language (default: both)")
+    q.add_argument("--no-local", action="store_true", help="ignore catalog/standards.local.yaml: standards as their "
+                                                           "neutral markers only (default: use it when it exists)")
     q = cs.add_parser("verify", help="compare two exported runs: fingerprint (code, configs, entries), row ids, "
                                      "and every row's output (structure exact, numbers within --tol)")
     q.add_argument("run_a"); q.add_argument("run_b")

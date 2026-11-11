@@ -1,8 +1,14 @@
 id: POS-SMK-MOUTH-HAND
 number: 65
-title: "抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上、再抽一次"
+title: "抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上（看一眼左鏡）、再抽一次"
+title_en: "Smoking: hand to the mouth for a puff, cigarette left in the mouth with the hand back on the wheel, cigarette held in the hand (with a look at the left mirror), then another puff"
+short: "抽菸一整套動作"
+short_en: "A full smoking sequence"
+brief: {small: "第一口 4 s、第二口 3 s", medium: "第一口 3 s、第二口 2 s", large: "第一口 1.5 s、第二口 1 s", all: "抽一口 → 叼著 2 s → 菸拿在手上 3 s（含看左鏡 1 s）→ 再抽一口"}
+brief_en: {small: "First puff 4 s, second 3 s", medium: "First puff 3 s, second 2 s", large: "First puff 1.5 s, second 1 s", all: "Puff → in the mouth 2 s → in the hand 3 s (incl. a 1 s left-mirror look) → puff"}
 summary: "scenarios/smoking.yaml 前段改成模板（最後的未繫安全帶拆到 SBT 條目）。
   對照：抽菸的真值沒有時長門檻，菸在嘴上或手上就成立。手到嘴抽的兩段 small 4 s / 3 s、medium 3 s / 2 s、large 1.5 s / 1 s，其他段不變。"
+summary_en: "The first part of scenarios/smoking.yaml turned into a template (the unbuckled seat belt at the end is split off into the SBT entries). Reference: the smoking ground truth has no duration threshold; it holds as soon as the cigarette is in the mouth or in the hand. The two hand-to-mouth puff segments small 4 s / 3 s, medium 3 s / 2 s, large 1.5 s / 1 s; the other segments are unchanged."
 status: ready
 source: written
 tags: [smoking, existing]

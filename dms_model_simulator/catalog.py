@@ -35,6 +35,33 @@ FAMILIES = {     # second level: the behaviour family
     "SBT": "安全帶",
     "ALL": "混合或日常",
 }
+CATEGORIES_EN = {   # the same in English (the gallery's English page): "name: what it covers"
+    "POS": "Behaviour happens: distraction, eyes closed, yawning, phone call, smoking, no seat belt",
+    "NEG": "Looks alike but is not: mirror check, drinking, hand by the face, normal blinking",
+    "BND": "Duration sweeps: one behaviour from short to long, side by side",
+    "CLR": "Stop and repeat: the behaviour stops and comes back after a while",
+    "ROB": "Worse detection: missed boxes, dropped frames, latency, more jitter",
+    "NAT": "Long everyday driving: long randomly generated drives",
+    "REG": "Regression: clips that once caused trouble",
+}
+FAMILIES_EN = {
+    "DIS": "Eyes or head off the road",
+    "DRW": "Eyes closed, drowsiness",
+    "YWN": "Yawning",
+    "PHN": "Phone",
+    "SMK": "Smoking",
+    "SBT": "Seat belt",
+    "ALL": "Mixed or everyday",
+}
+KINDS = {          # a category in a few plain words (catalog/REVIEW.md, for readers who are not engineers): zh, en
+    "POS": ("行為有發生", "Behaviour happens"),
+    "NEG": ("像但不是", "Looks like it, is not"),
+    "BND": ("門檻邊界掃描", "Sweep across the threshold"),
+    "CLR": ("停止後再發生", "Stops, then happens again"),
+    "ROB": ("模型輸出有錯時", "With model errors"),
+    "NAT": ("長時間自然駕駛", "Long natural driving"),
+    "REG": ("之前出過問題", "Once caused trouble"),
+}
 STATUSES = ("ready", "planned")
 SOURCES = ("written", "recorded", "generated")
 ID_RE = re.compile(r"^(POS|NEG|BND|CLR|ROB|NAT|REG)-(DIS|DRW|YWN|PHN|SMK|SBT|ALL)-[A-Z0-9]+(-[A-Z0-9]+)*$")
@@ -46,9 +73,14 @@ SEGMENT_KEYS = {"target", "duration", "head_pose", "eye_openness", "closure", "y
 DEFAULT_VARIATION = {"cameras": ["dash_right", "steering_column"], "variants": 0, "nominal": True, "seeds": [0],
                      "emulator_seeds": [0, 1, 2], "profiles": ["nominal"]}
 DEFAULT_FPS = 20.0          # model output rate
-ENTRY_KEYS = {"id", "number", "title", "summary", "status", "needs", "source", "tags", "behaviors", "params", "template",
-              "from_scenario", "generator", "variation", "fps", "_path"}
+ENTRY_KEYS = {"id", "number", "title", "title_en", "short", "short_en", "brief", "brief_en", "summary", "summary_en",
+              "status", "needs", "source", "tags", "behaviors", "standards", "params", "template", "from_scenario",
+              "generator", "variation", "fps", "_path"}
 VAR_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
+# short name and level table of an entry (the gallery's lists, catalog/REVIEW.md): limits in characters per language
+SHORT_MAX = {"zh": 14, "en": 45}
+BRIEF_ALL = "all"                                # the brief key for what is the same at every level / has no levels
+BRIEF_MAX = {"level": {"zh": 36, "en": 80}, BRIEF_ALL: {"zh": 50, "en": 110}}
 
 
 class CatalogError(ValueError):
@@ -80,9 +112,11 @@ def validate_behaviors(behaviors: dict) -> list[str]:
     for k, b in behaviors.items():
         if not BEHAVIOR_ID_RE.match(str(k)):
             errs.append(f"{k}: id is not V/N/C + two digits")
-        for key in ("name", "kind", "family", "common", "separable"):
+        for key in ("name", "name_en", "kind", "family", "common", "separable"):
             if key not in b:
                 errs.append(f"{k}: missing {key}")
+        if "name_en" in b and (not isinstance(b["name_en"], str) or not b["name_en"].strip()):
+            errs.append(f"{k}: name_en must be a non-empty string")
         if b.get("kind") not in BEHAVIOR_KINDS or str(k)[:1] != {"violation": "V", "normal": "N",
                                                                   "condition": "C"}.get(b.get("kind"), "?"):
             errs.append(f"{k}: kind {b.get('kind')!r} does not match the id prefix")
@@ -101,6 +135,182 @@ def validate_behaviors(behaviors: dict) -> list[str]:
         if b.get("kind") == "violation" and ex and "label" not in ex:
             errs.append(f"{k}: violation expect needs `label`")
     return errs
+
+
+# ---- standards (catalog/standards.yaml, optional local overlay catalog/standards.local.yaml) ----------------------
+# The public file holds neutral markers only: {standard id: {requirements: {Rn: {coverage}}}}. Names and texts of a
+# standard live in the git-ignored overlay next to it; only internal pages (the gallery) merge it in, validate
+# only checks it, and nothing that is committed (index, review, list) reads it: load_standards defaults to the
+# public file alone.
+LANGS = ("zh", "en")
+COVERAGE = ("partial", "gap", "out_of_scope")   # entries related | simulator could, no entry yet | simulator cannot
+STANDARD_TEXTS = ("title", "summary", "not_covered")
+REQUIREMENT_TEXTS = ("text", "gap")
+STANDARD_NOTES = ("premise",)     # optional everywhere: our own premise / reading, which the text does not confirm
+REQUIREMENT_NOTES = ("note",)
+STANDARD_STRINGS = ("name", "source", "checked")   # name: display label (the id when missing)
+REQUIREMENT_STRINGS = ("clause",)
+LOCAL_STANDARDS = "standards.local.yaml"
+
+
+def standards_local_path(path=None) -> Path:
+    """The local overlay that belongs to a public standards file: standards.local.yaml in the same folder."""
+    return (Path(path) if path else CATALOG_DIR / "standards.yaml").with_name(LOCAL_STANDARDS)
+
+
+def load_standards_overlay(path=None) -> dict | None:
+    """{standard id: names and texts} of the local overlay file as written (path default: catalog/
+    standards.local.yaml); None when the file does not exist."""
+    p = Path(path) if path else standards_local_path()
+    return dict(load_yaml(p).get("standards") or {}) if p.is_file() else None
+
+
+def load_standards(path=None, local=False) -> dict:
+    """{standard id: standard} from catalog/standards.yaml ({} when the file is missing). An entry's `standards`
+    ({standard id: [requirement ids]}) says which requirements it relates to; related is not compliant.
+    local: True = deep-merge the overlay next to the public file (standards.local.yaml) when it exists; a path =
+    that overlay file. Default False: the public markers only. The overlay only adds to standards and requirements
+    the public file has, and never changes a `coverage` (validate_standards_overlay reports what it ignores)."""
+    p = Path(path) if path else CATALOG_DIR / "standards.yaml"
+    out = dict(load_yaml(p).get("standards") or {}) if p.is_file() else {}
+    ov = load_standards_overlay(standards_local_path(p) if local is True else local) if local else None
+    for sid, s in (ov or {}).items():
+        if sid not in out or not isinstance(s, dict) or not isinstance(out[sid], dict):
+            continue
+        st = deep_merge(out[sid], {k: v for k, v in s.items() if k not in ("requirements", "coverage")})
+        reqs = dict(st.get("requirements") or {})
+        for rid, r in (s.get("requirements") or {}).items():
+            if rid in reqs and isinstance(r, dict) and isinstance(reqs[rid], dict):
+                reqs[rid] = deep_merge(reqs[rid], {k: v for k, v in r.items() if k != "coverage"})
+        out[sid] = {**st, "requirements": reqs}
+    return out
+
+
+def standard_label(sid: str, s: dict | None) -> str:
+    """How a standard is shown to people: its `name` (local overlay) when given, else its id."""
+    name = (s or {}).get("name") if isinstance(s, dict) else None
+    return str(name) if isinstance(name, str) and name.strip() else str(sid)
+
+
+def _bilingual(d, where: str) -> list[str]:
+    if not isinstance(d, dict) or any(not isinstance(d.get(lg), str) or not d[lg].strip() for lg in LANGS):
+        return [f"{where} needs a non-empty text per language {list(LANGS)}"]
+    return [f"{where}: unknown language {k!r}" for k in sorted(set(d) - set(LANGS), key=str)]
+
+
+def _texts_errors(d: dict, texts: tuple, strings: tuple, where: str, required: bool) -> list[str]:
+    """Problems of the bilingual texts and plain strings of a standard or requirement: checked when present, and
+    missing ones reported when required."""
+    errs = []
+    for k in texts:
+        if k in d or required:
+            errs += _bilingual(d.get(k), f"{where}: {k}")
+    for k in strings:
+        if (k in d or required) and (not isinstance(d.get(k), str) or not d[k].strip()):
+            errs.append(f"{where}: missing {k}" if k not in d else f"{where}: {k} must be a non-empty string")
+    return errs
+
+
+def entry_standards_errors(value, standards: dict) -> list[str]:
+    """Problems of one entry's `standards` field: known standards, known requirements, no repeats."""
+    if not isinstance(value, dict) or not value:
+        return ["standards must be a mapping {standard: [requirement ids]} (catalog/standards.yaml)"]
+    errs = []
+    for sid, reqs in value.items():
+        if sid not in standards:
+            errs.append(f"standards: {sid!r} is not in catalog/standards.yaml")
+            continue
+        if not isinstance(reqs, list):
+            errs.append(f"standards: {sid} needs a list of requirement ids ([] = related to its topic only)")
+            continue
+        known = standards[sid].get("requirements") or {}
+        errs += [f"standards: {sid} has no requirement {r!r}" for r in reqs if r not in known]
+        errs += [f"standards: {sid} lists {r!r} twice" for r in sorted({r for r in reqs if reqs.count(r) > 1}, key=str)]
+    return errs
+
+
+def validate_standards(standards: dict, entries: list[dict] | None = None) -> list[str]:
+    """Problems of catalog/standards.yaml (empty = valid): every standard has requirements, each with a valid
+    `coverage`. Names and texts (name, title, summary, not_covered, premise, source, checked; clause, text, gap,
+    note) are optional
+    (the local overlay brings them) but checked when present. With the catalog's entries, also the coverage: a
+    `partial` requirement is referenced by at least one entry, a `gap` / `out_of_scope` one by none."""
+    errs = []
+    for sid, s in standards.items():
+        if not isinstance(s, dict):
+            errs.append(f"{sid}: not a mapping")
+            continue
+        errs += _texts_errors(s, STANDARD_TEXTS + STANDARD_NOTES, STANDARD_STRINGS, str(sid), required=False)
+        reqs = s.get("requirements")
+        if not isinstance(reqs, dict) or not reqs:
+            errs.append(f"{sid}: missing requirements")
+            continue
+        for rid, r in reqs.items():
+            if not isinstance(r, dict):
+                errs.append(f"{sid} {rid}: not a mapping")
+                continue
+            errs += _texts_errors(r, REQUIREMENT_TEXTS + REQUIREMENT_NOTES, REQUIREMENT_STRINGS, f"{sid} {rid}",
+                                  required=False)
+            if r.get("coverage") not in COVERAGE:
+                errs.append(f"{sid} {rid}: coverage must be one of {list(COVERAGE)}")
+        if entries is None:
+            continue
+        refs = {rid: [str(e.get("id")) for e in entries if rid in ((e.get("standards") or {}).get(sid) or [])]
+                for rid in reqs}
+        for rid, r in reqs.items():
+            cov = (r or {}).get("coverage") if isinstance(r, dict) else None
+            if cov == "partial" and not refs[rid]:
+                errs.append(f"{sid} {rid}: coverage partial but no entry lists it")
+            elif cov in ("gap", "out_of_scope") and refs[rid]:
+                errs.append(f"{sid} {rid}: coverage {cov} but listed by {', '.join(refs[rid])}")
+    return errs
+
+
+def validate_standards_overlay(overlay: dict, standards: dict) -> list[str]:
+    """Problems of the local overlay (standards.local.yaml as written) against the public registry (empty = valid).
+    It names only standards and requirements the public file has, holds no `coverage` (the public file is its only
+    source), and is complete for every standard it names: name, title, summary, not_covered, source, checked, and
+    clause, text, gap for every requirement of that standard (an internal page is never half described). `premise`
+    (standard) and `note` (requirement) are optional, bilingual when given."""
+    errs = []
+    s_keys = {*STANDARD_TEXTS, *STANDARD_NOTES, *STANDARD_STRINGS, "requirements"}
+    r_keys = {*REQUIREMENT_TEXTS, *REQUIREMENT_NOTES, *REQUIREMENT_STRINGS}
+    for sid, s in (overlay or {}).items():
+        if sid not in standards:
+            errs.append(f"{sid}: not in standards.yaml")
+            continue
+        if not isinstance(s, dict):
+            errs.append(f"{sid}: not a mapping")
+            continue
+        errs += [f"{sid}: coverage belongs in standards.yaml only" if k == "coverage" else f"{sid}: unknown key {k!r}"
+                 for k in sorted(set(s) - s_keys, key=str)]
+        errs += _texts_errors(s, STANDARD_TEXTS, STANDARD_STRINGS, str(sid), required=True)
+        errs += _texts_errors(s, STANDARD_NOTES, (), str(sid), required=False)      # optional: premise
+        reqs = s.get("requirements")
+        if not isinstance(reqs, dict):
+            errs.append(f"{sid}: missing requirements")
+            continue
+        known = (standards[sid] or {}).get("requirements") or {}
+        errs += [f"{sid} {rid}: not in standards.yaml" for rid in reqs if rid not in known]
+        for rid in known:
+            r = reqs.get(rid)
+            if r is None:
+                errs.append(f"{sid} {rid}: missing (every requirement needs clause, text, gap)")
+                continue
+            if not isinstance(r, dict):
+                errs.append(f"{sid} {rid}: not a mapping")
+                continue
+            errs += [f"{sid} {rid}: coverage belongs in standards.yaml only" if k == "coverage"
+                     else f"{sid} {rid}: unknown key {k!r}" for k in sorted(set(r) - r_keys, key=str)]
+            errs += _texts_errors(r, REQUIREMENT_TEXTS, REQUIREMENT_STRINGS, f"{sid} {rid}", required=True)
+            errs += _texts_errors(r, REQUIREMENT_NOTES, (), f"{sid} {rid}", required=False)   # optional: note
+    return errs
+
+
+def standard_entries(entries: list[dict], sid: str, rid: str | None = None) -> list[dict]:
+    """Entries related to a standard (rid None) or to one of its requirements."""
+    return [e for e in entries if sid in (e.get("standards") or {})
+            and (rid is None or rid in ((e.get("standards") or {}).get(sid) or []))]
 
 
 # ---- loading ----------------------------------------------------------------------------------------
@@ -325,9 +535,67 @@ def _frame_multiple(v, fps: float) -> bool:
     return x.denominator == 1
 
 
-def validate(entry: dict, profiles: dict, cfgs: dict | None = None) -> list[str]:
+def short_brief_errors(entry: dict) -> list[str]:
+    """Problems of an entry's short name (`short`, `short_en`: a few words) and level table (`brief`, `brief_en`:
+    {level: what differs at that level, all: what is the same at every level / what an entry without levels runs}).
+    Limits in SHORT_MAX / BRIEF_MAX (characters); uniqueness across the catalog is validate_catalog's."""
+    errs = []
+    for k, lg in (("short", "zh"), ("short_en", "en")):
+        v = entry.get(k)
+        if not isinstance(v, str) or not v.strip():
+            errs.append(f"missing {k} (the scenario in a few words)" if k not in entry else f"{k} must be a non-empty string")
+        elif len(v) > SHORT_MAX[lg]:
+            errs.append(f"{k} has {len(v)} characters (at most {SHORT_MAX[lg]})")
+    try:
+        want = set(LEVELS) if has_levels(entry) else {BRIEF_ALL}
+    except CatalogError:
+        return errs                                   # a broken levels spec is reported by validate
+    keys = {}
+    for k, lg in (("brief", "zh"), ("brief_en", "en")):
+        b = entry.get(k)
+        if not isinstance(b, dict) or not b:
+            errs.append(f"missing {k} ({{small, medium, large[, all]}} with levels, else {{all}})" if k not in entry
+                        else f"{k} must be a mapping {{level: text}}")
+            continue
+        keys[k] = set(b)
+        ok = set(b) - {BRIEF_ALL} == want - {BRIEF_ALL} and (BRIEF_ALL in b or want == set(LEVELS))
+        if not ok:
+            errs.append(f"{k} keys {sorted(b, key=str)}: need {', '.join(LEVELS)} (and optionally {BRIEF_ALL})"
+                        if want == set(LEVELS) else f"{k} keys {sorted(b, key=str)}: an entry without levels needs "
+                                                    f"exactly {BRIEF_ALL}")
+        for lv, v in b.items():
+            lim = BRIEF_MAX[BRIEF_ALL if lv == BRIEF_ALL else "level"][lg]
+            if not isinstance(v, str) or not v.strip():
+                errs.append(f"{k}.{lv} must be a non-empty string")
+            elif len(v) > lim:
+                errs.append(f"{k}.{lv} has {len(v)} characters (at most {lim})")
+    if len(keys) == 2 and keys["brief"] != keys["brief_en"]:
+        errs.append(f"brief and brief_en have different keys ({sorted(keys['brief'])} vs {sorted(keys['brief_en'])})")
+    return errs
+
+
+def validate_catalog(entries: list[dict]) -> list[str]:
+    """Problems across the whole catalog (empty = valid): `short` and `short_en` are unique (ids and numbers are
+    checked by load_entries)."""
+    errs = []
+    for k in ("short", "short_en"):
+        seen: dict[str, str] = {}
+        for e in entries:
+            v = e.get(k)
+            if not isinstance(v, str) or not v.strip():
+                continue
+            key = v.strip()
+            if key in seen:
+                errs.append(f"{k} {key!r} is used by both {seen[key]} and {e.get('id')}")
+            else:
+                seen[key] = str(e.get("id"))
+    return errs
+
+
+def validate(entry: dict, profiles: dict, cfgs: dict | None = None, standards: dict | None = None) -> list[str]:
     """Problems of one entry (empty = valid). Builds every grid-mode scenario and checks segment keys, targets,
-    hand / phone / cigarette states and frame-aligned durations."""
+    hand / phone / cigarette states and frame-aligned durations. standards: catalog/standards.yaml's content
+    (default: loaded) for the entry's `standards` field; the coverage across entries is validate_standards'."""
     errs: list[str] = []
     eid = entry.get("id", "?")
     try:
@@ -351,6 +619,18 @@ def validate(entry: dict, profiles: dict, cfgs: dict | None = None) -> list[str]
             errs += [f"behaviors: {b!r} is not in catalog/behaviors.yaml" for b in beh_ids if b not in known]
         if entry.get("source", "written") not in SOURCES:
             errs.append(f"source must be one of {SOURCES}")
+        if "standards" in entry:
+            errs += entry_standards_errors(entry["standards"], load_standards() if standards is None else standards)
+        for k in ("title_en", "summary_en"):         # English of title / summary (the gallery's English page)
+            if k in entry and (not isinstance(entry[k], str) or not entry[k].strip()):
+                errs.append(f"{k} must be a non-empty string")
+        if "title_en" not in entry:
+            errs.append("missing title_en (the title in English)")
+        if entry.get("summary") and "summary_en" not in entry:
+            errs.append("missing summary_en (the summary in English)")
+        if "summary_en" in entry and not entry.get("summary"):
+            errs.append("summary_en without summary")
+        errs += short_brief_errors(entry)
         rel = Path(entry.get("_path", "")).parent.name
         if entry.get("_path") and rel != category(entry):
             errs.append(f"file is in {rel}/, id says {category(entry)}")
@@ -600,6 +880,115 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
            "entries": sorted({r["entry"] for r in rows}), "skipped_planned": skipped, "rows": rows}
     (out / "manifest.json").write_text(json.dumps(man, indent=1, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
     return man
+
+
+# ---- review table (catalog/REVIEW.md, REVIEW.en.md, REVIEW.csv, REVIEW.en.csv) -------------------------------
+REVIEW_FILES = {"zh": ("REVIEW.md", "REVIEW.csv"), "en": ("REVIEW.en.md", "REVIEW.en.csv")}
+REVIEW_TEXT = {
+    "zh": {"title": "情境審閱表",
+           "cols": ("編號", "短名", "類別", "行為", *LEVELS, "每級相同／不分級", "標記", "ID", "確認", "備註"),
+           "planned": "（未完成）", "sep": "；",      # behaviour names contain 「、」 themselves
+           "intro": ("每一列是目錄裡的一條情境，用固定的編號找；目錄的 {n} 條全在這一張表，照編號排。",
+                     "small、medium、large 是同一條情境的三個難度：從 small 到 large 越來越接近告警門檻、越難分辨"
+                     "（定義見 `catalog/README.md` 開頭的「難度」）。這三欄只寫各級不同的地方，各級相同的、或不分級的情境，寫在「每級相同／不分級」。",
+                     "「標記」是情境跟外部法規哪幾項要求有關的代號（只標相關、不表示符合），說明在 `catalog/README.md`「標準」一節。"
+                     "`STD-A: R8, R20` 是對到這幾項要求；只寫 `STD-A` 是跟那份法規管的主題有關，但沒有對到特定一項。"
+                     "短名後面有「（未完成）」的，模擬器還做不到，只有大綱。",
+                     "「確認」「備註」兩欄留給審閱的人填。",
+                     "由 `dms-sim catalog review` 產生，不要手改。")},
+    "en": {"title": "Scenario review table",
+           "cols": ("No.", "Short name", "Kind", "Behaviours", *LEVELS, "Same at every level, or no levels", "Marker",
+                    "ID", "OK?", "Comment"),
+           "planned": " (planned)", "sep": "; ",
+           "intro": ("Each row is one scenario of the catalog, found by its fixed number; all {n} are in this one "
+                     "table, by number.",
+                     "small, medium and large are three difficulty levels of the same scenario: from small to large "
+                     "it gets closer to the alert threshold and harder to tell apart (see `catalog/README.md`). These "
+                     "three columns only say what differs between levels; what is the same at every level, or what a "
+                     "scenario without levels runs, is in the next column.",
+                     "The marker says which requirements of an external regulation a scenario relates to (related, "
+                     "never compliant), explained in `catalog/README.md`, section on standards. `STD-A: R8, R20` points "
+                     "to those requirements; a bare `STD-A` means related to the topic that regulation covers, without "
+                     "pointing to a specific requirement. \"(planned)\" after a "
+                     "short name: the simulator cannot run it yet; only its outline exists.",
+                     "The last two columns are for the reviewer.",
+                     "Generated by `dms-sim catalog review`; do not edit by hand.")},
+}
+
+
+def _review_marker(entry: dict, standards: dict) -> str:
+    """`STD-A: R8, R20` (`STD-A` for an empty list): always the standard's public id, never a name."""
+    own = entry.get("standards") or {}
+    sids = [s for s in standards if s in own] + [s for s in own if s not in standards]
+    return "; ".join(f"{s}: {', '.join(map(str, own[s]))}" if own[s] else str(s) for s in sids)
+
+
+def review_rows(entries: list[dict], behaviors: dict, standards: dict, lang: str = "zh") -> list[list[str]]:
+    """The review table as plain cells (header first), one row per entry by number. standards: the public registry
+    (load_standards() without the overlay; only its ids are used)."""
+    if lang not in REVIEW_TEXT:
+        raise CatalogError(f"lang must be one of {list(REVIEW_TEXT)}, got {lang!r}")
+    T, en = REVIEW_TEXT[lang], lang == "en"
+    out = [list(T["cols"])]
+    for e in sorted(entries, key=lambda x: (not isinstance(x.get("number"), int), x.get("number") or 0, str(x["id"]))):
+        short = str(e.get("short_en" if en else "short") or e.get("short") or "")
+        if e.get("status", "ready") == "planned":
+            short += T["planned"]
+        names = [(b, behaviors.get(b) or {}) for b in e.get("behaviors") or []]
+        beh = T["sep"].join(f"{b} {(d.get('name_en') if en else None) or d.get('name', '')}".strip() for b, d in names)
+        brief = e.get("brief_en" if en else "brief") or e.get("brief") or {}
+        brief = brief if isinstance(brief, dict) else {}
+        out.append([entry_no(e), short, KINDS.get(category(e), ("", ""))[1 if en else 0], beh,
+                    *(str(brief.get(lv, "")) for lv in LEVELS), str(brief.get(BRIEF_ALL, "")),
+                    _review_marker(e, standards), str(e["id"]), "", ""])
+    return out
+
+
+def review_markdown(entries: list[dict], behaviors: dict, standards: dict, lang: str = "zh") -> str:
+    """catalog/REVIEW.md (REVIEW.en.md): a short intro, then every entry in one table (review_rows)."""
+    rows = review_rows(entries, behaviors, standards, lang)        # raises on an unknown language
+    T = REVIEW_TEXT[lang]
+
+    def cell(s) -> str:
+        return " ".join(str(s).split()).replace("|", "\\|")       # one line per row; | would end the cell
+
+    id_col = T["cols"].index("ID")
+    L = [f"# {T['title']}", ""]
+    for x in T["intro"]:                                          # a blank line each: separate paragraphs
+        L += [x.format(n=len(rows) - 1), ""]
+    L.append("| " + " | ".join(rows[0]) + " |")
+    L.append("|" + "---|" * len(rows[0]))
+    for r in rows[1:]:
+        L.append("| " + " | ".join(f"`{cell(c)}`" if i == id_col else cell(c) for i, c in enumerate(r)) + " |")
+    return "\n".join(L) + "\n"
+
+
+def review_csv(entries: list[dict], behaviors: dict, standards: dict, lang: str = "zh") -> str:
+    """catalog/REVIEW.csv (REVIEW.en.csv): the same rows as the markdown table (written with a BOM for Excel)."""
+    import csv
+    import io
+    buf = io.StringIO()
+    csv.writer(buf, lineterminator="\n").writerows(review_rows(entries, behaviors, standards, lang))
+    return buf.getvalue()
+
+
+def write_review(out_dir=None, entries: list[dict] | None = None, behaviors: dict | None = None,
+                 standards: dict | None = None) -> list[Path]:
+    """Write the four review files into out_dir (default catalog/). standards default: the public registry only;
+    these files are committed, so the local overlay is never read here."""
+    out = Path(out_dir or CATALOG_DIR)
+    out.mkdir(parents=True, exist_ok=True)
+    entries = load_entries() if entries is None else entries
+    behaviors = load_behaviors() if behaviors is None else behaviors
+    standards = load_standards() if standards is None else standards
+    paths = []
+    for lg, (md, csv_name) in REVIEW_FILES.items():
+        p = out / md
+        p.write_text(review_markdown(entries, behaviors, standards, lg), encoding="utf-8", newline="\n")
+        q = out / csv_name
+        q.write_text(review_csv(entries, behaviors, standards, lg), encoding="utf-8-sig", newline="")
+        paths += [p, q]
+    return paths
 
 
 # ---- index -------------------------------------------------------------------------------------------

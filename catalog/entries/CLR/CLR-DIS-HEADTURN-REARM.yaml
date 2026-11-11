@@ -1,9 +1,15 @@
 id: CLR-DIS-HEADTURN-REARM
 number: 21
 title: "頭向右轉 8 / 6 / 3.5 s、回正 8 / 4 / 2 s、再轉一次"
+title_en: "Head turned right for 8 / 6 / 3.5 s, back to centre for 8 / 4 / 2 s, then turned again"
+short: "轉頭兩次，中間明確回正"
+short_en: "Two head turns with a clear return between"
+brief: {small: "轉 8 s、回正 8 s", medium: "轉 6 s、回正 4 s", large: "轉 3.5 s、回正 2 s", all: "頭右轉 60°，共轉 2 次"}
+brief_en: {small: "8 s turn, 8 s back", medium: "6 s turn, 4 s back", large: "3.5 s turn, 2 s back", all: "Head turned right 60°, twice"}
 summary: "兩次明確的轉頭，中間回正。看第一次回正後有沒有解除、第二次轉頭有沒有再觸發。只用 dash_right（理由見 BND-DIS-HEADTURN-DURATION）。
   對照門檻：長分心，連續離開路面 3 s。每次轉頭 small 8 s、medium 6 s、large 3.5 s（剛過門檻）；中間回正 small 8 s、medium 4 s、
   large 2 s（最短，但仍明確回到路面）。頭一律轉 60°（視線目標跟著頭，所以角度不變）。"
+summary_en: "Two clear head turns with a return to centre between them. Checks whether it clears after the first return and whether the second turn triggers again. Only dash_right is used (reason in BND-DIS-HEADTURN-DURATION). Reference threshold: long distraction, eyes off road continuously for 3 s. Each head turn small 8 s, medium 6 s, large 3.5 s (just past the threshold); return to centre in between small 8 s, medium 4 s, large 2 s (the shortest, but still clearly back on the road). The head always turns 60° (the gaze target follows the head, so the angle does not change)."
 status: ready
 source: written
 tags: [head_turn, clear, rearm]

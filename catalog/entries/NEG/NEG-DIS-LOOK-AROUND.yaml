@@ -1,9 +1,15 @@
 id: NEG-DIS-LOOK-AROUND
 number: 12
 title: "東張西望：視線在左鏡、右前路面、右側窗、左前路面之間快速跳，每次很短就回前方"
+title_en: "Looking around: gaze jumps quickly between the left mirror, road ahead right, right side window and road ahead left, returning ahead after each short look"
+short: "東張西望"
+short_en: "Looking around"
+brief: {small: "每處 0.4 s，3 輪（離開路面 2.4 s）", medium: "每處 0.6 s，5 輪（離開路面 6 s）", large: "每處 0.8 s，6 輪（離開路面 9.6 s）", all: "每輪看左鏡、右前路面、右側窗、左前路面，每次回前方 0.5 s"}
+brief_en: {small: "0.4 s per place, 3 rounds (2.4 s off the road)", medium: "0.6 s per place, 5 rounds (6 s off the road)", large: "0.8 s per place, 6 rounds (9.6 s off the road)", all: "Each round: left mirror, road right, right side window, road left; 0.5 s ahead after each"}
 summary: "對照門檻：Euro NCAP VATS（30 s 內離開路面累計 10 s）。每輪看 4 個地方，其中 2 個離開路面（左鏡、右側窗），2 個還在路上（左前、右前路面）。
   每次回前方 0.5 s，一輪 4 ×（停留 + 0.5）s。離開路面的累計：small 3 輪 × 2 × 0.4 s = 2.4 s（10.8 s 內）；
   medium 5 輪 × 2 × 0.6 s = 6 s（22 s 內）；large 6 輪 × 2 × 0.8 s = 9.6 s（31.2 s 內，任何 30 s 視窗都在 10 s 以下）。"
+summary_en: "Reference threshold: Euro NCAP VATS (10 s off road in total within 30 s). Each round looks at 4 places, 2 of them off road (left mirror, right side window) and 2 still on road (road ahead left and right). Each return to straight ahead lasts 0.5 s, so a round is 4 × (dwell + 0.5) s. Cumulative off road: small 3 rounds × 2 × 0.4 s = 2.4 s (within 10.8 s); medium 5 rounds × 2 × 0.6 s = 6 s (within 22 s); large 6 rounds × 2 × 0.8 s = 9.6 s (within 31.2 s; under 10 s in any 30 s window)."
 status: ready
 source: written
 tags: [glance, head_turn, look_around]

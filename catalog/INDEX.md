@@ -20,14 +20,14 @@
 
 | 編號 | 行為 | 類型 | 常見 | 好分 | 會跟誰搞混 | 條目數 |
 |---|---|---|---|---|---|---|
-| ★ V01 | 轉頭長分心（看乘客、窗外） | 違規 | 常見 | 好分 | N02, N04, N05, N06, N07, N08, N25 | 13 |
+| ★ V01 | 轉頭長分心（看乘客、窗外） | 違規 | 常見 | 好分 | N02, N04, N05, N06, N07, N08, N25 | 12 |
 | V02 | 只動眼睛的長分心（lizard） | 違規 | 常見 | 難分 | N09, N03 | 1 |
 | V03 | 低頭長分心（看大腿、腳踏區） | 違規 | 常見 | 普通 | N03, N12, N14, N24, V06 | 4 |
 | V04 | 短分心累計（VATS） | 違規 | 常見 | 難分 | N06, N07, N03, N02, N09 | 1 |
 | ★ V05 | 閉眼、微睡 | 違規 | 偶爾 | 普通 | N10, N11, N12, N13, N14, N17, N27, N30, C01 | 15 |
-| V06 | 睡著、無反應（閉眼＋垂頭） | 違規 | 少見 | 好分 | V03, N27 | 5 |
+| V06 | 睡著、無反應（閉眼＋垂頭） | 違規 | 少見 | 好分 | V03, N27 | 3 |
 | ★ V07 | 打哈欠 | 違規 | 常見 | 普通 | N15, N16, N17, N18, N19, C02 | 12 |
-| ★ V08 | 講電話（手機貼耳） | 違規 | 常見 | 好分 | N20, N19 | 10 |
+| ★ V08 | 講電話（手機貼耳） | 違規 | 常見 | 好分 | N20, N19 | 9 |
 | ★ V09 | 手拿手機看或打字 | 違規 | 常見 | 普通 | N28, N19, N24 | 5 |
 | ★ V10 | 抽菸 | 違規 | 偶爾 | 普通 | N21, N22, N19, N23, C02 | 10 |
 | ★ V11 | 沒繫安全帶 | 違規 | 常見 | 好分 | N29 | 6 |
@@ -37,7 +37,7 @@
 | N04 | 盲點檢查（轉頭看後方側邊） | 正常 | 常見 | 普通 | V01 | 1 |
 | ★ N05 | 路口左右張望（視線仍在路上） | 正常 | 常見 | 好分 | V01 | 3 |
 | N06 | 東張西望（視線快速在多處跳） | 正常 | 常見 | 普通 | V04, V01 | 1 |
-| N07 | 聊天時看乘客一眼 | 正常 | 常見 | 普通 | V01, V04 | 6 |
+| N07 | 聊天時看乘客一眼 | 正常 | 常見 | 普通 | V01, V04 | 7 |
 | ★ N08 | 抬頭看紅綠燈 | 正常 | 常見 | 好分 | V01 | 1 |
 | N09 | 只動眼睛的短瞥 | 正常 | 常見 | 難分 | V02, V04 | 1 |
 | ★ N10 | 頻繁眨眼 | 正常 | 常見 | 好分 | V05 | 1 |
@@ -45,12 +45,12 @@
 | N12 | 低頭但眼睛睜開 | 正常 | 常見 | 普通 | V05, V03 | 1 |
 | N13 | 揉眼睛、推眼鏡 | 正常 | 常見 | 普通 | V05 | 3 |
 | N14 | 打噴嚏、咳嗽 | 正常 | 偶爾 | 普通 | V05, V03 | 1 |
-| ★ N15 | 講話 | 正常 | 常見 | 好分 | V07 | 3 |
+| ★ N15 | 講話 | 正常 | 常見 | 好分 | V07 | 4 |
 | N16 | 唱歌 | 正常 | 常見 | 普通 | V07 | 1 |
 | N17 | 大笑 | 正常 | 常見 | 難分 | V07, V05 | 3 |
 | N18 | 嚼口香糖 | 正常 | 偶爾 | 好分 | V07 | 2 |
 | N19 | 喝水、吃東西 | 正常 | 常見 | 普通 | V07, V10, V09, V08 | 2 |
-| N20 | 手摸耳朵、撐頭（沒拿手機） | 正常 | 常見 | 普通 | V08 | 3 |
+| N20 | 手摸耳朵、撐頭（沒拿手機） | 正常 | 常見 | 普通 | V08 | 2 |
 | N21 | 手摸嘴、托下巴、抓鼻子（沒拿菸） | 正常 | 常見 | 普通 | V10 | 4 |
 | N22 | 叼吸管、牙籤、筆、棒棒糖 | 正常 | 偶爾 | 難分 | V10 | 2 |
 | N23 | 沒點的菸、菸盒拿在手上 | 正常 | 少見 | 難分 | V10 | — |
@@ -80,8 +80,8 @@
 | #024 | `POS-DRW-CLOSURE-HEAD-TURNED` | 頭向左轉 35° 時閉眼 3 s（20 / 35 / 45°，4 / 3 / 1.5 s） | V05 | closure, head_turn, interaction | 三段 | ready |
 | #025 | `POS-DRW-MICROSLEEP` | 正常開車 8 s 後微睡 2.5 / 2 / 1.2 s | V05 | closure, microsleep | 三段 | ready |
 | #026 | `POS-DRW-NCAP-SLEEP` | Euro NCAP 睡著（sleep）：閉眼 8 / 6 / 3.5 s、頭花 1.2 s 慢慢往前點 | V06 | ncap, closure, sleep | 三段 | ready |
-| #027 | `POS-DRW-NCAP-UNRESPONSIVE` | Euro NCAP 無反應駕駛：閉眼、頭垂到胸前 12 / 10 / 7 s 不動 | V06 | ncap, closure, sleep, unresponsive, head_down | 三段 | ready |
-| #028 | `POS-DRW-PROGRESSIVE` | 一路變睏（約 70 s）：眨眼變慢、哈欠、長閉眼、點頭，最後微睡 | V05, V07, V06 | drowsy, progressive |  | ready |
+| #027 | `POS-DRW-NCAP-UNRESPONSIVE` | Euro NCAP 無反應駕駛：閉眼 12 / 10 / 7 s，頭花 1.5 s 垂到胸前後不動 | V06 | ncap, closure, sleep, unresponsive, head_down | 三段 | ready |
+| #028 | `POS-DRW-PROGRESSIVE` | 一路變睏（72 s）：哈欠、眼睛變小、長閉眼、低頭，最後微睡 | V05, V07 | drowsy, progressive |  | ready |
 | #029 | `POS-DRW-YAWN-THEN-CLOSURE` | 先打哈欠，3 s 後閉眼 3 / 2.5 / 1.5 s | V05, V07 | sleepiness, yawn, closure, interaction | 三段 | ready |
 | #043 | `POS-YWN-BASIC` | 基本款：打一次哈欠（6 / 5 / 3.5 s，嘴最大 0.95 / 0.85 / 0.7） | V07 | basic, yawn | 三段 | ready |
 | #044 | `POS-YWN-COVERED` | 用手遮住嘴打哈欠（5 / 4 / 3 s） | V07, N21 | yawn, hand_near_face, occlusion | 三段 | ready |
@@ -92,7 +92,7 @@
 | #055 | `POS-PHN-WINDSHIELD` | 手機舉在擋風玻璃前（Euro NCAP advanced） | V09 | phone, ncap |  | planned：camera_ahead_of_the_phone |
 | #063 | `POS-SMK-BASIC` | 基本款：菸含在嘴上、雙手在方向盤 6 / 5 / 2 s，再拿掉 | V10 | basic, smoking | 三段 | ready |
 | #064 | `POS-SMK-CIG-IN-LAP` | 兩口之間：菸夾在手上、手放在大腿（10 / 6 / 3 s） | V10 | smoking | 三段 | ready |
-| #065 | `POS-SMK-MOUTH-HAND` | 抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上、再抽一次 | V10, N02 | smoking, existing | 三段 | ready |
+| #065 | `POS-SMK-MOUTH-HAND` | 抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上（看一眼左鏡）、再抽一次 | V10, N02 | smoking, existing | 三段 | ready |
 | #066 | `POS-SMK-PUFF` | 手拿菸到嘴邊抽 4 / 3 / 1.5 s | V10 | smoking, puff, occlusion | 三段 | ready |
 | #072 | `POS-SBT-BASIC` | 基本款：從頭到尾沒繫安全帶，整段 20 / 10 / 3 s | V11 | basic, seatbelt | 三段 | ready |
 | #073 | `POS-SBT-UNBUCKLE-MID` | 開車中解開安全帶 12 / 10 / 3 s 再繫回 | V11 | seatbelt | 三段 | ready |
@@ -103,13 +103,13 @@
 | 編號 | id | 情境 | 行為 | 標籤 | 難度 | 狀態 |
 |---|---|---|---|---|---|---|
 | #008 | `NEG-DIS-ADJUST-HVAC` | 調冷氣、音響：右手伸到中控台，視線在中控與路面之間來回 | N24 | hand_off_wheel, glance, hvac | 三段 | ready |
-| #009 | `NEG-DIS-ADJUST-MIRROR` | 調後照鏡：手握住後照鏡、眼睛看著鏡子（1 / 2 / 2.8 s） | N25 | mirror, hand_off_wheel, occlusion | 三段 | ready |
-| #010 | `NEG-DIS-EYES-ONLY-GLANCE` | 只動眼睛的短瞥：頭不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照） | N09, N03 | glance, gaze_only | 三段 | ready |
+| #009 | `NEG-DIS-ADJUST-MIRROR` | 調後照鏡：手握住後照鏡、眼睛看著鏡子（1 / 2 / 2.8 s），之後不用手再看一眼（0.6 s） | N25 | mirror, hand_off_wheel, occlusion | 三段 | ready |
+| #010 | `NEG-DIS-EYES-ONLY-GLANCE` | 只動眼睛的短瞥：頭幾乎不動，眼睛看儀表或中控一下（POS-DIS-NCAP-LIZARD 的正常對照） | N09, N03 | glance, gaze_only | 三段 | ready |
 | #011 | `NEG-DIS-INTERSECTION-SCAN` | 路口左右張望：轉頭看左、右橫向路面（約 ±63°）各 0.8 / 1.2 / 2.0 s | N05 | head_turn, intersection | 三段 | ready |
 | #012 | `NEG-DIS-LOOK-AROUND` | 東張西望：視線在左鏡、右前路面、右側窗、左前路面之間快速跳，每次很短就回前方 | N06, N02, N05 | glance, head_turn, look_around | 三段 | ready |
 | #013 | `NEG-DIS-LOOKDOWN-CENTER` | 看中控（或排檔）與儀表，每次 0.8 / 1.2 / 1.8 s | N03 | glance, center_display, blind_spot | 三段 | ready |
 | #014 | `NEG-DIS-MIRROR-CHECK` | 正常開車，短暫看左右鏡、後照鏡、儀表（看鏡子每次 0.5 / 0.7–0.9 / 1.4 s） | N02, N03 | mirror, glance, existing | 三段 | ready |
-| #015 | `NEG-DIS-PASSENGER-CHAT` | 跟乘客聊天：邊講話邊反覆看乘客一眼（每次 0.6 / 1.2 / 1.8 s，3 / 5 / 6 次） | N07 | glance, head_turn, passenger | 三段 | ready |
+| #015 | `NEG-DIS-PASSENGER-CHAT` | 跟乘客聊天：邊講話邊反覆看乘客一眼（每次 0.6 / 1.2 / 1.8 s，3 / 5 / 6 次） | N07, N15 | glance, head_turn, passenger | 三段 | ready |
 | #016 | `NEG-DIS-SHOULDER-CHECK` | 變換車道前快速轉頭看盲點 0.5 / 0.8 / 1.5 s，重複 3 次 | N04 | head_turn, shoulder_check | 三段 | ready |
 | #017 | `NEG-DIS-TRAFFIC-LIGHT` | 抬頭看紅綠燈：視線仰角 10° / 20° / 30°（頭約轉一半），1.0 / 2.0 / 2.8 s | N08 | look_up, traffic_light | 三段 | ready |
 | #030 | `NEG-DRW-BLINK-HEAVY` | 很常眨眼（每分鐘 20 / 30 / 40 次）× 每次 0.15 / 0.25 / 0.3 s | N10 | blink | 三段 | ready |
@@ -120,18 +120,18 @@
 | #035 | `NEG-DRW-SQUINT` | 瞇眼（陽光或習慣）：開合度 0.5 / 0.35 / 0.25，持續 15 s | N11 | squint | 三段 | ready |
 | #046 | `NEG-YWN-CHEWING` | 嚼口香糖：嘴小幅度規律開合（約 1.4 Hz） | N18 | mouth, chewing | 三段 | ready |
 | #047 | `NEG-YWN-SINGING` | 唱歌：短音節加長音（長音嘴 0.35 / 0.6 / 0.7，拉 0.4 / 1.2 / 2.0 s） | N16 | mouth, singing | 三段 | ready |
-| #048 | `NEG-YWN-TALKING` | 講話：嘴一開一合（約 2.4 Hz，峰值 0.3 / 0.4 / 0.5，偶爾張大到 0.35 / 0.45 / 0.6）持續 5 / 10 / 15 s | N15 | talking, mouth | 三段 | ready |
-| #056 | `NEG-PHN-HAND-AT-EAR` | 手摸耳朵或撐頭，沒拿手機（1.5 / 4 / 8 s） | N20 | phone, hand_near_face, occlusion | 三段 | ready |
-| #057 | `NEG-PHN-HAND-AT-EAR-FP` | 手摸耳朵，模擬模型在手的位置成段報出假手機框（每次 1 / 3 / 6 s，1 / 2 / 3 次） | N20, C03 | phone, hand_near_face, false_positive | 三段 | ready |
-| #058 | `NEG-PHN-PHONE-MOUNT` | 手機放在儀表板的手機架上（導航）：偶爾看一眼，最後伸手點一下（1.0 / 1.5 / 2.0 s） | N28 | phone, glance | 三段 | ready |
+| #048 | `NEG-YWN-TALKING` | 講話：嘴一開一合（約 2.4 Hz，重音峰值 0.3 / 0.4 / 0.5，偶爾張大到 0.35 / 0.45 / 0.6）持續 5 / 10 / 15 s | N15 | talking, mouth | 三段 | ready |
+| #056 | `NEG-PHN-HAND-AT-EAR` | 手摸耳朵或撐頭，沒拿手機（1.5 / 4 / 8 s） | N20 | phone, hand_near_face | 三段 | ready |
+| #057 | `NEG-PHN-HAND-AT-EAR-FP` | 手摸耳朵 1 / 3 / 6 s（1 / 2 / 3 次），模擬模型在手的位置斷續報出假手機框 | N20, C03 | phone, hand_near_face, false_positive | 三段 | ready |
+| #058 | `NEG-PHN-PHONE-MOUNT` | 手機放在出風口的手機架上（導航）：偶爾看一眼，最後伸手點一下（1.0 / 1.5 / 2.0 s） | N28 | phone, glance | 三段 | ready |
 | #067 | `NEG-SMK-HAND-AT-MOUTH` | 手摸嘴或托下巴，沒有菸（每次 1.5 / 3 / 4 s，1 / 2 / 3 次） | N21 | smoking, hand_near_face, occlusion | 三段 | ready |
-| #068 | `NEG-SMK-HAND-AT-MOUTH-FP` | 手摸嘴或托下巴，模擬模型在嘴前成段報出假香菸框（每次 1 / 3 / 6 s，1 / 2 / 3 次） | N21, C03 | smoking, hand_near_face, false_positive | 三段 | ready |
+| #068 | `NEG-SMK-HAND-AT-MOUTH-FP` | 手摸嘴或托下巴 1 / 3 / 6 s（1 / 2 / 3 次），模擬模型在嘴前斷續報出假香菸框 | N21, C03 | smoking, hand_near_face, false_positive | 三段 | ready |
 | #069 | `NEG-SMK-HELD-STICK` | 嘴裡叼東西（沒用手扶）：牙籤 / 棒棒糖 / 筆（3 / 6 / 10 s） | N22 | held_object, mouth, false_positive | 三段 | ready |
 | #074 | `NEG-SBT-HAND-ACROSS-CHEST` | 安全帶有繫，右手跨過胸口（抓左肩、整理衣服）擋住一段安全帶（每次 1.5 / 4 / 8 s，2 / 2 / 3 次） | N29 | seatbelt, occlusion | 三段 | ready |
 | #078 | `NEG-ALL-BASIC-CLEAN-30` | 基本款：30 s 只看前方、正常眨眼 | N01 | basic, baseline |  | ready |
 | #079 | `NEG-ALL-DRINK-EAT` | 喝水、吃東西（手拿東西到嘴邊）：每口喝 1.5 / 3 / 5 s，吃東西 1 / 2 / 4 口 | N19 | hand_near_face, drinking, eating, occlusion | 三段 | ready |
 | #080 | `NEG-ALL-HABITS-COMBO` | 兩種正常行為疊在一起：邊笑邊看乘客、揉眼時低頭看儀表、邊講話邊看左鏡 | N17, N07, N13, N03, N15, N02 | interaction, laugh, rub_eyes, glance | 三段 | ready |
-| #081 | `NEG-ALL-HAND-OVER-HAND` | 轉彎交叉換手：手臂掃過方向盤上緣，擋住方向盤柱相機（每次約 0.2 / 0.4 / 0.7 s，2 / 4 / 6 次） | N26, N05 | occlusion, hand_over_hand | 三段 | ready |
+| #081 | `NEG-ALL-HAND-OVER-HAND` | 轉彎交叉換手：手臂掃過方向盤上緣，擋住方向盤柱相機（每次掃過 0.2 / 0.4 / 0.7 s，2 / 4 / 6 次） | N26, N05 | occlusion, hand_over_hand | 三段 | ready |
 | #082 | `NEG-ALL-LAUGH` | 大笑：嘴約 4 Hz 一開一合、眼睛瞇起、頭微仰，每陣 2.0 / 2.25 / 2.5 s | N17 | yawn, closure, mouth, squint, laugh | 三段 | ready |
 
 ## BND：時長掃描：同一個行為從短到長成對排開
@@ -167,7 +167,7 @@
 | 編號 | id | 情境 | 行為 | 標籤 | 難度 | 狀態 |
 |---|---|---|---|---|---|---|
 | #022 | `ROB-DIS-LOW-FPS` | 15 fps 時頭向右轉 60°，持續時間從 1 s 掃到 8 s | V01, C03 | robustness, frame_rate, head_turn |  | ready |
-| #040 | `ROB-DRW-EYE-FLIP` | 睜眼被認成閉眼，每次平均 0.5 s 或 2 s | C03, N01, V05 | robustness, class_flip |  | ready |
+| #040 | `ROB-DRW-EYE-FLIP` | 睜眼被認成閉眼（設定每次平均 0.5 s 或 2 s） | C03, N01, V05 | robustness, class_flip |  | ready |
 | #041 | `ROB-DRW-NCAP-SUNGLASSES` | Euro NCAP 遮擋（墨鏡）：眼框完全偵測不到時，轉頭看乘客 4 s、閉眼點頭 4 s | C01, V01, V05, V06 | ncap, occlusion, sunglasses, robustness, closure |  | ready |
 | #062 | `ROB-PHN-LOW-CONF` | 手機框分數偏低，講電話 6 s | V08, C03 | robustness, phone, conf |  | ready |
 | #083 | `ROB-ALL-BURST-MISS` | 連續漏框 1 / 5 / 15 / 30 幀 | C03, V08, V10, V05, V11, V01 | robustness, burst_miss |  | ready |
@@ -178,10 +178,10 @@
 
 | 編號 | id | 情境 | 行為 | 標籤 | 難度 | 狀態 |
 |---|---|---|---|---|---|---|
-| #042 | `NAT-DRW-SLEEPY-600` | 600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段） | V05, V07, V06, N01, N02, N03, N07 | natural, drowsy |  | ready |
+| #042 | `NAT-DRW-SLEEPY-600` | 600 s 睏倦駕駛：只開疲勞片段（每分鐘約 0.6 段） | V05, V07, N01, N02, N03, N07 | natural, drowsy |  | ready |
 | #086 | `NAT-ALL-CLEAN-300` | 300 s 日常駕駛：看路、看鏡子、看儀表，沒有手機、疲勞、抽菸、未繫 | N01, N02, N03, N07 | natural, false_alarm |  | ready |
-| #087 | `NAT-ALL-MIXED-120` | 120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸、未繫安全帶片段 | N01, N02, N03, V08, V09, V03, V01, V05, V07, V10 | natural, existing |  | ready |
-| #088 | `NAT-ALL-NORMAL-HABITS-300` | 300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤 | N01, N02, N03, N07, N13, N15, N17, N18, N19, N20, N21, N22 | natural, false_alarm, habits | 三段 | ready |
+| #087 | `NAT-ALL-MIXED-120` | 120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸片段 | N01, N02, N03, N07, V09, V03, V05, V07, V10 | natural, existing |  | ready |
+| #088 | `NAT-ALL-NORMAL-HABITS-300` | 300 s 日常駕駛，隨機夾雜正常習慣（可能有講話、嚼口香糖、大笑、揉眼、喝水、托下巴、叼牙籤） | N01, N02, N03, N07, N13, N15, N17, N18, N19, N21, N22 | natural, false_alarm, habits | 三段 | ready |
 
 ## REG：回歸：之前出過問題的片段
 

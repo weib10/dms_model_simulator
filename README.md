@@ -75,7 +75,7 @@ dms-sim demo --scenario phone_distraction --out out/demo           # every camer
 dms-sim export --scenario phone_distraction --camera dash_right --format frame_yaml --profile bad --out out/x
 dms-sim catalog expand POS-PHN --out runs/r1 && dms-sim catalog run runs/r1 --jobs 4   # one card per row
 dms-sim catalog run runs/r1 --jobs 4 --timeline --gif              # and a timeline picture + camera-view GIF per row
-dms-sim catalog gallery runs/r1                                    # runs/r1/index.html: every entry with its pictures
+dms-sim catalog gallery runs/r1                                    # runs/r1/index.html + index.en.html: every entry with its pictures
 ```
 
 More commands:
@@ -89,6 +89,7 @@ dms-sim inspect-bin out/drowsy__steering_column.dms.bin --head 3                
 dms-sim gen-scenario --duration 120 --seed 1                                      # random scenario
 dms-sim batch --gen 3 --variants 5 --out out/batch                                # scenarios x drivers x cameras
 dms-sim catalog list                                                              # scenario catalog (catalog/README.md)
+dms-sim catalog review                                                            # catalog/REVIEW.md, .en.md, .csv, .en.csv: one row per entry
 python -m pytest -q tests                                                         # several minutes
 ```
 
@@ -282,8 +283,18 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   its YAML, shown as `#045` on the page, in `catalog/INDEX.md` and in `catalog list`; never changed or reused, a new
   entry takes the largest + 1), and the search box finds it by number. The bar on top stays on screen and marks the
   current family; on a wide screen an entry page also lists its family on the left. The home page says what ★
-  means and where the entries come from (their `source`, counted from the catalog). The page text is in Chinese,
-  like the catalog. `catalog/README.md` has the commands that build it for the whole catalog.
+  means and where the entries come from (their `source`, counted from the catalog). `catalog/README.md` has the
+  commands that build it for the whole catalog.
+  The command writes two pages by default: `RUN/index.html` (Chinese) and `RUN/index.en.html` (English);
+  `--lang zh|en` writes only one. Each links to the other at the same place (`#...`). The English page uses the
+  entries' `title_en` / `summary_en` and the behaviours' `name_en` (the Chinese where they are missing) and builds
+  the script lines from each row's `card.json` keys; `card.md`, `card.json`, `INDEX.md` and exams stay Chinese.
+  Standards (`catalog/standards.yaml`) get a page each, reached from the bar on top: their requirements in three
+  groups (scenarios in the catalog relate to it / no scenario yet / out of the simulator's reach). Entries with a
+  `standards` field carry the standard's code as a small mark; the mark means related, not compliant. The public
+  file holds neutral markers only (an id such as `STD-A`, requirement ids, coverage); names and requirement texts
+  can come from an optional, git-ignored `catalog/standards.local.yaml`, which the gallery uses when it exists
+  (`--no-local` for the markers only).
 
 ## Reproducibility
 

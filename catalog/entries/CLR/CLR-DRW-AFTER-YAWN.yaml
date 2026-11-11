@@ -1,12 +1,19 @@
 id: CLR-DRW-AFTER-YAWN
 number: 38
 title: "打一次哈欠，之後 20 / 14 / 8 s 正常開車（解除、不再發）"
+title_en: "One yawn, then 20 / 14 / 8 s of normal driving (clears, no recurrence)"
+short: "打一次哈欠後恢復正常"
+short_en: "One yawn, then back to normal"
+brief: {small: "哈欠 5 s，之後正常 20 s", medium: "哈欠 4 s，之後正常 14 s", large: "哈欠 3 s，之後正常 8 s"}
+brief_en: {small: "Yawn 5 s, then 20 s normal", medium: "Yawn 4 s, then 14 s normal", large: "Yawn 3 s, then 8 s normal"}
 summary: "只有一次哈欠，之後眼睛、嘴巴都正常。看哈欠結束後狀態有沒有退回來（只測解除，不再發）。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照：哈欠一般 3–10 s。哈欠 small 5 s、medium 4 s、large 3 s；之後正常開車 small 20 s、medium 14 s、large 8 s（最短的觀察時間）。"
+summary_en: "Only one yawn; afterwards the eyes and mouth are normal. Checks whether the state goes back after the yawn ends (tests clearing only, no recurrence). The yawn uses a scenario event (yawn: {start: true}): the mouth opens and closes along a sine profile, and the ground truth yawning is true for the whole segment. Reference: a yawn usually lasts 3–10 s. Yawn small 5 s, medium 4 s, large 3 s; normal driving afterwards small 20 s, medium 14 s, large 8 s (the shortest observation time)."
 status: ready
 source: written
 tags: [sleepiness, yawn, decay]
 behaviors: [V07]
+standards: {STD-A: []}
 params:
   yawn_s: {levels: {small: 5.0, medium: 4.0, large: 3.0}}
   after_s: {levels: {small: 20.0, medium: 14.0, large: 8.0}}

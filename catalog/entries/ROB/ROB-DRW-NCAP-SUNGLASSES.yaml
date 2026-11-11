@@ -1,13 +1,20 @@
 id: ROB-DRW-NCAP-SUNGLASSES
 number: 41
 title: "Euro NCAP 遮擋（墨鏡）：眼框完全偵測不到時，轉頭看乘客 4 s、閉眼點頭 4 s"
+title_en: "Euro NCAP occlusion (sunglasses): with eye boxes never detected, head turned to look at the passenger for 4 s, eyes closed with a head nod for 4 s"
+short: "戴墨鏡（看不到眼睛）"
+short_en: "Sunglasses (eyes not detected)"
+brief: {all: "看不到眼框：轉頭看乘客 4 s（頭 60°）、閉眼點頭 4 s（頭低 20°）"}
+brief_en: {all: "No eye boxes: head turned to the passenger 4 s (60°), eyes closed with a 20° nod 4 s"}
 summary: "模擬器沒有墨鏡幾何，用 profile no_eyes（眼框偵測率 0）近似：輸出裡沒有任何眼框。同一串行為含兩段：轉頭看乘客 4 s（頭 60°），
   以及最關鍵的閉眼 4 s、頭往前點 20°（看不到眼睛時，只剩臉框和頭姿能看出睡著）。轉頭、點頭都是 0.35 s。
   對照門檻：長分心連續離開路面 3 s；睡著連續閉眼 3 s。"
+summary_en: "The simulator has no sunglasses geometry, so profile no_eyes (eye-box detection rate 0) approximates it: there are no eye boxes in the output at all. The same sequence of behaviours contains two segments: head turned to look at the passenger for 4 s (head 60°), and the most important one, eyes closed for 4 s with the head nodding forward 20° (when the eyes cannot be seen, only the face box and head pose can show the driver is asleep). The head turn and the nod both take 0.35 s. Reference threshold: long distraction, eyes off road continuously for 3 s; asleep, eyes closed continuously for 3 s."
 status: ready
 source: written
 tags: [ncap, occlusion, sunglasses, robustness, closure]
 behaviors: [C01, V01, V05, V06]
+standards: {STD-A: []}
 template:
   behavior: {transition_head_s: 0.35}
   segments:

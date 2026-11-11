@@ -1,8 +1,14 @@
 id: POS-SMK-PUFF
 number: 66
 title: "手拿菸到嘴邊抽 4 / 3 / 1.5 s"
+title_en: "Hand brings the cigarette to the mouth for a puff, 4 / 3 / 1.5 s"
+short: "手拿菸到嘴邊抽"
+short_en: "Hand brings the cigarette to the mouth"
+brief: {small: "抽 4 s", medium: "抽 3 s", large: "抽 1.5 s"}
+brief_en: {small: "4 s puff", medium: "3 s puff", large: "1.5 s puff"}
 summary: "手遮住嘴，嘴框可能偵測不到。
   對照：抽菸的真值沒有時長門檻，菸在嘴上就成立。small 4 s、medium 3 s、large 1.5 s（一口短吸）。"
+summary_en: "The hand covers the mouth, so the mouth box may not be detected. Reference: the smoking ground truth has no duration threshold; it holds as soon as the cigarette is in the mouth. small 4 s, medium 3 s, large 1.5 s (one short puff)."
 status: ready
 source: written
 tags: [smoking, puff, occlusion]

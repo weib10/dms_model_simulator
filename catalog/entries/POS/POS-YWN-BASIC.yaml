@@ -1,13 +1,20 @@
 id: POS-YWN-BASIC
 number: 43
 title: "基本款：打一次哈欠（6 / 5 / 3.5 s，嘴最大 0.95 / 0.85 / 0.7）"
+title_en: "Basic: one yawn (6 / 5 / 3.5 s, mouth peak 0.95 / 0.85 / 0.7)"
+short: "打哈欠（基本款）"
+short_en: "Yawning (basic)"
+brief: {small: "哈欠 6 s，嘴最大 0.95", medium: "哈欠 5 s，嘴最大 0.85", large: "哈欠 3.5 s，嘴最大 0.7"}
+brief_en: {small: "6 s yawn, mouth peak 0.95", medium: "5 s yawn, mouth peak 0.85", large: "3.5 s yawn, mouth peak 0.7"}
 summary: "哈欠的基本款：眼睛正常。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照：哈欠一般 3–10 s（文獻 5.9 ± 1.9 s，Provine 1986）；模型的嘴開合判斷門檻約 0.55。
   small 6 s、嘴最大 0.95；medium 5 s、0.85；large 3.5 s、0.7（短、張得小，但仍是哈欠：超過 0.55 約 1.5 s）。"
+summary_en: "The basic entry for yawning: eyes normal. The yawn uses a scenario event (yawn: {start: true}): the mouth opens and closes along a sine profile, and the ground truth yawning is true for the whole segment. Reference: a yawn usually lasts 3–10 s (literature 5.9 ± 1.9 s, Provine 1986); the model's mouth-open threshold is about 0.55. small 6 s, mouth peak 0.95; medium 5 s, 0.85; large 3.5 s, 0.7 (short and less wide, but still a yawn: above 0.55 for about 1.5 s)."
 status: ready
 source: written
 tags: [basic, yawn]
 behaviors: [V07]
+standards: {STD-A: []}
 params:
   yawn_s: {levels: {small: 6.0, medium: 5.0, large: 3.5}}
   mouth: {levels: {small: 0.95, medium: 0.85, large: 0.7}}

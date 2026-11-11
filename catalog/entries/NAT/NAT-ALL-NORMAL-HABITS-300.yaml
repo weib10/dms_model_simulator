@@ -1,13 +1,20 @@
 id: NAT-ALL-NORMAL-HABITS-300
 number: 88
-title: "300 s 日常駕駛，夾雜正常習慣：講話、嚼口香糖、大笑、揉眼、喝水、托下巴、撐頭、叼牙籤"
+title: "300 s 日常駕駛，隨機夾雜正常習慣（可能有講話、嚼口香糖、大笑、揉眼、喝水、托下巴、叼牙籤）"
+title_en: "300 s of everyday driving with random normal habits (may include talking, chewing gum, laughing, rubbing the eyes, drinking, chin in hand, toothpick in the mouth)"
+short: "日常駕駛夾雜正常習慣"
+short_en: "Everyday drive with normal habits"
+brief: {small: "設定每分鐘 1 次（跑的兩段 300 s 實際 2、3 次）", medium: "設定每分鐘 2 次（跑的兩段 300 s 實際 7、7 次）", large: "設定每分鐘 4 次（跑的兩段 300 s 實際 13、18 次）", all: "隨機產生 300 s，無違規；習慣隨機抽，不一定每種都有，small 的兩段都只有講話"}
+brief_en: {small: "Set to 1 per minute (the two 300 s runs have 2 and 3)", medium: "Set to 2 per minute (the two 300 s runs have 7 and 7)", large: "Set to 4 per minute (the two 300 s runs have 13 and 18)", all: "300 s at random, no violations; habits drawn at random, not all appear; both small runs have only talking"}
 summary: "量每小時誤報數用的長段。沒有任何違規（沒有手機、疲勞、抽菸、未繫，也不看大腿），只有看路、看鏡子、看儀表、偶爾看乘客，
   加上 configs/scenario_gen.yaml 的 habit_episodes（各種正常習慣，各有自己的時長）。這條的難度是習慣出現的頻率：
-  small 每分鐘 1 次、medium 2 次、large 4 次（是例外：其他條目的難度是離門檻多近）。離開路面的目標不會直接相接（中間一定回到路面），鏡子最長 1.5 s、儀表、中控、乘客最長 2 s。"
+  設定 small 每分鐘 1 次、medium 2 次、large 4 次（這條跑的兩個 seed 300 s 內實際各 2、3 / 7、7 / 13、18 次；這是例外：其他條目的難度是離門檻多近）。離開路面的目標不會直接相接（中間一定回到路面），鏡子最長 1.5 s、儀表、中控、乘客最長 2 s。"
+summary_en: "A long run for measuring false positives per hour. No violations at all (no phone, drowsiness, smoking or unbuckled seat belt, and no looking at the lap); only watching the road, mirrors and instrument cluster, occasionally the passenger, plus the habit_episodes in configs/scenario_gen.yaml (various normal habits, each with its own duration). The difficulty of this entry is how often the habits occur: set to small 1 per minute, medium 2, large 4 (the two seeds this entry runs actually give 2 and 3 / 7 and 7 / 13 and 18 in 300 s; an exception: for other entries difficulty is how close it is to the threshold). Off-road targets never follow one another directly (the gaze always returns to the road in between); mirrors last at most 1.5 s, and the instrument cluster, centre display and passenger at most 2 s."
 status: ready
 source: generated
 tags: [natural, false_alarm, habits]
-behaviors: [N01, N02, N03, N07, N13, N15, N17, N18, N19, N20, N21, N22]
+behaviors: [N01, N02, N03, N07, N13, N15, N17, N18, N19, N21, N22]
+standards: {STD-A: [R1]}
 params:
   rate: {levels: {small: 1.0, medium: 2.0, large: 4.0}}
 generator:

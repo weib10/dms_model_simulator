@@ -1,8 +1,14 @@
 id: POS-PHN-BASIC-CALL
 number: 52
 title: "基本款：看著路講電話 6 / 5 / 2 s，再放下"
+title_en: "Basic: phone call while watching the road for 6 / 5 / 2 s, then phone put down"
+short: "講電話（基本款）"
+short_en: "Phone call (basic)"
+brief: {small: "講 6 s", medium: "講 5 s", large: "講 2 s"}
+brief_en: {small: "6 s call", medium: "5 s call", large: "2 s call"}
 summary: "手機家族的基本款：手機貼耳、眼睛看路、頭不轉。
   對照：講電話的真值沒有時長門檻，手機貼耳就成立。small 6 s、medium 5 s、large 2 s（短但仍是一通明確的電話）。"
+summary_en: "The basic entry of the phone family: phone at the ear, eyes on the road, head not turned. Reference: the phone-call ground truth has no duration threshold; it holds as soon as the phone is at the ear. small 6 s, medium 5 s, large 2 s (short, but still a clear call)."
 status: ready
 source: written
 tags: [basic, phone, call]

@@ -1,9 +1,15 @@
 id: POS-DIS-PASSENGER-6S
 number: 7
 title: "自然頭眼分工：看乘客 6 s，頭照預設增益轉約 53°、眼睛補到約 82°（8 / 6 / 3.5 s）"
+title_en: "Natural head-eye split: looking at the passenger for 6 s, head turns about 53° with the default gain, eyes make up the rest to about 82° (8 / 6 / 3.5 s)"
+short: "看乘客，頭只轉一部分"
+short_en: "Looking at the passenger, head turns partway"
+brief: {small: "看 8 s", medium: "看 6 s", large: "看 3.5 s", all: "頭不指定角度，照自然比例轉，其餘靠眼睛"}
+brief_en: {small: "8 s look", medium: "6 s look", large: "3.5 s look", all: "No head angle given: the head turns its natural share and the eyes do the rest"}
 summary: "只用 dash_right。視線目標 passenger 在右約 82°；不給頭姿，頭照預設增益（yaw 0.65）轉約 53°，眼睛補剩下的角度，轉頭 0.35 s。
-  跟直接給頭姿 60° / 45° 的 POS-DIS-BASIC-TURN、POS-DIS-NCAP-OWL-PASSENGER 對照：同一個目標、頭轉得少一點。
+  跟直接給頭姿 60° / 45° 的 POS-DIS-BASIC-TURN、POS-DIS-NCAP-OWL-PASSENGER 對照：同一個目標，頭轉約 53°，介於它們的 60° 與 45° 之間。
   對照門檻：長分心，連續離開路面 3 s。small 看 8 s、medium 6 s、large 3.5 s（剛過門檻）。"
+summary_en: "Only dash_right. The gaze target passenger is about 82° to the right; no head pose is given, so the head turns about 53° with the default gain (yaw 0.65) and the eyes make up the remaining angle; head turn 0.35 s. Compare with POS-DIS-BASIC-TURN and POS-DIS-NCAP-OWL-PASSENGER, which give the head pose directly as 60° / 45°: same target, the head turns about 53°, between their 60° and 45°. Reference threshold: long distraction, eyes off road continuously for 3 s. small looks for 8 s, medium 6 s, large 3.5 s (just past the threshold)."
 status: ready
 source: written
 tags: [head_turn, passenger, natural_gain]

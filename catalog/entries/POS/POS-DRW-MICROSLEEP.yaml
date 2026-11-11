@@ -1,12 +1,19 @@
 id: POS-DRW-MICROSLEEP
 number: 25
 title: "正常開車 8 s 後微睡 2.5 / 2 / 1.2 s"
+title_en: "Microsleep of 2.5 / 2 / 1.2 s after 8 s of normal driving"
+short: "短暫打瞌睡（微睡）"
+short_en: "Microsleep"
+brief: {small: "閉 2.5 s，頭低 15°", medium: "閉 2 s，頭低 10°", large: "閉 1.2 s，頭低 5°"}
+brief_en: {small: "Closed 2.5 s, head down 15°", medium: "Closed 2 s, head down 10°", large: "Closed 1.2 s, head down 5°"}
 summary: "一次微睡（Euro NCAP：閉眼 3 s 以下算微睡、3 s 以上算睡著，見 POS-DRW-NCAP-SLEEP）。
   對照門檻：閉眼（開合度 < 0.2）約 1 s 以上。small 閉 2.5 s、頭往下點 15°；medium 2 s、10°；large 1.2 s、5°（剛過門檻、頭幾乎不動）。"
+summary_en: "One microsleep (Euro NCAP: eye closure of 3 s or less is microsleep, 3 s or more is asleep; see POS-DRW-NCAP-SLEEP). Reference threshold: eye closure (openness < 0.2) of about 1 s or more. small closed 2.5 s, head nods down 15°; medium 2 s, 10°; large 1.2 s, 5° (just past the threshold, head almost still)."
 status: ready
 source: written
 tags: [closure, microsleep]
 behaviors: [V05]
+standards: {STD-A: [R8, R20]}
 params:
   close_s: {levels: {small: 2.5, medium: 2.0, large: 1.2}}
   nod: {levels: {small: -15, medium: -10, large: -5}}

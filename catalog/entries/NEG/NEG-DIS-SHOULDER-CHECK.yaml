@@ -1,9 +1,15 @@
 id: NEG-DIS-SHOULDER-CHECK
 number: 16
 title: "變換車道前快速轉頭看盲點 0.5 / 0.8 / 1.5 s，重複 3 次"
+title_en: "Quick head turn to check the blind spot before changing lanes, 0.5 / 0.8 / 1.5 s, repeated 3 times"
+short: "變換車道前看盲點"
+short_en: "Blind-spot check before changing lanes"
+brief: {small: "每次 0.5 s", medium: "每次 0.8 s", large: "每次 1.5 s", all: "頭轉 60°，左、左、右共 3 次，中間回前方 3 s"}
+brief_en: {small: "0.5 s each", medium: "0.8 s each", large: "1.5 s each", all: "Head turned 60°, left, left, right: 3 times, 3 s ahead in between"}
 summary: "對照門檻：長分心 3 s、VATS（30 s 內累計 10 s）。大角度（±60°）但很短的轉頭，是正常駕駛動作（真實的盲點檢查約 0.5–1.2 s）。
   眼睛跟著頭看過去（head_±60 目標），真值會短暫離開路面。每次 small 0.5 s、medium 0.8 s、large 1.5 s（猶豫著併線，
   比一般的盲點檢查長，仍在 3 s 以下），共 3 次（累計 1.5 / 2.4 / 4.5 s），中間回前方 3 s。"
+summary_en: "Reference threshold: long distraction 3 s, VATS (10 s in total within 30 s). A large-angle (±60°) but very short head turn, a normal driving action (a real blind-spot check is about 0.5–1.2 s). The eyes follow the head (head_±60 targets), so the ground truth is briefly off road. Each turn small 0.5 s, medium 0.8 s, large 1.5 s (hesitating before merging, longer than a typical blind-spot check, still under 3 s), 3 times in total (cumulative 1.5 / 2.4 / 4.5 s), with 3 s looking ahead in between."
 status: ready
 source: written
 tags: [head_turn, shoulder_check]

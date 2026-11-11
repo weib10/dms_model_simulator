@@ -1,9 +1,15 @@
 id: POS-DIS-NCAP-LIZARD
 number: 2
 title: "Euro NCAP 長分心（lizard，只動眼睛）：頭幾乎不動，眼睛看儀表或中控 5 / 4 / 3.5 s"
+title_en: "Euro NCAP long distraction (lizard, eyes only): head almost still, eyes on the instrument cluster or centre display for 5 / 4 / 3.5 s"
+short: "只用眼睛久看儀表或中控"
+short_en: "Eyes only, long look at cluster or display"
+brief: {small: "看 5 s，頭低 10°", medium: "看 4 s，頭低 5°", large: "看 3.5 s，頭低 2°", all: "每級都跑儀表、中控兩種"}
+brief_en: {small: "5 s look, head down 10°", medium: "4 s look, head down 5°", large: "3.5 s look, head down 2°", all: "Each level runs both targets: instrument cluster and centre display"}
 summary: "lizard 指頭幾乎不動、只有眼睛離開路面。視線目標儀表（正下方約 23°）、中控（右下）各一列，都在眼球 45° 限制內。只有框沒有視線的輸出，從框上幾乎看不出來；steering_column 在正前方下方，當對照。
   頭只往下點一點、不左右轉（兩個目標用同一個頭姿）：small [0, -10, 0]（臉框多少看得出變化）、medium [0, -5, 0]、large [0, -2, 0]（頭幾乎不動）。
   對照門檻：Euro NCAP 長分心，連續離開路面 3 s 以上（protocol 情境約 3–4 s）。medium 照 protocol 看 4 s、small 5 s、large 3.5 s。"
+summary_en: "Lizard means the head barely moves and only the eyes leave the road. One row each for the gaze targets instrument cluster (straight down, about 23°) and centre display (down and to the right), both within the 45° eyeball limit. With boxes only and no gaze output it is nearly invisible from the boxes; steering_column, straight ahead and below, serves as a control. The head only dips slightly, with no left-right turn (the same head pose for both targets): small [0, -10, 0] (some change visible in the face box), medium [0, -5, 0], large [0, -2, 0] (head almost still). Reference threshold: Euro NCAP long distraction, eyes off road continuously for 3 s or more (protocol scenarios about 3–4 s). medium follows the protocol with 4 s, small 5 s, large 3.5 s."
 status: ready
 source: written
 tags: [ncap, long_distraction, gaze_only, blind_spot]

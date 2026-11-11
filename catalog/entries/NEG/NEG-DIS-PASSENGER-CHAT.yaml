@@ -1,13 +1,19 @@
 id: NEG-DIS-PASSENGER-CHAT
 number: 15
 title: "跟乘客聊天：邊講話邊反覆看乘客一眼（每次 0.6 / 1.2 / 1.8 s，3 / 5 / 6 次）"
+title_en: "Chatting with the passenger: repeated glances at the passenger while talking (0.6 / 1.2 / 1.8 s each, 3 / 5 / 6 times)"
+short: "邊聊天邊看乘客"
+short_en: "Glancing at the passenger while chatting"
+brief: {small: "每次 0.6 s ×3（累計 1.8 s）", medium: "每次 1.2 s ×5（累計 6 s）", large: "每次 1.8 s ×6（累計 10.8 s，30 s 內最多 9 s）", all: "聊天期間一直講話，每次之間回前方 4.5 s"}
+brief_en: {small: "0.6 s each ×3 (1.8 s in total)", medium: "1.2 s each ×5 (6 s in total)", large: "1.8 s each ×6 (10.8 s in total, at most 9 s in any 30 s)", all: "Talking throughout the chat, 4.5 s looking ahead between glances"}
 summary: "對照門檻：VATS（30 s 內累計 10 s）與單次長分心 3 s。每次看乘客 small 0.6 s、medium 1.2 s、large 1.8 s，
   共 3 / 5 / 6 次，每次之間回前方 4.5 s：累計 1.8 / 6 / 10.8 s，任一 30 s 內最多 1.8 / 6 / 9 s（large 貼著 10 s）。
-  全程在講話：嘴在 0.1 與 0.3 / 0.35 之間一開一合（每段 0.1–0.25 s，約 3 Hz），回前方的最後 0.3 s 停頓。"
+  聊天期間一直在講話：嘴在 0.1 與 0.3 / 0.35 之間一開一合（每段 0.1–0.25 s，約 3 Hz），回前方的最後 0.3 s 停頓。"
+summary_en: "Reference threshold: VATS (10 s in total within 30 s) and a single long distraction of 3 s. Each look at the passenger small 0.6 s, medium 1.2 s, large 1.8 s, 3 / 5 / 6 times in total, with 4.5 s looking ahead between looks: cumulative 1.8 / 6 / 10.8 s, at most 1.8 / 6 / 9 s within any 30 s (large is close to 10 s). Talking throughout the chat: the mouth opens and closes between 0.1 and 0.3 / 0.35 (each step 0.1–0.25 s, about 3 Hz), with a pause in the last 0.3 s of each look ahead."
 status: ready
 source: written
 tags: [glance, head_turn, passenger]
-behaviors: [N07]
+behaviors: [N07, N15]
 params:
   glance_k: {levels: {small: 1, medium: 2, large: 3}}     # glance = glance_k x 0.6 s
   n: {levels: {small: 3, medium: 5, large: 6}}

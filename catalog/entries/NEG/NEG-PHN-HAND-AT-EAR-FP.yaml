@@ -1,9 +1,16 @@
 id: NEG-PHN-HAND-AT-EAR-FP
 number: 57
-title: "手摸耳朵，模擬模型在手的位置成段報出假手機框（每次 1 / 3 / 6 s，1 / 2 / 3 次）"
+title: "手摸耳朵 1 / 3 / 6 s（1 / 2 / 3 次），模擬模型在手的位置斷續報出假手機框"
+title_en: "Hand touching the ear for 1 / 3 / 6 s (1 / 2 / 3 times), and the simulated model intermittently reports a false phone box at the hand"
+short: "手摸耳朵，被誤報手機"
+short_en: "Hand at the ear, mistaken for a phone"
+brief: {small: "手在耳邊 1 s ×1", medium: "手在耳邊 3 s ×2", large: "手在耳邊 6 s ×3", all: "模擬模型在手的位置斷續報出假手機框（手在耳邊時約四成的幀）；之間放下 3 s"}
+brief_en: {small: "Hand at the ear 1 s ×1", medium: "Hand at the ear 3 s ×2", large: "Hand at the ear 6 s ×3", all: "Simulated model reports a false phone box on and off (~40% of hand-at-ear frames); hand down 3 s between"}
 summary: "NEG-PHN-HAND-AT-EAR 加上誤報：手在耳邊（沒有手機）時，ctx_fp 讓模擬模型在手的位置成段報出手機框。
   對照：講電話（V08）的真值沒有時長門檻，看的是手機框；假框出現得越久、越多次越像講電話。手在耳邊每次 small 1 s、
-  medium 3 s、large 6 s，共 1 / 2 / 3 次，中間放下 3 s。"
+  medium 3 s、large 6 s，共 1 / 2 / 3 次，中間放下 3 s。
+  假框只出現在手在耳邊的一部分時間（約四成），small 只有 1 s，某些模型雜訊 seed（如 seed 0）在 small 一幀假框都沒有。"
+summary_en: "NEG-PHN-HAND-AT-EAR plus false positives: when the hand is at the ear (no phone), ctx_fp makes the simulated model report a phone box at the hand in stretches. Reference: the phone-call (V08) ground truth has no duration threshold; what matters is the phone box; the longer and the more often the false box appears, the more it looks like a phone call. Hand at the ear each time small 1 s, medium 3 s, large 6 s, 1 / 2 / 3 times in total, hand down for 3 s in between. The false box covers only part of the hand-at-ear time (about 40%); small lasts only 1 s, and with some model-noise seeds (e.g. seed 0) small shows no false box at all."
 status: ready
 source: written
 tags: [phone, hand_near_face, false_positive]

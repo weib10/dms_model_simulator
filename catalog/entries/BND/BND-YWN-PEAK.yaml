@@ -1,12 +1,20 @@
 id: BND-YWN-PEAK
 number: 50
 title: "哈欠張嘴幅度從 0.5 掃到 0.95（每次 5 s）"
+title_en: "Yawn mouth opening swept from 0.5 to 0.95 (5 s each)"
+short: "哈欠張嘴大小掃描"
+short_en: "Yawn mouth-opening sweep"
+brief: {all: "5 s 哈欠，嘴最大 0.5 / 0.55 / 0.6 / 0.7 / 0.8 / 0.95"}
+brief_en: {all: "One 5 s yawn, mouth peak 0.5 / 0.55 / 0.6 / 0.7 / 0.8 / 0.95"}
 summary: "一次 5 s 的哈欠，嘴最大開合度由小到大。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
-  模型的張嘴門檻約 0.55：0.5 的哈欠從頭到尾都不會被報成張嘴，0.55–0.6 附近只有頂點一下。"
+  模型的張嘴門檻約 0.55：真值嘴最大 0.5 的哈欠一幀都不到門檻（模型雜訊偶爾讓 1–5 幀過門檻）；0.55 只有頂點約 0.1 s 碰到門檻；
+  0.6 有約 1.4 s 在門檻上；0.7 以上 2 s 以上。"
+summary_en: "One 5 s yawn, peak mouth openness from small to large. The yawn uses a scenario event (yawn: {start: true}): the mouth opens and closes along a sine profile, and the ground truth yawning is true for the whole segment. The model's mouth-open threshold is about 0.55: a yawn peaking at 0.5 never reaches it in the ground truth (model noise pushes 1–5 frames over it); at 0.55 only about 0.1 s at the peak touches it; at 0.6 about 1.4 s is above it; from 0.7 on, more than 2 s."
 status: ready
 source: written
 tags: [yawn, mouth]
 behaviors: [V07]
+standards: {STD-A: []}
 params:
   peak: {grid: [0.5, 0.55, 0.6, 0.7, 0.8, 0.95]}
 template:

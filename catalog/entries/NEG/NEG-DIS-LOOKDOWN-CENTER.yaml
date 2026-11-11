@@ -1,10 +1,16 @@
 id: NEG-DIS-LOOKDOWN-CENTER
 number: 13
 title: "看中控（或排檔）與儀表，每次 0.8 / 1.2 / 1.8 s"
+title_en: "Looking at the centre display (or gear lever) and the instrument cluster, 0.8 / 1.2 / 1.8 s each"
+short: "低頭看中控或排檔、儀表"
+short_en: "Glancing down at display/gear lever, cluster"
+brief: {small: "每次 0.8 s，3 輪（累計 4.8 s）", medium: "每次 1.2 s，3 輪（累計 7.2 s）", large: "每次 1.8 s，2 輪（累計 7.2 s）", all: "一輪看低處、儀表各一次，之後回前方 2 s；每級都跑中控、排檔兩種"}
+brief_en: {small: "0.8 s each, 3 rounds (4.8 s in total)", medium: "1.2 s each, 3 rounds (7.2 s in total)", large: "1.8 s each, 2 rounds (7.2 s in total)", all: "A round: one look down, one at the cluster, 2 s ahead after each; runs both display and gear lever"}
 summary: "對照門檻：短瞥上限 2 s（N03）、長分心 3 s、VATS（30 s 內累計 10 s）。一輪 = 低頭看中控或排檔一次、看儀表一次，
   每次之後回前方 2 s。每次 small 0.8 s、medium 1.2 s、large 1.8 s；small、medium 3 輪（累計 4.8 / 7.2 s），
   large 2 輪（累計 7.2 s，避開 VATS）。低頭目標兩種各一列：中控螢幕（center_display）、排檔桿（gear_shift，兩座之間偏低）。
-  低頭時臉框的水平變化很小，從框上不太看得出來。"
+  低頭時頭也往右轉（中控約 21°、排檔約 29°），臉框會跟著變；只有低頭的部分在臉框上變化小。"
+summary_en: "Reference threshold: short-glance limit 2 s (N03), long distraction 3 s, VATS (10 s in total within 30 s). One round = looking down at the centre display or gear lever once and at the instrument cluster once, with 2 s looking ahead after each. Each look small 0.8 s, medium 1.2 s, large 1.8 s; small and medium 3 rounds (cumulative 4.8 / 7.2 s), large 2 rounds (cumulative 7.2 s, staying clear of VATS). One row for each look-down target: the centre display screen (center_display) and the gear lever (gear_shift, low between the two seats). Looking down also turns the head right (about 21° for the display, 29° for the gear lever), so the face box changes; only the looking-down part changes it little."
 status: ready
 source: written
 tags: [glance, center_display, blind_spot]

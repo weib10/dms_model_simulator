@@ -1,12 +1,19 @@
 id: CLR-YWN-TWO-YAWNS
 number: 51
 title: "兩次哈欠，間隔 12 / 10 / 5 s"
+title_en: "Two yawns, 12 / 10 / 5 s apart"
+short: "打兩次哈欠"
+short_en: "Two yawns"
+brief: {small: "每次 5 s，間隔 12 s", medium: "每次 4 s，間隔 10 s", large: "每次 3 s，間隔 5 s"}
+brief_en: {small: "5 s each, 12 s apart", medium: "4 s each, 10 s apart", large: "3 s each, 5 s apart"}
 summary: "兩次哈欠，中間閉嘴。看兩次哈欠是不是各被當成一次。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
   對照：哈欠一般 3–10 s。每次哈欠 small 5 s、medium 4 s、large 3 s；中間 small 12 s、medium 10 s、large 5 s（最短，但仍明確分開）。"
+summary_en: "Two yawns with the mouth closed between them. Checks whether each yawn counts as one. The yawn uses a scenario event (yawn: {start: true}): the mouth opens and closes along a sine profile, and the ground truth yawning is true for the whole segment. Reference: a yawn usually lasts 3–10 s. Each yawn small 5 s, medium 4 s, large 3 s; gap small 12 s, medium 10 s, large 5 s (the shortest, but still clearly separate)."
 status: ready
 source: written
 tags: [yawn, clear, rearm]
 behaviors: [V07]
+standards: {STD-A: []}
 params:
   yawn_s: {levels: {small: 5.0, medium: 4.0, large: 3.0}}
   gap_s: {levels: {small: 12.0, medium: 10.0, large: 5.0}}

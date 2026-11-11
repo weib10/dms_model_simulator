@@ -14,3 +14,7 @@ inputs/
 # maintainer's local notes (agent rules, progress), not published
 AGENTS.md
 HANDOFF.md
+catalog/standards.local.yaml
+docs/research/
+docs/catalog-proposal-*.md
+docs/exam-design-*.md

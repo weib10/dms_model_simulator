@@ -1,10 +1,16 @@
 id: BND-PHN-CALL-GAP
 number: 60
 title: "講電話 3 s、中間停 0.3–3 s（手機放下，或還拿在手上放到大腿）、再講 3 s"
+title_en: "Phone call for 3 s, a 0.3–3 s pause (phone put down, or still in hand and lowered to the lap), then another 3 s call"
+short: "一通電話中途停一下"
+short_en: "One call with a short pause"
+brief: {all: "停 0.3 / 0.6 / 1 / 1.5 / 2 / 3 s（放下或擱大腿），前後各講 3 s"}
+brief_en: {all: "3 s call, pause 0.3 / 0.6 / 1 / 1.5 / 2 / 3 s, 3 s call; phone put down or lowered to the lap"}
 summary: "中間停一下的時間很短。看後處理把它當成一通還是兩通、停的時候有沒有解除。兩種停法各掃一遍：
   放下手機（手回方向盤、沒有手機，真值 phone_use 中斷）；手機還拿在手上、放到大腿（hand: phone、phone: lap，真值 phone_use 不中斷，
   但大腿上的手機只有頭頂相機拍得到，預設兩台相機上手機框會消失）。
   模板不能把兩個參數綁在一起，所以停的那一段整段寫成參數（6 個時長 × 2 種停法，各一列）。"
+summary_en: "The pause in the middle is very short. Checks whether post-processing treats it as one call or two, and whether it clears during the pause. Each of the two kinds of pause is swept: phone put down (hand back on the wheel, no phone; the ground truth phone_use is interrupted); phone still in hand and lowered to the lap (hand: phone, phone: lap; the ground truth phone_use is not interrupted, but a phone on the lap is only visible to the overhead camera, so by default the phone box disappears on both cameras). Templates cannot tie two parameters together, so the whole pause segment is written as one parameter (6 durations × 2 kinds of pause, one row each)."
 status: ready
 source: written
 tags: [phone, call, gap]

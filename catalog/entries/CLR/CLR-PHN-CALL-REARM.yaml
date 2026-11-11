@@ -1,8 +1,14 @@
 id: CLR-PHN-CALL-REARM
 number: 61
 title: "講電話 5 / 4 / 2 s、放下 8 / 6 / 3 s、再講一次"
+title_en: "Phone call for 5 / 4 / 2 s, phone put down for 8 / 6 / 3 s, then another call"
+short: "兩通電話，中間放下"
+short_en: "Two calls with the phone put down between"
+brief: {small: "講 5 s、放下 8 s", medium: "講 4 s、放下 6 s", large: "講 2 s、放下 3 s", all: "共講 2 次"}
+brief_en: {small: "5 s call, 8 s down", medium: "4 s call, 6 s down", large: "2 s call, 3 s down", all: "Two calls"}
 summary: "兩通明確的電話，中間放下（和 BND-PHN-CALL-GAP 的短間隔不同）。看放下後有沒有解除、第二通有沒有再觸發。
   對照：講電話的真值沒有時長門檻。每通 small 5 s、medium 4 s、large 2 s；中間放下 small 8 s、medium 6 s、large 3 s（最短，但仍明確放下）。"
+summary_en: "Two clear calls with the phone put down between them (unlike the short gap in BND-PHN-CALL-GAP). Checks whether it clears after the phone is put down and whether the second call triggers again. Reference: the phone-call ground truth has no duration threshold. Each call small 5 s, medium 4 s, large 2 s; phone put down in between small 8 s, medium 6 s, large 3 s (the shortest, but still clearly put down)."
 status: ready
 source: written
 tags: [phone, call, clear, rearm]

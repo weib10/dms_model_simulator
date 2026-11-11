@@ -1,11 +1,17 @@
 id: POS-PHN-HELD-UP
 number: 53
 title: "手機拿在胸前（打字、看訊息）：看手機 6 s、2.5 s × 3 次、1.5 s × 6 次，或拿著但看路"
+title_en: "Phone held in front of the chest (typing, reading messages): looking at the phone 6 s, 2.5 s × 3 times, 1.5 s × 6 times, or holding it while watching the road"
+short: "手機拿在胸前看"
+short_en: "Phone held in front of the chest"
+brief: {small: "看手機 6 s ×1", medium: "看手機 2.5 s ×3", large: "看手機 1.5 s ×6", all: "每次之後看路 1 s；另跑一版拿著手機但一直看路"}
+brief_en: {small: "6 s look at the phone ×1", medium: "2.5 s looks at the phone ×3", large: "1.5 s looks at the phone ×6", all: "1 s on the road after each look; also run holding the phone while always watching the road"}
 summary: "大腿上的手機只有頭頂相機拍得到，所以用拿在胸前的手機（phone_held：駕駛正前方偏右、眼睛下方約 31°，在路面方框外），並算進真值的 phone_use。
   每次看手機之後抬頭看路 1 s，手機一直拿在手上。看手機 / 拿著但一直看路各一列。
   對照：手拿手機的真值沒有時長門檻。公開資料：撥號、打字時最長單次離路視線中位數 2.0 / 2.5 s。
   small 看手機 6 s 一次（同時是低頭長分心 V03）；medium 2.5 s × 3 次；large 1.5 s × 6 次（反覆短瞥，每次都比長分心 3 s 短，只剩手機本身是違規）。
   相機用 steering_column 和 overhead_console：手機離 dash_right 鏡頭只有約 15 cm，在那台畫面裡大到被裁掉，所以不用它。"
+summary_en: "A phone on the lap is only visible to the overhead camera, so this entry uses a phone held in front of the chest (phone_held: straight ahead of the driver, slightly to the right, about 31° below the eyes, outside the road box), counted in the ground truth phone_use. After each look at the phone the driver looks up at the road for 1 s; the phone stays in the hand throughout. One row each for looking at the phone and for holding it while always watching the road. Reference: the hand-held phone ground truth has no duration threshold. Public data: the median longest single eyes-off-road glance while dialling or typing is 2.0 / 2.5 s. small looks at the phone once for 6 s (also a looking-down long distraction, V03); medium 2.5 s × 3 times; large 1.5 s × 6 times (repeated short glances, each shorter than the 3 s long distraction, so only the phone itself is the violation). Cameras are steering_column and overhead_console: the phone is only about 15 cm from the dash_right lens, so large in that image that it gets cropped, so that camera is not used."
 status: ready
 source: written
 tags: [phone, held_up, glance]

@@ -1,8 +1,14 @@
 id: POS-ALL-SMOKE-AND-CALL
 number: 77
 title: "菸含在嘴上，同時講電話 8 / 6 / 3 s"
+title_en: "Cigarette held in the mouth while on a phone call, 8 / 6 / 3 s"
+short: "叼菸同時講電話"
+short_en: "Smoking while on a phone call"
+brief: {small: "同時 8 s", medium: "同時 6 s", large: "同時 3 s"}
+brief_en: {small: "Both for 8 s", medium: "Both for 6 s", large: "Both for 3 s"}
 summary: "兩種物件同時在臉旁：手機貼耳（手在 call），菸含在嘴上。看兩種行為會不會互相壓過。
   對照：講電話、抽菸的真值沒有時長門檻，手機貼耳、菸在嘴上就成立。同時出現 small 8 s、medium 6 s、large 3 s（短但仍明確）。"
+summary_en: "Two objects beside the face at once: phone at the ear (hand at call), cigarette held in the mouth. Checks whether one behaviour masks the other. Reference: the phone-call and smoking ground truths have no duration threshold; they hold as soon as the phone is at the ear and the cigarette is in the mouth. Both together small 8 s, medium 6 s, large 3 s (short but still clear)."
 status: ready
 source: written
 tags: [smoking, phone, interaction]

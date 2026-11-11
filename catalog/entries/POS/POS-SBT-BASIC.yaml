@@ -1,8 +1,14 @@
 id: POS-SBT-BASIC
 number: 72
 title: "基本款：從頭到尾沒繫安全帶，整段 20 / 10 / 3 s"
+title_en: "Basic: seat belt unbuckled from start to end, whole run 20 / 10 / 3 s"
+short: "全程沒繫安全帶（基本款）"
+short_en: "Seat belt never buckled (basic)"
+brief: {small: "整段 20 s", medium: "整段 10 s", large: "整段 3 s"}
+brief_en: {small: "Whole run 20 s", medium: "Whole run 10 s", large: "Whole run 3 s"}
 summary: "安全帶家族的基本款：上車就沒繫（第一幀起就解開，沒有先繫著的那一段），手在方向盤、不擋安全帶。
   對照：沒繫安全帶的真值沒有時長門檻，解開就成立。整段長度 small 20 s、medium 10 s、large 3 s（很短，但從頭到尾都沒繫）。"
+summary_en: "The basic entry of the seat-belt family: never buckled from the moment the driver gets in (unbuckled from the first frame, with no buckled part first), hands on the wheel, not blocking the seat belt. Reference: the unbuckled-seat-belt ground truth has no duration threshold; it holds as soon as the belt is unbuckled. Whole run length small 20 s, medium 10 s, large 3 s (very short, but unbuckled from start to end)."
 status: ready
 source: written
 tags: [basic, seatbelt]

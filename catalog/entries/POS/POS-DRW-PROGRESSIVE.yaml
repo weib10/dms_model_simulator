@@ -1,13 +1,20 @@
 id: POS-DRW-PROGRESSIVE
 number: 28
-title: "一路變睏（約 70 s）：眨眼變慢、哈欠、長閉眼、點頭，最後微睡"
+title: "一路變睏（72 s）：哈欠、眼睛變小、長閉眼、低頭，最後微睡"
+title_en: "Getting steadily drowsier (72 s): yawns, narrower eyes, long eye closures, head down, and finally a microsleep"
+short: "一路越來越睏"
+short_en: "Getting steadily drowsier"
+brief: {all: "共 72 s：清醒 10 s → 哈欠 2 次、眼睛變小 → 頻繁閉眼、低頭 → 微睡 2 s"}
+brief_en: {all: "72 s: alert 10 s → 2 yawns, narrower eyes → frequent closures, head down → 2 s microsleep"}
 summary: "疲勞逐漸加重的濃縮版。哈欠用劇本事件（yawn: {start: true}）：嘴照 sin 輪廓張開再閉上，真值 yawning 整段為真。
-  清醒 10 s → 眨眼變慢、第一次哈欠（20 s）→ 開合度 0.6、長閉眼開始出現、第二次哈欠（20 s）→ 開合度 0.4、頭往下 25°、閉眼更頻繁（15 s）
+  清醒 10 s → 第一次哈欠、之後開合度 0.8（20 s）→ 開合度 0.6、第二次哈欠，之後長閉眼開始出現（20 s）→ 開合度 0.4、頭往下 25°、閉眼更頻繁（15 s）
   → 微睡 2 s（頭往下 30°，劇本固定，每個 seed 都有）→ 驚醒回正。視線一直在路上（低頭但眼睛補償），所以沒有離路分心。"
+summary_en: "A condensed version of drowsiness gradually getting worse. The yawn uses a scenario event (yawn: {start: true}): the mouth opens and closes along a sine profile, and the ground truth yawning is true for the whole segment. Alert 10 s → first yawn, then openness 0.8 (20 s) → openness 0.6, second yawn, then long eye closures start to appear (20 s) → openness 0.4, head down 25°, more frequent eye closures (15 s) → microsleep 2 s (head down 30°, fixed in the scenario, present in every seed) → jolts awake and returns to centre. The gaze stays on the road throughout (head down but the eyes compensate), so there is no eyes-off-road distraction."
 status: ready
 source: written
 tags: [drowsy, progressive]
-behaviors: [V05, V07, V06]
+behaviors: [V05, V07]
+standards: {STD-A: [R8, R20]}
 template:
   behavior: {blink: {rate_per_min: 12, duration_s: 0.2}}
   segments:

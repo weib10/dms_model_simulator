@@ -1,8 +1,14 @@
 id: BND-DIS-HEADTURN-DURATION
 number: 20
 title: "頭向右轉 60°，持續時間從 0.5 s 掃到 8 s（3 s 門檻兩側加密）"
+title_en: "Head turned right 60°, duration swept from 0.5 s to 8 s (extra steps around the 3 s threshold)"
+short: "轉頭時間掃描"
+short_en: "Head-turn duration sweep"
+brief: {all: "頭右轉 60°，0.5–8 s 共 12 種，含 2.95 / 3.0 / 3.05 s"}
+brief_en: {all: "Head turned right 60°, 0.5–8 s in 12 steps, including 2.95 / 3.0 / 3.05 s"}
 summary: "前 10 s 看前方，接著頭向右轉 60° 一段時間，再回正 3 s。頭轉入轉出各 0.1 s，讓轉頭時間接近段長。只用 dash_right：從這台相機看右轉時臉的變化最明顯；角度的影響看 BND-DIS-HEADTURN-ANGLE。
-  對照門檻：長分心，連續離開路面 3 s；2.5、2.95、3.0、3.05、3.5 s 夾住門檻（前後各差一幀）。同一個劇本的 15 fps 版是 ROB-DIS-LOW-FPS。"
+  對照門檻：長分心，連續離開路面 3 s；2.5、2.95、3.0、3.05、3.5 s 夾住門檻（2.95、3.05 與 3.0 各差一幀）。同一個劇本的 15 fps 版是 ROB-DIS-LOW-FPS。"
+summary_en: "Looking ahead for the first 10 s, then the head turns right 60° for a while, then returns to centre for 3 s. Turning in and out take 0.1 s each, so the head-turn time is close to the segment length. Only dash_right is used: from this camera the face changes most visibly on a right turn; for the effect of angle see BND-DIS-HEADTURN-ANGLE. Reference threshold: long distraction, eyes off road continuously for 3 s; 2.5, 2.95, 3.0, 3.05 and 3.5 s bracket the threshold (2.95 and 3.05 s are one frame either side of 3.0 s). The 15 fps version of the same scenario is ROB-DIS-LOW-FPS."
 status: ready
 source: written
 tags: [head_turn, duration]

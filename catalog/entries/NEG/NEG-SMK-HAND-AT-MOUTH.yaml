@@ -1,9 +1,15 @@
 id: NEG-SMK-HAND-AT-MOUTH
 number: 67
 title: "手摸嘴或托下巴，沒有菸（每次 1.5 / 3 / 4 s，1 / 2 / 3 次）"
+title_en: "Hand touching the mouth or chin in hand, no cigarette (1.5 / 3 / 4 s each, 1 / 2 / 3 times)"
+short: "手摸嘴或托下巴，沒有菸"
+short_en: "Hand at the mouth or chin, no cigarette"
+brief: {small: "手在嘴前 1.5 s ×1", medium: "手在嘴前 3 s ×2", large: "手在嘴前 4 s ×3", all: "每次之間放下 3 s"}
+brief_en: {small: "Hand at the mouth 1.5 s ×1", medium: "Hand at the mouth 3 s ×2", large: "Hand at the mouth 4 s ×3", all: "Hand down 3 s between times"}
 summary: "對照：抽菸（V10）的真值沒有時長門檻，看的是香菸框；抽菸是手反覆到嘴邊，次數越多、每次越久越像。
   手在嘴前（hand: at_mouth，跟抽菸同一個手勢、手裡沒有菸）每次 small 1.5 s、medium 3 s、large 4 s，共 1 / 2 / 3 次，中間放下 3 s。
   遮擋版（同 NEG-PHN-HAND-AT-EAR）；有假香菸框的版本是 NEG-SMK-HAND-AT-MOUTH-FP。"
+summary_en: "Reference: the smoking (V10) ground truth has no duration threshold; what matters is the cigarette box; smoking is the hand repeatedly at the mouth, so the more times and the longer each time, the more it looks like smoking. Hand in front of the mouth (hand: at_mouth, the same gesture as smoking, with no cigarette in the hand) each time small 1.5 s, medium 3 s, large 4 s, 1 / 2 / 3 times in total, hand down for 3 s in between. Occlusion version (like NEG-PHN-HAND-AT-EAR); the version with a false cigarette box is NEG-SMK-HAND-AT-MOUTH-FP."
 status: ready
 source: written
 tags: [smoking, hand_near_face, occlusion]

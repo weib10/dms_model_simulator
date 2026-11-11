@@ -1,7 +1,13 @@
 id: ROB-ALL-ERROR-PROFILES
 number: 84
 title: "通話、抽菸、微睡、未繫安全帶各一段，在五種模型誤差設定下重跑"
+title_en: "One segment each of phone call, smoking, microsleep and unbuckled seat belt, rerun under five model error profiles"
+short: "多種模型誤差下重跑"
+short_en: "Same drive under several model error profiles"
+brief: {all: "通話、叼菸、閉眼、沒繫各一段（44.5 s），換 5 種誤差設定重跑"}
+brief_en: {all: "Call, cigarette, closure, unbuckled, one each (44.5 s), rerun under 5 error profiles"}
 summary: "同一個劇本換誤差設定（偵測率低、掉幀、延遲、框抖動）。連續漏框見 ROB-ALL-BURST-MISS，眼睛類別翻轉見 ROB-DRW-EYE-FLIP。"
+summary_en: "The same scenario under different error profiles (low detection rate, dropped frames, latency, box jitter). For consecutive missed boxes see ROB-ALL-BURST-MISS; for eye-class flips see ROB-DRW-EYE-FLIP."
 status: ready
 source: written
 tags: [robustness, profiles]

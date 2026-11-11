@@ -1,9 +1,15 @@
 id: NAT-ALL-MIXED-120
 number: 87
-title: "120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸、未繫安全帶片段"
-summary: "現有劇本 scenarios/random_120s.yaml（gen-scenario seed 1）。適合量每分鐘告警數、告警被切成幾段。"
+title: "120 s 隨機日常駕駛，夾雜手機、疲勞、抽菸片段"
+title_en: "120 s of random everyday driving, mixed with phone, drowsiness and smoking episodes"
+short: "日常駕駛夾雜違規片段"
+short_en: "Everyday drive mixed with violations"
+brief: {all: "120 s：手機、疲勞各約 13 s，抽菸約 7 s（與手機重疊），低頭久看 2 次，都有繫安全帶"}
+brief_en: {all: "120 s: phone and drowsiness ~13 s each, smoking ~7 s (overlaps phone), 2 long looks down; belt always on"}
+summary: "現有劇本 scenarios/random_120s.yaml（gen-scenario seed 1）。片段：手機放大腿 12.7 s、疲勞 13.2 s、抽菸 6.6 s；這個 seed 沒有抽到未繫安全帶。片段之外另有兩次低頭看大腿／中控的長分心（約 32–38 s 連續 5.9 s、68–71 s 連續 3.3 s）；抽菸片段整段和手機片段重疊（最後 6.6 s 手機擱大腿、菸含在嘴上）。適合量每分鐘告警數、告警被切成幾段。"
+summary_en: "The existing scenario scenarios/random_120s.yaml (gen-scenario seed 1). Episodes: phone on the lap 12.7 s, drowsiness 13.2 s, smoking 6.6 s; this seed drew no unbuckled seat belt. Outside the episodes there are two long looks down at the lap / centre display (about 32–38 s, 5.9 s in a row; 68–71 s, 3.3 s); the smoking episode lies entirely within the phone episode (the last 6.6 s: phone on the lap, cigarette in the mouth). Suited to measuring alerts per minute and how many pieces an alert is split into."
 status: ready
 source: generated
 tags: [natural, existing]
-behaviors: [N01, N02, N03, V08, V09, V03, V01, V05, V07, V10]
+behaviors: [N01, N02, N03, N07, V09, V03, V05, V07, V10]
 from_scenario: scenarios/random_120s.yaml

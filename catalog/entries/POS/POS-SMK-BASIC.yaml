@@ -1,8 +1,14 @@
 id: POS-SMK-BASIC
 number: 63
 title: "基本款：菸含在嘴上、雙手在方向盤 6 / 5 / 2 s，再拿掉"
+title_en: "Basic: cigarette held in the mouth, both hands on the wheel, 6 / 5 / 2 s, then removed"
+short: "叼菸（基本款）"
+short_en: "Cigarette in the mouth (basic)"
+brief: {small: "叼菸 6 s", medium: "叼菸 5 s", large: "叼菸 2 s", all: "雙手在方向盤"}
+brief_en: {small: "6 s in the mouth", medium: "5 s in the mouth", large: "2 s in the mouth", all: "Both hands on the wheel"}
 summary: "抽菸家族的基本款：手不在臉前，嘴與菸都沒被遮。
   對照：抽菸的真值沒有時長門檻，菸在嘴上就成立。small 6 s、medium 5 s、large 2 s（短但仍明確叼著）。"
+summary_en: "The basic entry of the smoking family: the hands are not in front of the face; neither the mouth nor the cigarette is covered. Reference: the smoking ground truth has no duration threshold; it holds as soon as the cigarette is in the mouth. small 6 s, medium 5 s, large 2 s (short but still clearly in the mouth)."
 status: ready
 source: written
 tags: [basic, smoking]

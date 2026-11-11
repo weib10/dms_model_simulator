@@ -1,8 +1,14 @@
 id: POS-PHN-LAP-THEN-CALL
 number: 54
 title: "低頭看大腿上的手機 4 s、抬頭 1 s、再看 2 s，然後接電話（通話時看乘客 1.5 s）"
+title_en: "Looking down at a phone on the lap for 4 s, up for 1 s, down again for 2 s, then answering a call (looking at the passenger for 1.5 s during the call)"
+short: "低頭看大腿手機後接電話"
+short_en: "Phone on the lap, then answering a call"
+brief: {all: "看大腿手機 4 s、抬頭 1 s、再看 2 s，接著講電話 4.5 s（含看乘客 1.5 s）"}
+brief_en: {all: "Phone on the lap: look 4 s, up 1 s, look 2 s; then a 4.5 s call (with a 1.5 s look at the passenger)"}
 summary: "從 scenarios/phone_distraction.yaml 改寫成模板（劇本檔不動），第一次看大腿從 3.0 s 拉長到 4.0 s，跨過長分心門檻（連續離開路面 3 s，V03）。
   通話時看乘客 1.5 s 是聊天時看一眼（N07），不是長分心。大腿上的手機只有 overhead_console 拍得到（dash_right、steering_column 拍不到），通話段三台都看得到手機。"
+summary_en: "Rewritten as a template from scenarios/phone_distraction.yaml (the scenario file is unchanged); the first look at the lap is lengthened from 3.0 s to 4.0 s, crossing the long-distraction threshold (eyes off road continuously for 3 s, V03). The 1.5 s look at the passenger during the call is a glance while chatting (N07), not a long distraction. A phone on the lap is only visible to overhead_console (not to dash_right or steering_column); during the call all three cameras can see the phone."
 status: ready
 source: written
 tags: [phone, call, look_down]
