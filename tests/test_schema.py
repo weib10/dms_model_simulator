@@ -52,10 +52,17 @@ def test_pipeline_record_keys_and_types():
         if p[F["head_pose"]] is not None:
             assert set(p[F["head_pose"]]) == {F["yaw"], F["pitch"], F["roll"], F["score"]}
         g = p[F["gaze"]]
+        assert (g is None) == (p[F["head_pose"]] is None)          # both need the face
         if g is not None:
-            assert set(g) == {F[k] for k in ("yaw", "pitch", "vector", "valid", "score", "yaw_vehicle", "pitch_vehicle", "zone")}
-            if g[F["valid"]]:
-                assert abs(np.linalg.norm(g[F["vector"]]) - 1) < 1e-6 and isinstance(g[F["zone"]], str)
+            assert set(g) == {F["face"], F["eye"]}
+            for part in (F["face"], F["eye"]):
+                d = g[part]
+                assert set(d) == {F[k] for k in ("yaw", "pitch", "vector", "valid", "score", "yaw_vehicle",
+                                                 "pitch_vehicle", "zone")}
+                if d[F["valid"]]:
+                    assert abs(np.linalg.norm(d[F["vector"]]) - 1) < 1e-6 and isinstance(d[F["zone"]], str)
+            assert g[F["face"]][F["valid"]]                         # with a face, the face direction is there
+            assert g[F["eye"]][F["valid"]] == bool(r["pred"]["gaze"]["valid"])
         if p[F["eye_openness"]] is not None:
             assert set(p[F["eye_openness"]]) == {F["left"], F["right"]}
             assert any(v is not None for v in p[F["eye_openness"]].values())
@@ -96,12 +103,49 @@ def test_dropped_frames_produce_nulls():
     assert p[F["frame_id"]] == 10
 
 
+def test_eye_refused_face_direction_still_given():
+    s = Simulation({"name": "closed", "behavior": {"blink": {"rate_per_min": 0}},
+                    "segments": [{"target": "road_ahead", "duration": 0.5, "eye_openness": 0.05}]}, "steering_column",
+                   seed=1, emulator_overrides={"pipeline": {"drop_frame_prob": 0}})
+    s.run()
+    seen = 0
+    for r in s.records:
+        g = to_pipeline(r, s.camera)[F["gaze"]]
+        if g is None:
+            continue
+        seen += 1
+        e, f = g[F["eye"]], g[F["face"]]
+        assert not e[F["valid"]] and e[F["score"]] == 0.0
+        assert all(e[F[k]] is None for k in ("yaw", "pitch", "vector", "yaw_vehicle", "pitch_vehicle", "zone"))
+        assert f[F["valid"]] and f[F["score"]] > 0 and isinstance(f[F["zone"]], str)
+        assert f[F["yaw"]] == r["pred"]["face_dir"]["yaw_camera"]
+    assert seen > 0
+
+
+def test_record_without_face_dir_keeps_the_eye_gaze():
+    s = _sim(pipeline={"drop_frame_prob": 0})
+    r = next(r for r in s.records if r["pred"]["face_dir"] is not None)
+    old = {**r, "pred": {k: v for k, v in r["pred"].items() if k != "face_dir"}}     # stored before face_dir existed
+    g, g_new = to_pipeline(old, s.camera)[F["gaze"]], to_pipeline(r, s.camera)[F["gaze"]]
+    assert g[F["face"]] is None and g[F["eye"]] == g_new[F["eye"]]
+
+
+def test_truth_gaze_face_and_eye():
+    s = _sim()
+    for r in s.records[:20]:
+        g = to_truth(r, s.camera)[F["gaze"]]
+        common = {F[k] for k in ("yaw", "pitch", "vector", "yaw_vehicle", "pitch_vehicle", "vector_vehicle", "zone")}
+        assert set(g[F["face"]]) == common and set(g[F["eye"]]) == common | {F["target"]}
+        assert g[F["face"]][F["vector_vehicle"]] == r["truth"]["face_dir"]["dir_vehicle"]
+        assert g[F["eye"]][F["vector_vehicle"]] == r["truth"]["gaze"]["dir_vehicle"]
+
+
 def test_truth_record_matches_frame_and_carries_events():
     s = _sim()
     r = dict(s.records[5]); r["truth"] = {**r["truth"], "events": {"eyes_off_road": True}}
     t = to_truth(r, s.camera)
     assert t[F["frame_id"]] == 5 and t[F["events"]] == {"eyes_off_road": True}
-    assert t[F["gaze"]][F["zone"]] == s.records[5]["truth"]["gaze"]["zone"]
+    assert t[F["gaze"]][F["eye"]][F["zone"]] == s.records[5]["truth"]["gaze"]["zone"]
     ev = to_truth(s.records[5], s.camera)[F["events"]]       # real labels from events.py (+ phone_use_visible)
     assert set(ev) == {"eyes_off_road", "off_road_s", "eyes_closed", "closed_s", "phone_use", "yawning", "smoking",
                        "seatbelt_off", "phone_use_visible"}

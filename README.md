@@ -113,9 +113,9 @@ Per frame, for one camera:
 - **Model output**
   - OD boxes with scores: `face`, `left_eye`, `right_eye`, `mouth`, `hand`, `phone`, `cigarette`, `seatbelt`
     (optionally mapped to your own classes, e.g. open / closed eye)
-  - head pose, gaze, eye / mouth openness
+  - head pose, gaze (face direction and eye gaze), eye / mouth openness
 - **Ground truth**, always from the script, never from the model
-  - exact boxes, landmarks, head pose, gaze, openness
+  - exact boxes, landmarks, head pose, gaze (face direction and eye gaze), openness
   - hand / phone / cigarette / seatbelt states
   - behaviour labels: `eyes_off_road`, `off_road_s`, `eyes_closed`, `closed_s`, `phone_use`, `phone_use_visible`,
     `yawning`, `smoking`, `seatbelt_off`
@@ -213,7 +213,7 @@ A scenario may carry a `cabin:` block (driver position / size) and a `camera:` b
 
 - detection probability vs box size / head yaw / occlusion
 - box and score noise
-- head pose / gaze / openness noise
+- head pose / gaze (face direction and eye gaze, independent) / openness noise
 - dropped frames and latency
 
 Optional modes, off by default. Each is a two-state Markov chain with a long-run share and a mean run length.
@@ -242,7 +242,7 @@ Optional modes, off by default. Each is a two-state Markov chain with a long-run
 | `flp1..2` | class flips |
 | `fp1..2` | false positives |
 | `bad`, `worst` | bundles |
-| `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze noise, and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
+| `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze (face and eye) noise, and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
 
 Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
 or in a catalog entry's `variation.profiles`.
@@ -264,7 +264,10 @@ particular model does.
 All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is in [`docs/SPEC.md`](docs/SPEC.md).
 
 - **Pipeline JSONL**: `frame_id`, `timestamp_ms`, `camera_id`, `od` [`{label, bbox [x1,y1,x2,y2], score}`],
-  `head_pose`, `gaze`, `eye_openness`, `mouth_openness`. A dropped frame has an empty `od` and null fields.
+  `head_pose`, `gaze` (`{face, eye}`: where the head points and the eye gaze, each with yaw / pitch, vector,
+  `valid`, score, vehicle angles and zone; `face` is valid whenever the face is found), `eye_openness`,
+  `mouth_openness`. A dropped frame has an empty `od` and null fields. Format change (0.2.0): `gaze` in the
+  pipeline and truth JSONL became `{face, eye}`; before it was the flat eye gaze, now `gaze.eye`.
 - **Truth JSONL**: exact values, the behaviour labels under `events`, and `observable`.
 - **Full JSONL**: `{frame, t, camera, truth, pred}` with diagnostics. `pred` carries the error flags `dropped`,
   `latency_fill`, `source_frame`, per-box `jump` / `false_positive` / `p_detect`, and `class_flip`.
@@ -335,7 +338,7 @@ standard benchmark the simplest is to generate it once with a tagged version and
 | vehicle | X forward, Y left, Z up, metres | origin = nominal driver eye point |
 | head | X out of the face, Y left, Z up | origin = eye midpoint; rotates about `driver.head_pivot` |
 | camera (OpenCV) | x right, y down, z forward | `R_cam_from_vehicle` in `<run>__camera.json` |
-| camera "face frame" | forward = reversed optical axis, left = image right, up = image up | head pose / gaze `*_camera` are 0 when parallel to the reversed optical axis; yaw>0 = subject's own left, pitch>0 = up |
+| camera "face frame" | forward = reversed optical axis, left = image right, up = image up | head pose / gaze (face and eye) `*_camera` are 0 when parallel to the reversed optical axis; yaw>0 = subject's own left, pitch>0 = up |
 
 - **Angles**: vehicle-frame yaw>0 = left, pitch>0 = up; head pose = `Rz(yaw) Ry(-pitch) Rx(roll)`.
 - **Boxes**: `[x1, y1, x2, y2]` pixels in the full image; scores 0..1.

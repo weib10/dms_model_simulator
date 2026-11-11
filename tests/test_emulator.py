@@ -79,6 +79,38 @@ def test_openness_null_for_undetected_eye_or_mouth(base):
     assert o["mouth_openness"] is not None
 
 
+EXACT_DET = {"pipeline": {"drop_frame_prob": 0.0},
+             "detection": {k: {"p_max": 1.0, "min_width_px": 0.0} for k in ("face", "eye", "mouth")}}
+
+
+def test_face_dir_without_eye_gaze_and_none_without_face(base):
+    closed = copy.deepcopy(base)
+    closed["eye_openness"] = {"left": 0.05, "right": 0.05}
+    o = _emu(EXACT_DET)._infer(closed)
+    assert not o["gaze"]["valid"] and o["gaze"]["reason"] == "eyes_closed"
+    fd = o["face_dir"]
+    assert fd["valid"] and 0.0 <= fd["conf"] <= 1.0 and fd["std_deg"] > 0
+    assert abs(np.linalg.norm(fd["dir_vehicle"]) - 1) < 1e-9
+    noface = copy.deepcopy(base)
+    noface["detections"] = [d for d in noface["detections"] if d["class"] != "face"]
+    o = _emu(EXACT_DET)._infer(noface)
+    assert o["face_dir"] is None and o["gaze"]["reason"] == "no_face" and o["head_pose_camera"] is None
+    e = _emu({"pipeline": {"drop_frame_prob": 1.0}})
+    assert e.emulate(base)["face_dir"] is None
+
+
+def test_face_dir_zero_noise_is_exact(base):
+    zero = deep_merge(EXACT_DET, {"face_dir": {"base_std_deg": 0.0, "per_deg_rel_yaw": 0.0,
+                                               "per_px_inv_face_width": 0.0, "bias_deg": [0.0, 0.0]}})
+    fd = _emu(zero)._infer(base)["face_dir"]
+    tf = base["face_dir"]
+    assert fd["angular_error_deg"] < 1e-9 and fd["zone"] == tf["zone"]
+    assert fd["yaw_camera"] == pytest.approx(tf["yaw_camera"], abs=1e-9)
+    assert fd["yaw_vehicle"] == pytest.approx(tf["yaw_vehicle"], abs=1e-9)
+    fd = _emu(EXACT_DET)._infer(base)["face_dir"]               # nominal noise: a few degrees off
+    assert 0 < fd["angular_error_deg"] < 6 * fd["std_deg"]
+
+
 def test_no_unused_eye_noise_stream():
     e = _emu()
     assert "eye" not in e.box_noise and {"left_eye", "right_eye"} <= set(e.box_noise)

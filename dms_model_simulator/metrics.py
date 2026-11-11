@@ -34,6 +34,10 @@ def summarize(records: list[dict], cfg: dict | None = None) -> dict:
     gaze_err = [G.angle_between(np.array(r["pred"]["gaze"]["dir_vehicle"]), np.array(r["truth"]["gaze"]["dir_vehicle"]))
                 for r in gaze_valid]
     zone_ok = [r["pred"]["gaze"]["zone"] == r["truth"]["gaze"]["zone"] for r in gaze_valid]
+    face_dir = [r for r in records if r["pred"].get("face_dir") and "face_dir" in r["truth"]]
+    face_err = [G.angle_between(np.array(r["pred"]["face_dir"]["dir_vehicle"]), np.array(r["truth"]["face_dir"]["dir_vehicle"]))
+                for r in face_dir]
+    face_zone_ok = [r["pred"]["face_dir"]["zone"] == r["truth"]["face_dir"]["zone"] for r in face_dir]
     hp = [(r["pred"]["head_pose_camera"], r["truth"]["head_pose_camera"]) for r in records if r["pred"]["head_pose_camera"]]
     hp_err = [abs(p["yaw"] - t["yaw"]) for p, t in hp]
     fw = [d["width_px"] for r in face_truth for d in r["truth"]["detections"] if d["class"] == "face"]
@@ -53,6 +57,8 @@ def summarize(records: list[dict], cfg: dict | None = None) -> dict:
         "gaze_mean_error_deg": _mean(gaze_err),
         "gaze_p95_error_deg": float(np.percentile(gaze_err, 95)) if gaze_err else float("nan"),
         "zone_accuracy": _mean(zone_ok),
+        "face_dir_mean_error_deg": _mean(face_err),
+        "face_zone_accuracy": _mean(face_zone_ok),
         "head_yaw_mae_deg": _mean(hp_err),
         "false_positives_per_frame": _rate(fp, n),
     }

@@ -66,6 +66,8 @@ def test_no_face_box_and_extra_fields(sim, all_cams):
     r["truth"]["landmarks_px"] = {k: [float("nan"), float("nan")] for k in r["truth"]["landmarks_px"]}
     r["truth"]["gaze"]["origin_px"] = [float("nan")] * 2
     r["truth"]["gaze"]["tip_px"] = [float("nan")] * 2
+    r["truth"]["face_dir"]["origin_px"] = [float("nan")] * 2       # a face direction off the image is not drawn
+    r["truth"]["face_dir"]["tip_px"] = [float("nan")] * 2
     r["pred"]["detections"] = []
     img = viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5)
     assert img.size == (sim.camera.width // 2, sim.camera.height // 2)
@@ -78,6 +80,60 @@ def test_no_face_box_and_extra_fields(sim, all_cams):
     b = np.asarray(viz.draw_camera_view(sim.records[5], sim.camera, sim.cabin, 0.5))
     assert np.any(a != b)
     viz.composite(r2, sim.camera, sim.cabin, all_cams, 0.5)
+
+
+def test_face_direction_arrows_drawn(sim, all_cams):
+    # the frame where head and eyes point furthest apart (else the gaze arrow covers the face arrow)
+    from dms_model_simulator import geometry as G
+    r = max(sim.records, key=lambda x: G.angle_between(x["truth"]["face_dir"]["dir_vehicle"], x["truth"]["gaze"]["dir_vehicle"]))
+    assert r["pred"]["face_dir"]["valid"]
+    bare = copy.deepcopy(r)
+    del bare["truth"]["face_dir"]; bare["pred"]["face_dir"] = None     # records without a face direction still draw
+    a = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5))
+    b = np.asarray(viz.draw_camera_view(bare, sim.camera, sim.cabin, 0.5))
+    assert np.any(a != b)
+    n_face = lambda img, col: int(np.all(img == col, axis=-1).sum())     # the legend has the colour in both
+    assert n_face(a, viz.FACE_COLOR) > n_face(b, viz.FACE_COLOR)
+    bg = viz.cabin_background(sim.cabin, all_cams, sim.camera.name, 300)
+    ca, cb = np.asarray(bg.render(r)), np.asarray(bg.render(bare))
+    assert n_face(ca, viz.CABIN_GT_FACE) > n_face(cb, viz.CABIN_GT_FACE)
+    viz.plt.close(viz.plot_cabin(sim.cabin, all_cams, bare, highlight=sim.camera.name))
+
+
+def test_face_direction_drawn_on_top_of_an_aligned_gaze(sim, all_cams):
+    """Head and eyes pointing the same way: the thinner face arrows lie on the gaze arrows and stay visible."""
+    from dms_model_simulator import geometry as G
+    r = copy.deepcopy(min(sim.records, key=lambda x: G.angle_between(x["truth"]["face_dir"]["dir_vehicle"],
+                                                                     x["truth"]["gaze"]["dir_vehicle"])))
+    r["truth"]["face_dir"] = {**r["truth"]["face_dir"], "dir_vehicle": r["truth"]["gaze"]["dir_vehicle"],
+                              "origin_px": r["truth"]["gaze"]["origin_px"], "tip_px": r["truth"]["gaze"]["tip_px"]}
+    u, v = np.round(0.5 * np.add(r["truth"]["gaze"]["origin_px"], r["truth"]["gaze"]["tip_px"]) * 0.5).astype(int)
+    img = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5, show_pred=False))
+    assert tuple(img[v, u]) == viz.FACE_COLOR                        # midpoint of the GT gaze line: face on top
+    near = img[v - 3:v + 4, u - 3:u + 4].reshape(-1, 3)
+    assert any(tuple(p) == viz.GAZE_COLOR for p in near)             # the wider gaze line still shows beside it
+    bg = viz.cabin_background(sim.cabin, all_cams, sim.camera.name, 300)
+    bare = copy.deepcopy(r); del bare["truth"]["face_dir"]; bare["pred"]["face_dir"] = None
+    ca, cb = np.asarray(bg.render(r)), np.asarray(bg.render(bare))
+    n = lambda img, col: int(np.all(img == col, axis=-1).sum())
+    assert n(ca, viz.CABIN_GT_FACE) > n(cb, viz.CABIN_GT_FACE)       # visible over the GT gaze arrow
+    assert n(ca, viz.CABIN_GT_GAZE) > 0
+
+
+def test_legend_wraps_in_a_narrow_view(sim):
+    """At a small scale the six legend entries do not fit one row: the last (PRED face) wraps onto a row of its own
+    instead of being cut off at the image edge."""
+    r = copy.deepcopy(sim.records[10])
+    del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None        # PRED_FACE_COLOR then only in the legend
+    for scale in (0.5, 0.15):
+        img = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, scale))
+        rows = np.nonzero(np.all(img == viz.PRED_FACE_COLOR, axis=-1).any(axis=1))[0]
+        gaze_rows = np.nonzero(np.all(img == viz.GAZE_COLOR, axis=-1)[-40:].any(axis=1))[0]
+        assert len(rows) > 0                                        # the PRED face legend entry is drawn
+        if scale == 0.15:
+            assert rows.min() > img.shape[0] - 40 + gaze_rows.max()   # on a row below the GT gaze entry
+        else:                                                       # wide enough: one row, as before
+            assert rows.max() <= img.shape[0] - 40 + gaze_rows.max() and rows.min() >= img.shape[0] - 40 + gaze_rows.min()
 
 
 def test_plot_cabin_standalone(sim, all_cams):
@@ -97,11 +153,45 @@ def test_pred_gaze_drawn_with_lens_distortion():
                         "false_positives": {"rate_per_frame": 0}}}
     s = Simulation("mirror_check", "steering_column", seed=0, cfgs=cfgs, emulator_overrides=ov)
     s.frames = s.frames[:5]; s.run()
-    r = s.records[2]
+    r = copy.deepcopy(s.records[2])
     assert r["pred"]["gaze"]["valid"]
+    # the face-direction arrows are drawn on top of the gaze; without them the GT gaze tip shows the PRED gaze
+    del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None
     u, v = r["truth"]["gaze"]["tip_px"]
     img = np.asarray(viz.draw_camera_view(r, s.camera, s.cabin, 1.0))
     assert tuple(img[int(round(v)), int(round(u))]) == viz.PRED_GAZE_COLOR      # drawn over the GT tip
+
+
+def test_pred_face_drawn_with_lens_distortion():
+    """With exact face-direction output the predicted face tip lands on the GT face tip (truth.py: the same 0.15 m
+    ray, projected through the distorted lens), and the arrow ends there. The frame is the one where the
+    distortion moves the tip most, so a ray of another length or a projection without distortion misses."""
+    from dms_model_simulator.config import load_configs
+    cfgs = load_configs()
+    cfgs["cameras"]["cameras"]["steering_column"].update({"distortion": [-0.35, 0.0], "look_at_offset": [0.0, 0.2, 0.12]})
+    ov = {"pipeline": {"drop_frame_prob": 0},
+          "face_dir": {"base_std_deg": 0, "per_deg_rel_yaw": 0, "per_px_inv_face_width": 0, "bias_deg": [0, 0]},
+          "detection": {"face": {"p_max": 1, "min_width_px": 0}, "false_positives": {"rate_per_frame": 0}}}
+    s = Simulation("mirror_check", "steering_column", seed=0, cfgs=cfgs, emulator_overrides=ov); s.run()
+    flat = copy.copy(s.camera); flat.k1 = flat.k2 = 0.0            # the same camera without distortion
+
+    def shift(r):                                  # how far the distortion moves the face tip (px)
+        t = r["truth"]["face_dir"]
+        tip = np.array(t["origin_vehicle"]) + 0.15 * np.array(t["dir_vehicle"])
+        return float(np.linalg.norm(np.subtract(t["tip_px"], flat.project(tip)[0])))
+
+    H = s.camera.height
+    ok = [r for r in s.records if r["pred"]["face_dir"] and 0.3 * H < r["truth"]["face_dir"]["tip_px"][1] < 0.7 * H]
+    r = copy.deepcopy(max(ok, key=shift))
+    assert shift(r) > 6
+    assert r["pred"]["face_dir"]["angular_error_deg"] < 1e-9
+    o, tip = np.array(r["truth"]["face_dir"]["origin_px"]), np.array(r["truth"]["face_dir"]["tip_px"])
+    del r["truth"]["face_dir"]                     # only the PRED face arrow is drawn (it is on top of the rest)
+    img = np.asarray(viz.draw_camera_view(r, s.camera, s.cabin, 1.0))
+    px = lambda p: tuple(img[int(round(p[1])), int(round(p[0]))])
+    assert px(tip) == viz.PRED_FACE_COLOR                            # tip on the GT tip
+    beyond = tip + 6 * (tip - o) / np.linalg.norm(tip - o)
+    assert px(beyond) != viz.PRED_FACE_COLOR                         # and the arrow ends there
 
 
 def test_error_rows_and_plot_timeline(tmp_path):

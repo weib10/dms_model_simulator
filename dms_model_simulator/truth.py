@@ -280,6 +280,14 @@ def compute_truth(cabin: Cabin, cam: Camera, f: DriverFrame) -> dict:
     origin_uv, _ = cam.project(head.origin)
     tip_uv, _ = cam.project(head.origin + 0.15 * gaze_dir)
 
+    # face direction: the head's forward axis (head frame +X), from the eye midpoint; same ray length as the gaze
+    face_dir = head.R[:, 0].copy()
+    f_yaw_v, f_pitch_v = G.dir_to_yaw_pitch(face_dir)
+    face_dir_cam = cam.dir_to_cam(face_dir)
+    f_yaw_c, f_pitch_c = G.dir_to_yaw_pitch(G.cv_to_face(face_dir_cam))
+    f_zone, f_zone_err = cabin.classify_zone(head.origin, face_dir)
+    f_tip_uv, _ = cam.project(head.origin + 0.15 * face_dir)
+
     dets = []
     if face_box:
         dets.append({"class": "face", "bbox": face_box, "occlusion": occ_frac(face_lms), "width_px": face_w,
@@ -332,6 +340,13 @@ def compute_truth(cabin: Cabin, cam: Camera, f: DriverFrame) -> dict:
             "target": f.target_name, "zone": zone, "zone_angle_err_deg": zone_err,
             "gaze_to_camera_deg": gaze_to_cam,
             "origin_px": origin_uv.tolist(), "tip_px": tip_uv.tolist(),
+        },
+        "face_dir": {
+            "origin_vehicle": head.origin.tolist(), "dir_vehicle": face_dir.tolist(),
+            "yaw_vehicle": f_yaw_v, "pitch_vehicle": f_pitch_v,
+            "dir_camera": face_dir_cam.tolist(), "yaw_camera": f_yaw_c, "pitch_camera": f_pitch_c,
+            "zone": f_zone, "zone_angle_err_deg": f_zone_err,
+            "origin_px": origin_uv.tolist(), "tip_px": f_tip_uv.tolist(),
         },
         "eye_openness": {"left": f.openness_left, "right": f.openness_right},
         "mouth_openness": mouth_open,

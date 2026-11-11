@@ -44,7 +44,8 @@ def cmd_run(a):
 
 
 RUN_COLS = ["face_detection_rate", "mean_face_width_px", "mean_abs_head_yaw_rel_camera_deg", "mean_gaze_to_camera_deg",
-            "mean_face_occlusion", "gaze_valid_rate_eyes_open", "gaze_mean_error_deg", "zone_accuracy", "head_yaw_mae_deg"]
+            "mean_face_occlusion", "gaze_valid_rate_eyes_open", "gaze_mean_error_deg", "zone_accuracy", "head_yaw_mae_deg",
+            "face_dir_mean_error_deg", "face_zone_accuracy"]
 
 
 def _save_video(viz, frames, path: Path, fps: float, mp4: bool):
@@ -252,7 +253,7 @@ def cmd_compare(a):
         name = sim.scenario["name"]                       # with the variant suffix
     cols = ["face_detection_rate", "mean_face_width_px", "mean_eye_width_px", "mean_abs_head_yaw_rel_camera_deg",
             "mean_gaze_to_camera_deg", "mean_face_occlusion", "gaze_valid_rate_eyes_open", "gaze_mean_error_deg",
-            "gaze_p95_error_deg", "zone_accuracy", "head_yaw_mae_deg"]
+            "gaze_p95_error_deg", "zone_accuracy", "head_yaw_mae_deg", "face_dir_mean_error_deg", "face_zone_accuracy"]
     table = markdown_table(rows, cols)
     print(table)
     if a.out:

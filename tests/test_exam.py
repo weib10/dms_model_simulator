@@ -141,6 +141,9 @@ def test_exact_reports_every_truth_box_and_observable_says_what_is_there():
         assert {x["class"] for x in p["detections"]} == {x["class"] for x in t["detections"]}
         assert set(ob) == set(E.OBSERVABLE_CHANNELS)
         assert bool(p["gaze"]["valid"]) == ob["gaze"]
+        assert (p["face_dir"] is not None) == ob["face"]          # the face direction needs the face only
+        if p["face_dir"] is not None:
+            assert p["face_dir"]["angular_error_deg"] < 1e-6
         assert (p["head_pose_camera"] is not None) == ob["head_pose"] == ob["face"]
         assert (p["eye_openness"] is not None) == ob["eyes"] and (p["mouth_openness"] is not None) == ob["mouth"]
         assert ob["phone"] == t["phone_visible"] and ob == rn["truth"]["observable"]

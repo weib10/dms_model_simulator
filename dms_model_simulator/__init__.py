@@ -5,4 +5,4 @@ Coordinate conventions (see README):
   camera frame  : OpenCV (x right, y down, z forward).
   yaw/pitch     : computed in a forward-left-up frame; yaw>0 = left, pitch>0 = up.
 """
-__version__ = "0.1.0"
+__version__ = "0.2.0"

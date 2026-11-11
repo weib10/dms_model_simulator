@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from dms_model_simulator.behavior import DriverFrame
 from dms_model_simulator.camera import Camera
 from dms_model_simulator.config import load_configs
@@ -34,6 +35,32 @@ def test_gaze_into_camera_is_zero_in_camera_frame():
     # direction in camera frame is anti-parallel to the eye position in the camera frame
     eye_c = np.array(tr["head_center_camera"])
     assert G.angle_between(np.array(tr["gaze"]["dir_camera"]), -eye_c) < 1e-6
+
+
+def test_face_dir_is_the_head_forward_axis():
+    """face_dir points where the head points: the vehicle-frame direction of the head yaw / pitch (the same
+    definition as the head-off-road check), from the eye midpoint, whatever the gaze does."""
+    cabin, cam = _setup()
+    for tgt, yaw, pitch in (("road_ahead", 0, 0), ("left_mirror", 25, 10), ("phone_lap", -40, -30), ("road_ahead", 70, 5)):
+        tr = compute_truth(cabin, cam, _frame(tgt, cabin, yaw=yaw, pitch=pitch))
+        fd = tr["face_dir"]
+        assert G.angle_between(np.array(fd["dir_vehicle"]), G.yaw_pitch_to_dir(yaw, pitch)) < 1e-9
+        assert fd["yaw_vehicle"] == pytest.approx(yaw, abs=1e-9) and fd["pitch_vehicle"] == pytest.approx(pitch, abs=1e-9)
+        assert fd["origin_vehicle"] == tr["gaze"]["origin_vehicle"] and fd["origin_px"] == tr["gaze"]["origin_px"]
+        assert G.angle_between(np.array(fd["dir_camera"]), cam.dir_to_cam(np.array(fd["dir_vehicle"]))) < 1e-9
+        # the camera angles of the face direction equal the head pose yaw / pitch in the camera face frame
+        assert fd["yaw_camera"] == pytest.approx(tr["head_pose_camera"]["yaw"], abs=1e-9)
+        assert fd["pitch_camera"] == pytest.approx(tr["head_pose_camera"]["pitch"], abs=1e-9)
+        assert fd["zone"] == cabin.classify_zone(np.array(fd["origin_vehicle"]), np.array(fd["dir_vehicle"]))[0]
+    tr = compute_truth(cabin, cam, _frame("phone_lap", cabin))       # eyes down, head straight
+    assert tr["face_dir"]["zone"] == "road_ahead" and tr["gaze"]["zone"] == "phone_lap"
+
+
+def test_face_dir_along_the_reversed_optical_axis_is_zero_in_camera_frame():
+    cabin, cam = _setup()
+    yaw, pitch = G.dir_to_yaw_pitch(-np.asarray(cam.optical_axis, float))
+    fd = compute_truth(cabin, cam, _frame("road_ahead", cabin, yaw=yaw, pitch=pitch))["face_dir"]
+    assert abs(fd["yaw_camera"]) < 1e-9 and abs(fd["pitch_camera"]) < 1e-9
 
 
 def test_face_frame_pose_consistent_with_vehicle_pose():

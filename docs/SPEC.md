@@ -13,7 +13,7 @@ an exact copy of one particular model.
 |---|---|
 | OD model output | 8 simulator classes, each `{label, bbox [x1,y1,x2,y2] px (full image, clipped), score}`: **face** (off by default in the pipeline JSONL, on in dms.bin; `--include-face` / `--no-face`), **left_eye**, **right_eye**, **mouth**, **hand**, **phone**, **cigarette** (at the lips or in the hand), **seatbelt** (only while worn, plus optional false positives when off). A layout `class_map` maps them to consumer classes (e.g. open / closed eye from the predicted openness) for dms.bin, frame_yaml and `--labels mapped`. |
 | OD box extents | `box_style: annotation` (default): face = forehead to chin along the face contour, ears excluded; eye = whole socket (height does not follow openness); mouth = philtrum to below the lower lip, height grows with the lip gap; a part the head hides is cut off; an eye / mouth with no more than `min_visible_fraction` visible gets no box. `geometric` = tight landmark boxes. |
-| other outputs | head pose (face frame) with score; gaze yaw / pitch, unit vector, `valid`, score, vehicle-frame angles and zone; eye openness per eye and mouth openness (0..1). |
+| other outputs | head pose (face frame) with score; gaze as two directions, `face` (where the head points) and `eye` (the eye gaze), each with yaw / pitch, unit vector, `valid`, score, vehicle-frame angles and zone; eye openness per eye and mouth openness (0..1). |
 | ground truth | exact geometry; the emulator never changes it. Truth and model output share `frame_id`. |
 | behaviour labels | derived from the script (`events.py`, `configs/behavior.yaml` `events`), never from the model, and without duration thresholds: they say what the driver does, not what an alert should decide. |
 | observability | per frame and evidence channel, whether a detector that misses nothing could report it (`observable`); the `exact` profile outputs exactly that. Exams count a truth frame only when its evidence is observable. |
@@ -36,24 +36,37 @@ One JSON object per frame, field names in one place (`dms_model_simulator/schema
 { "frame_id": int, "timestamp_ms": int, "camera_id": str,
   "od": [ {"label": str, "bbox": [x1,y1,x2,y2], "score": float} ],
   "head_pose": {"yaw": deg, "pitch": deg, "roll": deg, "score": float} | null,
-  "gaze": {"yaw": deg, "pitch": deg, "vector": [x,y,z], "valid": bool, "score": float,
-           "yaw_vehicle": deg, "pitch_vehicle": deg, "zone": str} | null,
+  "gaze": {"face": DIRECTION, "eye": DIRECTION} | null,
   "eye_openness": {"left": 0..1 | null, "right": 0..1 | null} | null,
   "mouth_openness": 0..1 | null }
+
+DIRECTION = {"yaw": deg, "pitch": deg, "vector": [x,y,z], "valid": bool, "score": float,
+             "yaw_vehicle": deg, "pitch_vehicle": deg, "zone": str}
 ```
-Dropped frame: `od: []`, other fields null. No face: head pose / gaze / openness null. Face but eyes closed or not
-visible: gaze with `valid: false`. Openness only for what the model detected in that frame. Latency
-(`pipeline.latency_frames`) delays the whole output by N frames; with latency the full-JSONL `pred` carries
+Dropped frame: `od: []`, other fields null. No face: head pose / gaze / openness null. With a face, `gaze.face` is
+always valid; when the eyes are closed or not visible (or the gaze points too far from the camera) `gaze.eye` has
+`valid: false`, null angles / vector / zone and score 0 (a full-JSONL record stored before 0.2.0, without
+`face_dir`, converts with `gaze.face: null`). Openness only for what the model detected in that frame.
+`gaze.face` is the head's forward axis from the eye midpoint (camera yaw / pitch are direction angles in the camera
+face frame, vehicle angles and zone as for the eye gaze). `head_pose` and `gaze.face` are two estimates of the same
+head orientation with independent noise (two models): in the truth their camera yaw / pitch are equal, in the
+model output they differ by that noise. `head_pose` also has roll; `gaze.face` also has the vector, vehicle angles
+and zone. Latency (`pipeline.latency_frames`) delays the whole output by N frames; with latency the full-JSONL `pred` carries
 `source_frame`.
 
-Truth JSONL (`*.truth.jsonl`), same `frame_id`: exact `od`, head pose, gaze (with zone and scripted target),
-openness, blink / closure, hand / phone / cigarette / seatbelt / held states, `phone_visible`, and `events`:
+Format change (0.2.0): `gaze` in the pipeline and truth JSONL became `{face, eye}`; before it was the flat eye gaze,
+now `gaze.eye`.
+
+Truth JSONL (`*.truth.jsonl`), same `frame_id`: exact `od`, head pose, gaze as `{face, eye}` (each: camera and
+vehicle angles and vectors as `vector` / `vector_vehicle`, zone; `eye` also has the scripted target; no `valid` /
+`score`, both always present), openness, blink / closure, hand / phone / cigarette / seatbelt / held states, `phone_visible`, and `events`:
 `eyes_off_road` (scripted target off the road, or the actual gaze outside the yaw / pitch box of the on-road
 targets widened by `zone_classifier.tolerance_deg`), `off_road_s` (current continuous off-road time), `eyes_closed` (mean scripted openness below
 `closed_openness_threshold`), `closed_s`, `phone_use` (scripted, also when the phone is out of view),
 `phone_use_visible` (phone box in the image), `yawning`, `smoking`, `seatbelt_off`; and `observable`
 (`emulator.observable`): `face` / `head_pose` (face box in the truth), `head_away` (head pose there and the head's
-facing direction outside the road box), `gaze` (the gaze model gives a direction), `eyes`, `mouth`, `hand`, `phone`,
+facing direction outside the road box), `gaze` (the gaze model gives an eye gaze direction: `gaze.eye.valid`;
+`gaze.face` follows the `face` / `head_pose` channel), `eyes`, `mouth`, `hand`, `phone`,
 `cigarette` (that box in the truth; eyes and mouth need the face), `seatbelt_region` (the strap's place is in the
 image, worn or not). With `perfect_detection: true` (profile `exact`) the model output has a quantity exactly
 when its channel is observable. The full JSONL `truth` also

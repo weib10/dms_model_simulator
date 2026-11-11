@@ -12,7 +12,8 @@ def sigmoid(x):
 
 def _empty(**flags) -> dict:
     """Output of a frame with no model result (dropped, or latency pipeline still filling)."""
-    return {**flags, "detections": [], "head_pose_camera": None, "gaze": None, "eye_openness": None, "mouth_openness": None}
+    return {**flags, "detections": [], "head_pose_camera": None, "gaze": None, "face_dir": None, "eye_openness": None,
+            "mouth_openness": None}
 
 
 def _clip_box(box, w: int, h: int) -> list[float] | None:
@@ -49,8 +50,8 @@ def observable(truth: dict, cfg: dict) -> dict:
     carries no evidence however good the detector is: the phone in the lap, the mouth behind a hand, the eyes of a
     head turned away. cfg: the emulator config (requires_face and the gaze validity rules).
     face / head_pose: the face box is in the truth; eyes / mouth / hand / phone / cigarette: that box is (eyes and
-    mouth also need the face when the class has requires_face); gaze: the gaze model gives a direction
-    (gaze_refusal); seatbelt_region: the place where a worn belt is boxed is in the image, worn or not.
+    mouth also need the face when the class has requires_face); gaze: the gaze model gives an eye gaze direction
+    (gaze_refusal; pipeline gaze.eye.valid; the face direction gaze.face follows face / head_pose); seatbelt_region: the place where a worn belt is boxed is in the image, worn or not.
     Simulation.truths adds head_away: the head pose is there and the head itself points off the road (outside
     the road box), so the head pose alone shows the eyes are off the road; a glance with the eyes only shows in
     the gaze and nowhere else."""
@@ -124,14 +125,15 @@ class Emulator:
     persistent eye / mouth class flips (`eye_state_flip`, `mouth_state_flip`), context-dependent false
     positives (`contextual_false_positives`) and box jumps (`box_jump`). Each is a two-state Markov chain
     (markov_step). `box_conditions` scales the box noise with the view (occlusion, head yaw, small boxes); its gains
-    are 0 in the shipped config. The box-jump stream is spawned last, so enabling it changes nothing else."""
+    are 0 in the shipped config. The box-jump stream is spawned after those, so enabling it changes nothing else.
+    The face-direction noise (`face_dir`) has the last stream: adding it left every earlier draw unchanged."""
 
     def __init__(self, cfg: dict, cabin: Cabin, cam: Camera, rng: np.random.Generator):
         self.cfg, self.cabin, self.cam, self.rng = cfg, cabin, cam, rng
         d = cfg["detection"]
         classes = [c for c in d if c not in ("false_positives", "eye")] + ["left_eye", "right_eye"]
         spec = {c: d["eye" if c.endswith("_eye") else c] for c in classes}
-        streams = iter(rng.spawn(3 + 2 * len(classes) + 4 + 3 + 1))
+        streams = iter(rng.spawn(3 + 2 * len(classes) + 4 + 3 + 1 + 1))
         self.drop_rng, self.fp_rng, self.sb_fp_rng = next(streams), next(streams), next(streams)
         self.det_rng = {c: next(streams) for c in classes}
         self.box_noise = {c: AR1(next(streams), spec[c]["temporal_rho"], 4) for c in classes}
@@ -141,6 +143,7 @@ class Emulator:
         self.mouth_noise = AR1(next(streams), cfg["mouth_openness"]["temporal_rho"], 1)
         self.eye_flip_rng, self.mouth_flip_rng, self.ctx_fp_rng = next(streams), next(streams), next(streams)
         self.jump_rng = next(streams)
+        self.face_dir_noise = AR1(next(streams), cfg["face_dir"]["temporal_rho"], 2)
         self.miss_state: dict[str, bool] = {}        # class -> missed last time it was evaluated (burst misses)
         self.jump_state: dict[str, bool | None] = {} # class -> box jumped last time it was produced (box_jump)
         self.jump_offset: dict[str, tuple] = {}      # class -> (dx, dy as box fractions, size factor) of the jump
@@ -335,6 +338,22 @@ class Emulator:
             return None
         return float(fc["open_value"] if low else fc["closed_value"])
 
+    # ---- directions (eye gaze, face direction) ------------------------------------
+    def _direction(self, yaw_c: float, pitch_c: float, origin, truth_dir_vehicle, std: float, c: dict) -> dict:
+        """Output of a noisy direction given as camera face-frame angles: vector in camera and vehicle frame,
+        vehicle angles, zone from `origin`, angular error to the truth direction, conf from the predicted std
+        (c: conf_base, conf_per_deg_std)."""
+        dir_cam = G.face_to_cv(G.yaw_pitch_to_dir(yaw_c, pitch_c))
+        dir_v = self.cam.dir_to_vehicle(dir_cam)
+        yaw_v, pitch_v = G.dir_to_yaw_pitch(dir_v)
+        zone, zerr = self.cabin.classify_zone(np.array(origin), dir_v)
+        conf = float(np.clip(c["conf_base"] - c["conf_per_deg_std"] * std, 0, 1))
+        return {"valid": True, "yaw_camera": float(yaw_c), "pitch_camera": float(pitch_c),
+                "dir_camera": dir_cam.tolist(), "yaw_vehicle": float(yaw_v), "pitch_vehicle": float(pitch_v),
+                "dir_vehicle": dir_v.tolist(), "zone": zone, "zone_angle_err_deg": float(zerr),
+                "angular_error_deg": G.angle_between(dir_v, np.array(truth_dir_vehicle)),
+                "std_deg": float(std), "conf": conf}
+
     # ---- per-frame --------------------------------------------------------------
     def emulate(self, truth: dict) -> dict:
         pipe = self.cfg["pipeline"]
@@ -448,21 +467,22 @@ class Emulator:
             std = (c["base_std_deg"] + c["per_deg_gaze_to_camera"] * tg["gaze_to_camera_deg"]
                    + c["per_deg_rel_head_yaw"] * abs(rel_yaw) + c["per_px_inv_eye_width"] / max(eye_w, 1.0))
             n = self.gaze_noise.step(k) * std + np.array(c["bias_deg"])
-            yaw_c, pitch_c = tg["yaw_camera"] + n[0], tg["pitch_camera"] + n[1]
-            dir_cam = G.face_to_cv(G.yaw_pitch_to_dir(yaw_c, pitch_c))
-            dir_v = self.cam.dir_to_vehicle(dir_cam)
-            yaw_v, pitch_v = G.dir_to_yaw_pitch(dir_v)
-            origin = np.array(tg["origin_vehicle"])
-            zone, zerr = self.cabin.classify_zone(origin, dir_v)
-            conf = float(np.clip(c["conf_base"] - c["conf_per_deg_std"] * std, 0, 1))
-            gz = {"valid": True, "yaw_camera": float(yaw_c), "pitch_camera": float(pitch_c),
-                  "dir_camera": dir_cam.tolist(), "yaw_vehicle": float(yaw_v), "pitch_vehicle": float(pitch_v),
-                  "dir_vehicle": dir_v.tolist(), "zone": zone, "zone_angle_err_deg": float(zerr),
-                  "angular_error_deg": G.angle_between(dir_v, np.array(tg["dir_vehicle"])),
-                  "std_deg": float(std), "conf": conf}
+            gz = self._direction(tg["yaw_camera"] + n[0], tg["pitch_camera"] + n[1], tg["origin_vehicle"],
+                                 tg["dir_vehicle"], std, c)
 
-        out = {"dropped": False, "detections": dets, "head_pose_camera": hp_out, "gaze": gz, "eye_openness": eo,
-               "mouth_openness": mo}
+        # face direction (where the head points): whenever the face is found, also when the eye gaze is refused
+        fd = None
+        if face_pred:
+            c = self.cfg["face_dir"]
+            tf = truth["face_dir"]
+            fw = max(face_truth["width_px"], 1.0)
+            std = c["base_std_deg"] + c["per_deg_rel_yaw"] * abs(rel_yaw) + c["per_px_inv_face_width"] / fw
+            n = self.face_dir_noise.step(k) * std + np.array(c["bias_deg"])
+            fd = self._direction(tf["yaw_camera"] + n[0], tf["pitch_camera"] + n[1], tf["origin_vehicle"],
+                                 tf["dir_vehicle"], std, c)
+
+        out = {"dropped": False, "detections": dets, "head_pose_camera": hp_out, "gaze": gz, "face_dir": fd,
+               "eye_openness": eo, "mouth_openness": mo}
         if flipped:                                  # open / closed class reported wrong this frame (diagnostic)
             out["class_flip"] = flipped
         return out

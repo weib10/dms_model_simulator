@@ -21,8 +21,8 @@ FIELDS: dict[str, str] = {
     # head pose
     "head_pose": "head_pose", "head_pose_vehicle": "head_pose_vehicle",
     "yaw": "yaw", "pitch": "pitch", "roll": "roll",
-    # gaze
-    "gaze": "gaze", "vector": "vector", "valid": "valid",
+    # gaze: face direction and eye gaze
+    "gaze": "gaze", "face": "face", "eye": "eye", "vector": "vector", "valid": "valid",
     "yaw_vehicle": "yaw_vehicle", "pitch_vehicle": "pitch_vehicle", "vector_vehicle": "vector_vehicle",
     "zone": "zone", "target": "target",
     # openness
@@ -140,6 +140,26 @@ def _openness(eo: dict | None) -> dict | None:
     return {F["left"]: side(eo.get("left")), F["right"]: side(eo.get("right"))}
 
 
+def _direction(g: dict) -> dict:
+    """One direction of the pipeline gaze (face or eye): camera angles and vector, score, vehicle angles, zone;
+    valid=false with null angles and score 0 when the model gives no direction."""
+    if not g.get("valid"):
+        return {F["yaw"]: None, F["pitch"]: None, F["vector"]: None, F["valid"]: False, F["score"]: 0.0,
+                F["yaw_vehicle"]: None, F["pitch_vehicle"]: None, F["zone"]: None}
+    return {F["yaw"]: float(g["yaw_camera"]), F["pitch"]: float(g["pitch_camera"]),
+            F["vector"]: [float(v) for v in g["dir_camera"]], F["valid"]: True, F["score"]: float(g["conf"]),
+            F["yaw_vehicle"]: float(g["yaw_vehicle"]), F["pitch_vehicle"]: float(g["pitch_vehicle"]),
+            F["zone"]: str(g["zone"])}
+
+
+def _truth_direction(g: dict) -> dict:
+    """One direction of the truth gaze (face or eye): camera and vehicle angles and vectors, zone."""
+    return {F["yaw"]: float(g["yaw_camera"]), F["pitch"]: float(g["pitch_camera"]),
+            F["vector"]: [float(v) for v in g["dir_camera"]],
+            F["yaw_vehicle"]: float(g["yaw_vehicle"]), F["pitch_vehicle"]: float(g["pitch_vehicle"]),
+            F["vector_vehicle"]: [float(v) for v in g["dir_vehicle"]], F["zone"]: str(g["zone"])}
+
+
 def to_pipeline(record: dict, camera: Any = None, include_face: bool | None = None, labels: str = "sim",
                 label_map: dict | None = None) -> dict:
     """Model-like output for one frame. Dropped frames: empty od and null fields.
@@ -147,8 +167,10 @@ def to_pipeline(record: dict, camera: Any = None, include_face: bool | None = No
     labels: "sim" (simulator classes) or "mapped" (consumer classes via label_map, a layout dict with a
     class_map, see mapped_detections). include_face: emit the face box; None = no for "sim", yes for "mapped".
     A dropped frame is `od: []` with the other fields null in both modes.
-    gaze is null when there is no face (or the frame is dropped); when a face is found but the gaze
-    model refuses (eyes closed / not visible), gaze is emitted with valid=false and null angles.
+    gaze is {face, eye}: the face direction (where the head points) and the eye gaze, each with the same fields.
+    gaze is null when there is no face (or the frame is dropped). With a face, gaze.face is always valid; when the
+    gaze model refuses the eye gaze (eyes closed / not visible), gaze.eye has valid=false, null angles, score 0.
+    A record stored before the face direction existed (pred without face_dir) gives gaze.face null.
     eye_openness sides / mouth_openness are null when that eye / the mouth was not detected.
     """
     if labels not in LABEL_MODES:
@@ -173,18 +195,11 @@ def to_pipeline(record: dict, camera: Any = None, include_face: bool | None = No
         F["yaw"]: float(hp["yaw"]), F["pitch"]: float(hp["pitch"]), F["roll"]: float(hp["roll"]),
         F["score"]: float(hp["conf"])}
 
-    g = pred.get("gaze")
+    g, fd = pred.get("gaze"), pred.get("face_dir")
     if g is None or (not g.get("valid") and g.get("reason") == "no_face"):
         out[F["gaze"]] = None
-    elif g.get("valid"):
-        out[F["gaze"]] = {
-            F["yaw"]: float(g["yaw_camera"]), F["pitch"]: float(g["pitch_camera"]),
-            F["vector"]: [float(v) for v in g["dir_camera"]], F["valid"]: True, F["score"]: float(g["conf"]),
-            F["yaw_vehicle"]: float(g["yaw_vehicle"]), F["pitch_vehicle"]: float(g["pitch_vehicle"]),
-            F["zone"]: str(g["zone"])}
-    else:
-        out[F["gaze"]] = {F["yaw"]: None, F["pitch"]: None, F["vector"]: None, F["valid"]: False, F["score"]: 0.0,
-                          F["yaw_vehicle"]: None, F["pitch_vehicle"]: None, F["zone"]: None}
+    else:                                    # a record stored before face_dir existed: face null, eye as before
+        out[F["gaze"]] = {F["face"]: None if fd is None else _direction(fd), F["eye"]: _direction(g)}
 
     out[F["eye_openness"]] = _openness(pred.get("eye_openness"))
     mo = pred.get("mouth_openness")
@@ -201,12 +216,8 @@ def to_truth(record: dict, camera: Any = None) -> dict:
     out[F["head_pose"]] = {F["yaw"]: float(hp["yaw"]), F["pitch"]: float(hp["pitch"]), F["roll"]: float(hp["roll"])}
     out[F["head_pose_vehicle"]] = {F["yaw"]: float(hv["yaw"]), F["pitch"]: float(hv["pitch"]), F["roll"]: float(hv["roll"])}
     g = tr["gaze"]
-    out[F["gaze"]] = {
-        F["yaw"]: float(g["yaw_camera"]), F["pitch"]: float(g["pitch_camera"]),
-        F["vector"]: [float(v) for v in g["dir_camera"]],
-        F["yaw_vehicle"]: float(g["yaw_vehicle"]), F["pitch_vehicle"]: float(g["pitch_vehicle"]),
-        F["vector_vehicle"]: [float(v) for v in g["dir_vehicle"]],
-        F["zone"]: str(g["zone"]), F["target"]: str(g["target"])}
+    out[F["gaze"]] = {F["face"]: _truth_direction(tr["face_dir"]),
+                      F["eye"]: {**_truth_direction(g), F["target"]: str(g["target"])}}
     out[F["eye_openness"]] = _openness(tr["eye_openness"])
     out[F["mouth_openness"]] = float(tr.get("mouth_openness", 0.0))
     out[F["blink"]] = bool(tr["blink"]); out[F["closure"]] = bool(tr["closure"])

@@ -7,7 +7,8 @@ It is an example of the answer-sheet format and a baseline to compare a real pro
 post-processing: it has no tracking, no smoothing and raises no alerts. It reads one frame at a time and declares
 one `state` signal per behaviour label:
 
-    looking_away   gaze direction outside the row's road box; kept from the last frame when the gaze is not valid
+    looking_away   eye gaze direction (gaze.eye) outside the row's road box; kept from the last frame when it is
+                   not valid (gaze.face, where the head points, is not used)
     eyes_shut      mean eye openness below EYE_SHUT
     phone          a phone box is in the frame
     mouth_wide     mouth openness above MOUTH_WIDE
@@ -43,7 +44,7 @@ def read_row(question_dir: Path) -> list[dict]:
         for line in fh:
             rec = json.loads(line)
             labels = {d["label"] for d in rec["od"]}
-            gaze = rec["gaze"]
+            gaze = rec["gaze"]["eye"] if rec["gaze"] else None
             if gaze and gaze["valid"]:
                 away = not (yaw_lo <= gaze["yaw_vehicle"] <= yaw_hi and pitch_lo <= gaze["pitch_vehicle"] <= pitch_hi)
             if labels:                                   # a frame without any box says nothing about the belt

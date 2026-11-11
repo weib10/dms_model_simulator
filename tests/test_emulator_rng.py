@@ -53,6 +53,41 @@ def test_false_positive_rate_does_not_change_gaze_noise():
     assert ga == gb
 
 
+def _without_face_dir(records):
+    return [json.dumps({k: v for k, v in r["pred"].items() if k != "face_dir"}, sort_keys=True, default=float)
+            for r in records]
+
+
+def test_face_dir_noise_has_its_own_stream():
+    a = Simulation(_scen(), CAM, seed=7); a.run()
+    b = Simulation(_scen(), CAM, seed=7, emulator_overrides={"face_dir": {"base_std_deg": 9.0, "temporal_rho": 0.2}}); b.run()
+    assert _without_face_dir(a.records) == _without_face_dir(b.records)
+    assert [r["pred"]["face_dir"] for r in a.records] != [r["pred"]["face_dir"] for r in b.records]
+
+
+# pred values of _scen() at seed 7, recorded before the face-direction stream was added: the new stream is spawned
+# after all the others, so every earlier draw is unchanged (frame: gaze yaw / pitch camera, head yaw, face box x1,
+# face conf, left eye openness, mouth openness)
+BEFORE_FACE_DIR = {
+    10: (-1.0239830063265947, 14.33422206649113, 0.22177588412234192, 513.3803997066839, 0.957904717480573, 1.0,
+         0.09883982898791255),
+    50: (8.131767362396081, 18.220401807391035, -2.825458766192057, 509.2181245851145, 0.9770406351982985, 1.0,
+         0.08691294511476916),
+    90: (67.33936169651966, 4.595876465460264, 38.69299005032556, 541.5119074246511, 0.9205526439921108,
+         0.956205991794334, 0.08959010486316336),
+}
+
+
+def test_face_dir_stream_left_earlier_draws_unchanged():
+    s = Simulation(_scen(), CAM, seed=7); s.run()
+    for k, exp in BEFORE_FACE_DIR.items():
+        p = s.records[k]["pred"]
+        face = next(d for d in p["detections"] if d["class"] == "face")
+        got = (p["gaze"]["yaw_camera"], p["gaze"]["pitch_camera"], p["head_pose_camera"]["yaw"], face["bbox"][0],
+               face["conf"], p["eye_openness"]["left"], p["mouth_openness"])
+        assert got == pytest.approx(exp, rel=1e-9, abs=1e-9)
+
+
 def _targets(cfg, seed=3, dur=600):
     return [s["target"] for s in SG.generate(cfg, dur, seed=seed)["segments"]]
 

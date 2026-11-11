@@ -74,7 +74,10 @@ runs/A/
   `--gif-scale` set the GIF's frame step and size; with both, A-v1 builds in about a minute at `--jobs 4` and its
   GIFs take ~40 MB).
 - `road_box` is calibration, not an answer: the range of vehicle-frame gaze yaw / pitch (degrees) that counts as
-  looking at the road in this row. A few rows widen it (a traffic light above the windscreen, a junction scan).
+  looking at the road in this row. A few rows widen it (a traffic light above the windscreen, a junction scan). It
+  applies to both directions of `pipeline.jsonl`: `gaze.eye` (the eye gaze) and `gaze.face` (where the head
+  points, given whenever the face is found, also with the eyes closed). `examples/naive_reader.py` reads
+  `gaze.eye` only.
 - `fingerprint_id` identifies the build (code version, configs, entries). An answer sheet names the build it was
   made for.
 
@@ -160,7 +163,7 @@ Every truth frame therefore carries `observable`, one flag per evidence channel:
 |---|---|
 | `face`, `head_pose` | the face box is in the image |
 | `head_away` | the head pose is there and the head itself points outside the road box |
-| `gaze` | the gaze model gives a direction (eyes open enough, an eye visible, not too far from the camera) |
+| `gaze` | the gaze model gives an eye gaze direction, `gaze.eye.valid` (eyes open enough, an eye visible, not too far from the camera); `gaze.face` follows `face` / `head_pose` |
 | `eyes`, `mouth`, `hand`, `phone`, `cigarette` | that box is in the truth |
 | `seatbelt_region` | the place where a worn belt is boxed is in the image |
 
@@ -243,7 +246,8 @@ The entry list is frozen in the file. A changed list is a new version of the exa
 
 - The grader's times (`exams/grading.yaml`: edge band, alert grace, lookback, rule tolerance) are provisional.
 - `head_away` uses the road box on the head's facing direction. A head turned a little, with the eyes doing the
-  rest and the gaze not valid, has no evidence under the defaults.
+  rest and the eye gaze (`gaze.eye`) not valid, has no evidence under the defaults (the `gaze` channel is the eye
+  gaze; `gaze.face` gives no evidence beyond `head_away`).
 - `seatbelt_off` is graded on the absence of a box; the truth has no notion of a belt worn wrongly.
 - A layout's score thresholds can drop boxes the truth marks observable; that is your model configuration, and the
   grader does not correct for it.

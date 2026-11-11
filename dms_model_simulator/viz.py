@@ -2,7 +2,8 @@
 
 The composite view (camera view + cabin top/side plots) is rendered fast: the static cabin figure
 (targets, cameras, FOV wedges, wheel) is drawn once with matplotlib into a cached PIL image together
-with a data->pixel transform per subplot; each frame only overlays head position and gaze arrows with PIL.
+with a data->pixel transform per subplot; each frame only overlays head position, gaze and face-direction arrows
+with PIL.
 """
 from __future__ import annotations
 import functools
@@ -23,10 +24,14 @@ GT_BOX_COLOR = (80, 220, 120)
 PRED_COLOR = (255, 80, 80)
 GAZE_COLOR = (255, 255, 0)
 PRED_GAZE_COLOR = (255, 140, 0)
+FACE_COLOR = (0, 200, 255)          # face direction (where the head points)
+PRED_FACE_COLOR = (150, 235, 255)
 EVENT_COLOR = (220, 30, 30)
 HEAD_COLOR = (51, 102, 204)
 CABIN_GT_GAZE = (221, 204, 0)       # matplotlib "#dc0" (readable on white)
 CABIN_PRED_GAZE = (255, 136, 0)     # matplotlib "#f80"
+CABIN_GT_FACE = (0, 153, 153)       # matplotlib "#099"
+CABIN_PRED_FACE = (102, 204, 204)   # matplotlib "#6cc"
 
 # cabin subplots: (horizontal axis idx, vertical axis idx, xlabel, ylabel, sign h, sign v, xlim, ylim)
 _CABIN_VIEWS = (
@@ -43,6 +48,11 @@ def _font(size=14, bold=False):
         return ImageFont.truetype("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf", int(size))
     except Exception:
         return ImageFont.load_default()
+
+
+def _face_width(gaze_width: float) -> int:
+    """Line width of a face-direction arrow: about half the gaze arrow's, at least 1 px (drawn on top of it)."""
+    return max(1, int(gaze_width) // 2)
 
 
 def _finite(*pts) -> bool:
@@ -158,6 +168,7 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
         d.rectangle([x1, y1, x2, y2], outline=GT_BOX_COLOR, width=2)
         d.text((x1 + 2, y1 - fs - 1), str(det.get("class", det.get("label", "?"))), fill=GT_BOX_COLOR, font=f_small)
     g = tr["gaze"]
+    fg = tr.get("face_dir")
     if _finite(g.get("origin_px"), g.get("tip_px")):
         d.line([P(g["origin_px"]), P(g["tip_px"])], fill=GAZE_COLOR, width=3)
         x, y = P(g["tip_px"]); d.ellipse([x - 4, y - 4, x + 4, y + 4], fill=GAZE_COLOR)
@@ -165,20 +176,34 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
     # ---- predictions -----------------------------------------------------------
     dropped = bool(pr.get("dropped"))
     pg = None if dropped else pr.get("gaze")
+    pf = None if dropped else pr.get("face_dir")
     if show_pred and not dropped:
         for det in pr.get("detections", []):
             x1, y1, x2, y2 = [v * s for v in det["bbox"]]
             d.rectangle([x1, y1, x2, y2], outline=PRED_COLOR, width=1)
             conf = det.get("conf", det.get("score", 0.0))
             d.text((x1 + 2, y2 + 1), f"{det.get('class', det.get('label', '?'))} {conf:.2f}", fill=PRED_COLOR, font=f_small)
+        # same ray length and projection (incl. lens distortion) as the GT gaze in truth.py
+        origin_v = np.array(tr["head_center_vehicle"], float)
         if pg and pg.get("valid") and pg.get("dir_vehicle") is not None:
-            # same ray length and projection (incl. lens distortion) as the GT gaze in truth.py
-            origin_v = np.array(tr["head_center_vehicle"], float)
             uv0, _ = cam.project(origin_v)
             uv1, _ = cam.project(origin_v + 0.15 * np.array(pg["dir_vehicle"], float))
             if _finite(uv0, uv1):
                 d.line([P(uv0), P(uv1)], fill=PRED_GAZE_COLOR, width=2)
                 x, y = P(uv1); d.ellipse([x - 3, y - 3, x + 3, y + 3], fill=PRED_GAZE_COLOR)
+
+    # ---- face directions: on top of both gaze arrows and half their width, so they show when head and eyes
+    # point the same way (GT from truth.py's projection, PRED with the same ray length and projection)
+    if fg and _finite(fg.get("origin_px"), fg.get("tip_px")):
+        d.line([P(fg["origin_px"]), P(fg["tip_px"])], fill=FACE_COLOR, width=_face_width(3))
+        x, y = P(fg["tip_px"]); d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=FACE_COLOR)
+    if show_pred and pf and pf.get("valid") and pf.get("dir_vehicle") is not None:
+        origin_v = np.array(tr["head_center_vehicle"], float)
+        uv0, _ = cam.project(origin_v)
+        uv1, _ = cam.project(origin_v + 0.15 * np.array(pf["dir_vehicle"], float))
+        if _finite(uv0, uv1):
+            d.line([P(uv0), P(uv1)], fill=PRED_FACE_COLOR, width=_face_width(2))
+            x, y = P(uv1); d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=PRED_FACE_COLOR)
 
     # ---- HUD text (wrapped to the image width) ---------------------------------
     hp_gt = tr["head_pose_camera"]
@@ -187,6 +212,7 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
                               f"gaze cam {g['yaw_camera']:+.0f}/{g['pitch_camera']:+.0f}",
                               f"veh {g['yaw_vehicle']:+.0f}/{g['pitch_vehicle']:+.0f}",
                               f"->cam {g['gaze_to_camera_deg']:.0f}deg",
+                              *([f"face cam {fg['yaw_camera']:+.0f}/{fg['pitch_camera']:+.0f}"] if fg else []),
                               f"eyes {eo['left']:.2f}/{eo['right']:.2f}",
                               f"mouth {float(tr.get('mouth_openness', 0) or 0):.2f}",
                               f"hand={tr.get('hand')}", f"phone={tr.get('phone')}"])]
@@ -195,6 +221,8 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
     else:
         hp = pr.get("head_pose_camera")
         segs = ["PRED", f"head {hp['yaw']:+.0f}/{hp['pitch']:+.0f}/{hp['roll']:+.0f}" if hp else "head none"]
+        if pf and pf.get("valid"):
+            segs.append(f"face {pf['yaw_camera']:+.0f}/{pf['pitch_camera']:+.0f}")
         if pg and pg.get("valid"):
             segs += [f"gaze {pg.get('yaw_camera', 0):+.0f}/{pg.get('pitch_camera', 0):+.0f}",
                      f"err {pg.get('angular_error_deg', float('nan')):.1f}deg",
@@ -208,7 +236,18 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
 
     f_big = _font(fs + 3, bold=True)
     leg_h = fs + 2
-    bot_h = (fs + 7) + leg_h + 8                 # target/zone row + legend row
+    # legend entries packed into rows no wider than the image (a row wraps like the event tags)
+    legend = (("box", GT_BOX_COLOR, "GT box"), ("box", PRED_COLOR, "PRED box"),
+              ("line", GAZE_COLOR, "GT gaze"), ("line", PRED_GAZE_COLOR, "PRED gaze"),
+              ("line", FACE_COLOR, "GT face"), ("line", PRED_FACE_COLOR, "PRED face"))
+    leg_rows, x = [[]], 6
+    for item in legend:
+        w = fs + 3 + d.textlength(item[2], font=f_small)
+        if leg_rows[-1] and x + w > W - 6:
+            leg_rows.append([]); x = 6
+        leg_rows[-1].append((x, item))
+        x += w + fs
+    bot_h = (fs + 7) + leg_h * len(leg_rows) + 8      # target/zone row + legend rows
     band = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     bd = ImageDraw.Draw(band)
     bd.rectangle([0, 0, W, top_h], fill=(0, 0, 0, 165))
@@ -228,17 +267,16 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
         d.text((x, y_big), t, fill=col, font=f_big)
         x += d.textlength(t, font=f_big) + fs
 
-    # legend
-    y_leg, x = H - leg_h - 4, 6
-    for kind, col, label in (("box", GT_BOX_COLOR, "GT box"), ("box", PRED_COLOR, "PRED box"),
-                             ("line", GAZE_COLOR, "GT gaze"), ("line", PRED_GAZE_COLOR, "PRED gaze")):
-        sw = fs
-        if kind == "box":
-            d.rectangle([x, y_leg + 2, x + sw, y_leg + sw - 1], outline=col, width=2)
-        else:
-            d.line([x, y_leg + sw // 2 + 1, x + sw, y_leg + sw // 2 + 1], fill=col, width=3)
-        d.text((x + sw + 3, y_leg), label, fill=(220, 220, 220), font=f_small)
-        x += sw + 3 + d.textlength(label, font=f_small) + fs
+    # legend (rows laid out above)
+    sw = fs
+    for i, row in enumerate(leg_rows):
+        y_leg = H - leg_h * (len(leg_rows) - i) - 4
+        for x, (kind, col, label) in row:
+            if kind == "box":
+                d.rectangle([x, y_leg + 2, x + sw, y_leg + sw - 1], outline=col, width=2)
+            else:
+                d.line([x, y_leg + sw // 2 + 1, x + sw, y_leg + sw // 2 + 1], fill=col, width=3)
+            d.text((x + sw + 3, y_leg), label, fill=(220, 220, 220), font=f_small)
 
     # event tags (top-right, under the HUD band)
     tags = [(e.upper(), EVENT_COLOR) for e in _active_events(tr)]
@@ -288,13 +326,15 @@ def _cabin_static_fig(cabin: Cabin, cameras: list[Camera], highlight: str | None
 
 
 def plot_cabin(cabin: Cabin, cameras: list[Camera], record: dict | None = None, highlight: str | None = None):
-    """Top-down (left) and side (right) views of targets, cameras with FOV, head and gaze ray (matplotlib)."""
+    """Top-down (left) and side (right) views of targets, cameras with FOV, head, gaze and face-direction rays
+    (matplotlib)."""
     fig, axes = _cabin_static_fig(cabin, cameras, highlight)
     for ax, (ia, ib, _la, _lb, sa, sb, _xl, _yl) in zip(axes, _CABIN_VIEWS):
         if record:
             tr = record["truth"]
             hc = np.array(tr["head_center_vehicle"])
             ax.plot(sa * hc[ia], sb * hc[ib], "o", color="#36c", ms=_HEAD_MS, alpha=0.7)
+            pr = record.get("pred") or {}
             tip = hc + 1.0 * np.array(tr["gaze"]["dir_vehicle"])
             ax.annotate("", xy=(sa * tip[ia], sb * tip[ib]), xytext=(sa * hc[ia], sb * hc[ib]),
                         arrowprops=dict(arrowstyle="->", color="#dc0", lw=2))
@@ -303,9 +343,18 @@ def plot_cabin(cabin: Cabin, cameras: list[Camera], record: dict | None = None, 
                 tip = hc + 1.0 * np.array(pg["dir_vehicle"])
                 ax.annotate("", xy=(sa * tip[ia], sb * tip[ib]), xytext=(sa * hc[ia], sb * hc[ib]),
                             arrowprops=dict(arrowstyle="->", color="#f80", lw=1.5))
+            for fd, col, lw in ((tr.get("face_dir"), "#099", 1.0), (pr.get("face_dir"), "#6cc", 0.75)):
+                if fd and fd.get("valid", True) and fd.get("dir_vehicle") is not None:     # on top, half width
+                    tip = hc + 1.0 * np.array(fd["dir_vehicle"])
+                    ax.annotate("", xy=(sa * tip[ia], sb * tip[ib]), xytext=(sa * hc[ia], sb * hc[ib]),
+                                arrowprops=dict(arrowstyle="->", color=col, lw=lw))
         else:
             hc = cabin.nominal_head_center()
             ax.plot(sa * hc[ia], sb * hc[ib], "o", color="#36c", ms=_HEAD_MS, alpha=0.7)
+    if record:
+        from matplotlib.lines import Line2D
+        axes[0].legend([Line2D([], [], color=c, lw=2) for c in ("#dc0", "#f80", "#099", "#6cc")],
+                       ["GT gaze", "PRED gaze", "GT face", "PRED face"], loc="upper left", fontsize=8)
     return fig
 
 
@@ -366,6 +415,10 @@ class CabinBackground:
         gd = np.array(tr["gaze"]["dir_vehicle"], float)
         pg = (record.get("pred") or {}).get("gaze")
         pd_ = np.array(pg["dir_vehicle"], float) if pg and pg.get("valid") and pg.get("dir_vehicle") is not None else None
+        fg = tr.get("face_dir")
+        fd_ = np.array(fg["dir_vehicle"], float) if fg else None
+        pf = (record.get("pred") or {}).get("face_dir")
+        pfd = np.array(pf["dir_vehicle"], float) if pf and pf.get("valid") and pf.get("dir_vehicle") is not None else None
         r_head = _HEAD_MS * self.px_per_pt / 2
         w_gt, w_pr = max(2, round(2 * self.px_per_pt)), max(1, round(1.5 * self.px_per_pt))
         for a in self.axes:
@@ -380,13 +433,18 @@ class CabinBackground:
             _arrow(d, (hx, hy), loc(hc + gd), CABIN_GT_GAZE, width=w_gt)
             if pd_ is not None:
                 _arrow(d, (hx, hy), loc(hc + pd_), CABIN_PRED_GAZE, width=w_pr)
+            if fd_ is not None:                                  # face direction on top of the gaze, half width
+                _arrow(d, (hx, hy), loc(hc + fd_), CABIN_GT_FACE, width=_face_width(w_gt))
+            if pfd is not None:
+                _arrow(d, (hx, hy), loc(hc + pfd), CABIN_PRED_FACE, width=_face_width(w_pr))
             out.paste(sub.convert("RGB"), (x0, y0))
         # legend, top-left of the first subplot
         d = ImageDraw.Draw(out)
         f = _font(max(9, round(out.height / 40)))
         x0, y0 = self.axes[0]["box"][:2]
         x, y = x0 + 6, y0 + 4
-        for col, label in ((CABIN_GT_GAZE, "GT gaze"), (CABIN_PRED_GAZE, "PRED gaze"), (HEAD_COLOR, "head")):
+        for col, label in ((CABIN_GT_GAZE, "GT gaze"), (CABIN_PRED_GAZE, "PRED gaze"), (CABIN_GT_FACE, "GT face"),
+                           (CABIN_PRED_FACE, "PRED face"), (HEAD_COLOR, "head")):
             d.line([x, y + f.size // 2 + 1, x + 18, y + f.size // 2 + 1], fill=col, width=3)
             d.text((x + 22, y), label, fill=(40, 40, 40), font=f)
             y += f.size + 3
@@ -502,7 +560,7 @@ def _tl_frame(r: dict) -> dict:
         return {"frame_id": r["frame"], "t": float(r["t"]), "zone": tr["gaze"]["zone"], "eo": tr.get("eye_openness"),
                 "pred_eo": None if pr.get("dropped") else pr.get("eye_openness"),
                 "pred_zone": pg.get("zone") if pg and pg.get("valid") else None, "events": tr.get("events") or {}}
-    g = r.get("gaze") or {}
+    g = (r.get("gaze") or {}).get("eye") or {}
     return {"frame_id": r["frame_id"], "t": r["timestamp_ms"] / 1000.0, "zone": g.get("zone"), "eo": r.get("eye_openness"),
             "pred_eo": None, "pred_zone": None, "events": r.get("events") or {}}
 
@@ -545,7 +603,7 @@ def plot_timeline(records: list[dict], path: str | Path | None = None, pipeline:
             p = pm.get(f["frame_id"])
             if p is not None:
                 f["pred_eo"] = p.get("eye_openness")
-                g = p.get("gaze") or {}
+                g = (p.get("gaze") or {}).get("eye") or {}
                 f["pred_zone"] = g.get("zone") if g.get("valid") else None
     t = np.array([f["t"] for f in fr])
     dt = float(np.median(np.diff(t))) if len(t) > 1 else 1.0 / 30

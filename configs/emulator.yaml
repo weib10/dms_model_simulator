@@ -153,6 +153,17 @@ gaze:
   conf_base: 0.9
   conf_per_deg_std: 0.08        # conf drops with predicted std
 
+# Face direction of the gaze model (where the head points: the head's forward axis), output whenever the face is
+# found, also when the eye gaze is refused. Noise independent of head_pose (a second estimate of the same head).
+face_dir:
+  base_std_deg: 2.0
+  per_deg_rel_yaw: 0.03         # std grows with |head yaw relative to camera|
+  per_px_inv_face_width: 60.0   # std += this / face_width_px
+  bias_deg: [0.0, 0.0]          # yaw, pitch
+  temporal_rho: 0.9
+  conf_base: 0.95
+  conf_per_deg_std: 0.05        # score drops with predicted std
+
 # Openness outputs = clip(truth + noise, 0, 1), null for an eye / the mouth the model did not detect this frame.
 # The clip biases values near the ends: truth 1.0 with noise_std 0.05 gives a mean of ~0.98 and exactly 1.0
 # on about half of the frames (likewise at 0 for closed eyes / mouth). Intended (a bounded output); fit to logs.
