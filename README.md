@@ -82,7 +82,8 @@ More commands:
 
 ```bash
 dms-sim run --scenario drowsy --camera steering_column --format all --out out     # JSONL + dms.bin
-dms-sim render --scenario mirror_check --camera all --out out                     # GIF, one tile per camera
+dms-sim render --scenario mirror_check --camera all --out out                     # GIF, one tile per camera (real time, --view-fps 25 default)
+dms-sim render --scenario face_vs_eyes --fps 25 --out out                          # face direction vs eye gaze, every frame at 25 fps
 dms-sim compare --scenario phone_distraction                                      # model-vs-truth table per camera
 dms-sim cabin --out out                                                           # cabin with all cameras
 dms-sim inspect-bin out/drowsy__steering_column.dms.bin --head 3                  # dms.bin as text

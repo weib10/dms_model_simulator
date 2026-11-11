@@ -214,3 +214,22 @@ def test_error_rows_and_plot_timeline(tmp_path):
     fig = viz.plot_timeline(truth, tmp_path / "tl2.png", pipeline=pipe)
     assert (tmp_path / "tl2.png").exists()
     viz.plt.close(fig)
+
+
+def test_view_indices_play_back_in_real_time():
+    assert viz.view_indices(10, 25, 25) == list(range(10))           # same rate: every record once
+    assert viz.view_indices(30, 30, 25) == [int(k * 30 / 25) for k in range(25)]   # 1 s at 30 fps -> 25 frames
+    assert viz.view_indices(4, 20, 40) == [0, 0, 1, 1, 2, 2, 3, 3]    # higher view rate: records repeat
+    with pytest.raises(ValueError):
+        viz.view_indices(4, 20, 0)
+
+
+def test_render_uses_view_fps(tmp_path, capsys):
+    from dms_model_simulator import cli
+    cli.main(["render", "--scenario", "mirror_check", "--camera", "steering_column", "--fps", "10", "--view-fps", "5",
+              "--no-cabin", "--scale", "0.15", "--out", str(tmp_path)])
+    assert "@ 5.0 fps" in capsys.readouterr().out
+    gif = next(tmp_path.rglob("preview.gif"))
+    from PIL import Image
+    im = Image.open(gif)
+    assert im.info["duration"] == 200 and im.n_frames == 57           # 11.5 s scenario at 5 fps

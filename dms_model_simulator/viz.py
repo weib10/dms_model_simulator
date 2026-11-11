@@ -480,6 +480,16 @@ def composite(record: dict, cam: Camera, cabin: Cabin, cameras: list[Camera], sc
     return out
 
 
+def view_indices(n: int, sim_fps: float, view_fps: float) -> list[int]:
+    """Record indices to show when n records simulated at sim_fps are played back in real time at view_fps:
+    frame k of the video shows the latest record at or before k / view_fps (records repeat when view_fps is
+    higher than sim_fps)."""
+    if not view_fps > 0 or not sim_fps > 0:
+        raise ValueError(f"view_fps and sim_fps must be > 0, got {view_fps!r} and {sim_fps!r}")
+    count = max(1, int(np.floor(n / sim_fps * view_fps + 1e-9)))
+    return [min(n - 1, int(np.floor(k / view_fps * sim_fps + 1e-9))) for k in range(count)]
+
+
 def save_gif(frames: list[Image.Image], path: str | Path, fps: float):
     frames[0].save(path, save_all=True, append_images=frames[1:], duration=int(1000 / fps), loop=0)
 

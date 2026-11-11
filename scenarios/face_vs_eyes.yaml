@@ -1,0 +1,14 @@
+name: face_vs_eyes
+description: Face direction and eye gaze pointing different ways (eyes-only glances, head turned while the eyes stay on the road).
+behavior: {}
+segments:
+  - {target: road_ahead,     duration: 2.0}
+  - {target: left_mirror,    duration: 1.5, head_pose: [0, 0, 0]}      # eyes only, head still
+  - {target: road_ahead,     duration: 1.0}
+  - {target: center_display, duration: 1.5, head_pose: [0, 0, 0]}      # eyes only, down and right
+  - {target: road_ahead,     duration: 1.0}
+  - {target: road_ahead,     duration: 2.0, head_pose: [30, 0, 0]}     # head turned left, eyes back on the road
+  - {target: road_ahead,     duration: 2.0, head_pose: [-30, 0, 0]}    # head turned right, eyes back on the road
+  - {target: road_ahead,     duration: 2.0, head_pose: [0, -20, 0]}    # head down, eyes up on the road
+  - {target: passenger,      duration: 2.0}                            # natural turn: head takes part, eyes the rest
+  - {target: road_ahead,     duration: 2.0}

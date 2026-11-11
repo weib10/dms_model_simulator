@@ -61,6 +61,23 @@ def _save_video(viz, frames, path: Path, fps: float, mp4: bool):
         print(f"note: ffmpeg failed to encode {mp.name} (GIF written)")
 
 
+VIEW_FPS = 25.0      # default playback rate of render / demo videos (frames per second, real time)
+
+
+def _view_plan(a, n: int, sim_fps: float) -> tuple[list[int], float]:
+    """Which records to draw and at what video frame rate. --every N: every Nth record, played at sim_fps / N;
+    otherwise real-time playback at --view-fps (default VIEW_FPS)."""
+    from .viz import view_indices
+    if a.every is not None:
+        if a.every < 1:
+            raise SystemExit("--every must be >= 1")
+        return list(range(0, n, a.every)), sim_fps / a.every
+    vf = VIEW_FPS if a.view_fps is None else float(a.view_fps)
+    if not vf > 0:
+        raise SystemExit("--view-fps must be > 0")
+    return view_indices(n, sim_fps, vf), vf
+
+
 def _render_grid(a, viz, cams):
     """One tile per camera, same scenario and seed, so every tile shows the same driver behaviour."""
     sims = []
@@ -72,14 +89,14 @@ def _render_grid(a, viz, cams):
     n = min(len(s.records) for s in sims)
     frames = []
     t0 = time.perf_counter()
-    for i in range(0, n, a.every):
+    idx, fps = _view_plan(a, n, sims[0].behavior.fps)
+    for i in idx:
         tiles = [viz.draw_camera_view(s.records[i], s.camera, s.cabin, a.scale) for s in sims]
         img = viz.make_grid(tiles, [s.camera.name for s in sims], a.grid_cols)
         if a.png:
             img.save(out / f"frame_{i:05d}.png")
         frames.append(img)
     dt = time.perf_counter() - t0
-    fps = sims[0].behavior.fps / a.every
     _save_video(viz, frames, out / "preview.gif", fps, a.mp4)
     frames[len(frames) // 3].save(out / "sample.png")
     print(f"wrote {out}/preview.gif ({len(frames)} frames @ {fps:.1f} fps, {len(cams)} cameras, "
@@ -102,13 +119,13 @@ def cmd_render(a):
     out = Path(a.out) / f"{sim.scenario['name']}__{cam.name}"; out.mkdir(parents=True, exist_ok=True)
     frames = []
     t0 = time.perf_counter()
-    for r in sim.records[::a.every]:
+    idx, fps = _view_plan(a, len(sim.records), sim.behavior.fps)
+    for r in (sim.records[i] for i in idx):
         img = viz.composite(r, cam, cabin, all_cams, a.scale) if a.cabin else viz.draw_camera_view(r, cam, cabin, a.scale)
         if a.png:
             img.save(out / f"frame_{r['frame']:05d}.png")
         frames.append(img)
     dt = time.perf_counter() - t0
-    fps = sim.behavior.fps / a.every
     viz.save_gif(frames, out / "preview.gif", fps)
     frames[len(frames) // 3].save(out / "sample.png")
     print(f"wrote {out}/preview.gif ({len(frames)} frames @ {fps:.1f} fps) and sample.png"
@@ -151,8 +168,8 @@ def cmd_demo(a):
         fig = viz.plot_timeline(sim.records, out / f"{stem}__timeline.png",
                                 title=f"{name} / {cam.name}: truth behaviour and injected model errors")
         viz.plt.close(fig)
-        frames = [viz.draw_camera_view(r, sim.camera, sim.cabin, a.scale) for r in sim.records[::a.every]]
-        fps = sim.behavior.fps / a.every
+        idx, fps = _view_plan(a, len(sim.records), sim.behavior.fps)
+        frames = [viz.draw_camera_view(sim.records[i], sim.camera, sim.cabin, a.scale) for i in idx]
         viz.save_gif(frames, out / f"{stem}.gif", fps)
         frames[len(frames) // 3].save(out / f"{stem}__sample.png")
         gif_frames[cam.name] = frames
@@ -567,6 +584,14 @@ def _pipeline_args(parser):
                              "classes of the --layout class_map")
 
 
+def _view_args(parser):
+    parser.add_argument("--view-fps", type=float, default=None,
+                        help=f"video playback rate in real time (default {VIEW_FPS:g}); independent of the simulation "
+                             "--fps: records are picked by time, repeated when --view-fps is higher")
+    parser.add_argument("--every", type=int, default=None,
+                        help="instead of --view-fps: draw every Nth simulated frame, played at --fps / N")
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(prog="dms-sim")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -590,7 +615,7 @@ def main(argv=None):
                    help="one camera (composite view), or several names / 'all' for a grid with one tile per camera")
     v.add_argument("--grid-cols", type=int, default=None, help="grid columns (default ceil(sqrt(n)))")
     v.add_argument("--out", default="out"); v.add_argument("--seed", type=int, default=0)
-    v.add_argument("--every", type=int, default=3, help="render every Nth frame"); v.add_argument("--scale", type=float, default=0.5)
+    _view_args(v); v.add_argument("--scale", type=float, default=0.5)
     v.add_argument("--png", action="store_true", help="also save individual PNG frames")
     v.add_argument("--mp4", action="store_true", help="also write preview.mp4 (needs ffmpeg on PATH)")
     _fps_arg(v)
@@ -608,7 +633,7 @@ def main(argv=None):
     _label_args(d)
     _fps_arg(d)
     _variant_arg(d)
-    d.add_argument("--every", type=int, default=3, help="GIF: render every Nth frame")
+    _view_args(d)
     d.add_argument("--scale", type=float, default=0.4, help="GIF: camera view scale")
     d.add_argument("--grid-cols", type=int, default=None, help="columns of the all-camera grid GIF"); d.set_defaults(fn=cmd_demo)
     c = sub.add_parser("cabin", help="plot the cabin with all camera presets"); c.add_argument("--out", default="out"); c.set_defaults(fn=cmd_cabin)
