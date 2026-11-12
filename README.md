@@ -286,6 +286,10 @@ Numbers given in frames here (`fast_rho`, `outlier_mean_frames`, `outlier_max_fr
 | `bad`, `worst` | bundles (`bad` includes `pg2`, `worst` includes `pg3`) |
 | `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze (face and eye) noise (`pose0` also zeroes the `pg` parts), and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
 
+**Tuning a tracker or filter on pose / gaze:** use `pg2` as the typical case (e.g. `--profile pg2`, or
+`pg2+jit1` with box noise); check the result against `pg1` and `pg3`. `nominal` has no per-run offset, so a
+smoother looks better on it than it will on real data.
+
 Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
 or in a catalog entry's `variation.profiles`.
 
