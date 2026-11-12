@@ -84,6 +84,7 @@ More commands:
 dms-sim run --scenario drowsy --camera steering_column --format all --out out     # JSONL + dms.bin
 dms-sim render --scenario mirror_check --camera all --out out                     # GIF, one tile per camera (real time, --view-fps 25 default)
 dms-sim render --scenario face_vs_eyes --fps 25 --out out                          # face direction vs eye gaze, every frame at 25 fps
+dms-sim render --scenario face_vs_eyes --fps 25 --story --out out                  # the same as a story: top-down view in plain words
 dms-sim compare --scenario phone_distraction                                      # model-vs-truth table per camera
 dms-sim cabin --out out                                                           # cabin with all cameras
 dms-sim inspect-bin out/drowsy__steering_column.dms.bin --head 3                  # dms.bin as text
@@ -124,7 +125,26 @@ Per frame, for one camera:
 - **Files**: pipeline JSONL (model output), truth JSONL, full JSONL (both side by side, with error flags), a packed
   binary log (`dms.bin`, layout in YAML) or one YAML per frame (`frame_yaml`). Details in [Outputs](#outputs).
 - **Behaviour card** (`card.md`, `card.json`): timeline of what the driver does, plus the injected errors.
-- **Pictures**: wireframe camera view, cabin plot, timeline plot, GIFs.
+- **Pictures**: wireframe camera view, cabin plot, timeline plot, GIFs (see [Reading the pictures](#reading-the-pictures)).
+
+### Reading the pictures
+
+Every view uses one code. Colour is the quantity: **orange = eyes** (where the eyes look), **blue = face** (where the
+nose points). Line style is the source: **truth solid and filled, model dashed and hollow**. Shape says it again: the
+face is a short wedge ("nose"), the eyes a long sight line with an arrowhead. Boxes: truth solid green, model dashed
+red. A direction along the line of sight (at the camera, or out of a cabin plot) is drawn as a ring: a dot inside =
+towards you, a cross = away.
+
+The camera view is a mirror image (the driver's left is on the right). Its HUD reads in the vehicle frame first, in
+words: `truth: face 31° L | eyes 0° | eyes−face 31° R`, then `model: face 27° L (err 4°) | eyes 4° L (err 5°)`; the
+camera-frame numbers are on the dim last line.
+
+**Story view** (for people who don't read JSONL): `dms-sim render --scenario face_vs_eyes --story` writes, instead
+of the engineering view, `story.gif` (one large top-down picture per frame, real-time playback at `--view-fps`) and
+`story_sheet.png` (up to four key moments: the middle of each scenario segment, picked where face and eyes differ
+most or the eyes are off the road). Under each picture: the directions in plain words and the model error. Each
+moment's title is the segment's optional `caption:` key, else a description such as "face 30° left, eyes ahead".
+One camera only; `--scale` sets the size (0.5 = 960x720).
 
 ## Checking a post-processing program
 

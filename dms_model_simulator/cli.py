@@ -107,6 +107,8 @@ def cmd_render(a):
     from . import viz
     cfgs = load_configs()
     cabin, cams = _cameras(cfgs, a.camera)
+    if a.story and len(cams) > 1:
+        raise SystemExit("--story draws one camera's model output: give one --camera")
     if len(cams) > 1:
         return _render_grid(a, viz, cams)
     cam = cams[0]
@@ -117,11 +119,15 @@ def cmd_render(a):
     cam, cabin = sim.camera, sim.cabin                  # with the scenario's / variant's driver and mount
     all_cams = [cam if c.name == cam.name else c for c in all_cams]
     out = Path(a.out) / f"{sim.scenario['name']}__{cam.name}"; out.mkdir(parents=True, exist_ok=True)
+    targets = viz.story_targets(cabin, sim.behavior.segments, sim.records)
+    if a.story:
+        return _render_story(a, viz, sim, out, targets)
     frames = []
     t0 = time.perf_counter()
     idx, fps = _view_plan(a, len(sim.records), sim.behavior.fps)
     for r in (sim.records[i] for i in idx):
-        img = viz.composite(r, cam, cabin, all_cams, a.scale) if a.cabin else viz.draw_camera_view(r, cam, cabin, a.scale)
+        img = (viz.composite(r, cam, cabin, all_cams, a.scale, targets=targets) if a.cabin
+               else viz.draw_camera_view(r, cam, cabin, a.scale))
         if a.png:
             img.save(out / f"frame_{r['frame']:05d}.png")
         frames.append(img)
@@ -137,6 +143,31 @@ def cmd_render(a):
             print(f"wrote {out}/preview.mp4")
         else:
             print("note: ffmpeg failed to encode preview.mp4 (GIF written)")
+
+
+def _render_story(a, viz, sim, out: Path, targets: list[str]):
+    """Story view: story.gif (real-time playback like the engineering view) and story_sheet.png (key moments)."""
+    segs = sim.behavior.segments
+    size = (round(1920 * a.scale), round(1440 * a.scale))
+    bg = viz.story_background(sim.cabin, targets, size)
+    caps = viz.segment_captions(segs, sim.records)
+    seg_of = viz.segment_of_frames(segs, len(sim.records))
+    idx, fps = _view_plan(a, len(sim.records), sim.behavior.fps)
+    t0 = time.perf_counter()
+    frames = []
+    for i in idx:
+        img = viz.story_frame(sim.records[i], sim.cabin, caption=caps[seg_of[i]], background=bg)
+        if a.png:
+            img.save(out / f"story_{sim.records[i]['frame']:05d}.png")
+        frames.append(img)
+    dt = time.perf_counter() - t0
+    _save_video(viz, frames, out / "story.gif", fps, a.mp4)
+    moments = viz.story_moments(sim.records, segs, k=4)
+    sheet = viz.story_sheet([viz.story_frame(sim.records[i], sim.cabin, caption=c, background=bg) for i, c in moments],
+                            cols=2, title=f"{sim.scenario['name']}: key moments (model: {sim.camera.name} camera)")
+    sheet.save(out / "story_sheet.png")
+    print(f"wrote {out}/story.gif ({len(frames)} frames @ {fps:.1f} fps) and story_sheet.png "
+          f"({len(moments)} moments)  [rendered at {len(frames) / max(dt, 1e-9):.1f} frames/s]")
 
 
 def _write_jsonl(path: Path, rows):
@@ -621,7 +652,11 @@ def main(argv=None):
     _fps_arg(v)
     _variant_arg(v)
     _profile_arg(v)
-    v.add_argument("--no-cabin", dest="cabin", action="store_false", help="camera view only"); v.set_defaults(fn=cmd_render)
+    v.add_argument("--no-cabin", dest="cabin", action="store_false", help="camera view only")
+    v.add_argument("--story", action="store_true",
+                   help="instead of the engineering view: a presentation view (large top-down picture with plain "
+                        "words) as story.gif, plus story_sheet.png with up to four key moments; one camera")
+    v.set_defaults(fn=cmd_render)
     d = sub.add_parser("demo", help="scenario on each camera -> all formats, behaviour cards, timelines, GIFs, report.md")
     d.add_argument("--scenario", required=True, help="scenario name or path to a YAML file")
     d.add_argument("--cameras", nargs="+", default=["all"], help="camera names or 'all'")

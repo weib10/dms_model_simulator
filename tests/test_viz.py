@@ -96,44 +96,57 @@ def test_face_direction_arrows_drawn(sim, all_cams):
     assert n_face(a, viz.FACE_COLOR) > n_face(b, viz.FACE_COLOR)
     bg = viz.cabin_background(sim.cabin, all_cams, sim.camera.name, 300)
     ca, cb = np.asarray(bg.render(r)), np.asarray(bg.render(bare))
-    assert n_face(ca, viz.CABIN_GT_FACE) > n_face(cb, viz.CABIN_GT_FACE)
+    assert n_face(ca, viz.FACE_COLOR) > n_face(cb, viz.FACE_COLOR)
     viz.plt.close(viz.plot_cabin(sim.cabin, all_cams, bare, highlight=sim.camera.name))
 
 
-def test_face_direction_drawn_on_top_of_an_aligned_gaze(sim, all_cams):
-    """Head and eyes pointing the same way: the thinner face arrows lie on the gaze arrows and stay visible."""
+def test_face_wedge_and_eye_line_both_visible_when_collinear(sim, all_cams):
+    """Head and eyes pointing the same way: the eye line lies on the wider face wedge and both stay visible, in the
+    camera view and in both cabin views."""
     from dms_model_simulator import geometry as G
     r = copy.deepcopy(min(sim.records, key=lambda x: G.angle_between(x["truth"]["face_dir"]["dir_vehicle"],
                                                                      x["truth"]["gaze"]["dir_vehicle"])))
     r["truth"]["face_dir"] = {**r["truth"]["face_dir"], "dir_vehicle": r["truth"]["gaze"]["dir_vehicle"],
                               "origin_px": r["truth"]["gaze"]["origin_px"], "tip_px": r["truth"]["gaze"]["tip_px"]}
     u, v = np.round(0.5 * np.add(r["truth"]["gaze"]["origin_px"], r["truth"]["gaze"]["tip_px"]) * 0.5).astype(int)
+    length = np.linalg.norm(np.subtract(r["truth"]["gaze"]["tip_px"], r["truth"]["gaze"]["origin_px"])) * 0.5
+    assert length > viz.TOWARD_CAM_PX                                # an arrow, not a toward-camera mark
     img = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5, show_pred=False))
-    assert tuple(img[v, u]) == viz.FACE_COLOR                        # midpoint of the GT gaze line: face on top
-    near = img[v - 3:v + 4, u - 3:u + 4].reshape(-1, 3)
-    assert any(tuple(p) == viz.GAZE_COLOR for p in near)             # the wider gaze line still shows beside it
+    assert tuple(img[v, u]) == viz.EYES_COLOR                        # midpoint of the GT eye line: eyes on top
+    near = img[v - 4:v + 5, u - 4:u + 5].reshape(-1, 3)
+    assert any(tuple(p) == viz.FACE_COLOR for p in near)             # the wider face wedge shows beside it
     bg = viz.cabin_background(sim.cabin, all_cams, sim.camera.name, 300)
     bare = copy.deepcopy(r); del bare["truth"]["face_dir"]; bare["pred"]["face_dir"] = None
     ca, cb = np.asarray(bg.render(r)), np.asarray(bg.render(bare))
     n = lambda img, col: int(np.all(img == col, axis=-1).sum())
-    assert n(ca, viz.CABIN_GT_FACE) > n(cb, viz.CABIN_GT_FACE)       # visible over the GT gaze arrow
-    assert n(ca, viz.CABIN_GT_GAZE) > 0
+    for a in bg.axes:                                                # in each cabin view, the wedge beside the line
+        x0, y0, x1, y1 = a["box"]
+        sa, sb = ca[y0:y1, x0:x1], cb[y0:y1, x0:x1]
+        assert n(sa, viz.FACE_COLOR) > n(sb, viz.FACE_COLOR) + 20
+        assert n(sa, viz.EYES_COLOR) > 20
 
 
 def test_legend_wraps_in_a_narrow_view(sim):
-    """At a small scale the six legend entries do not fit one row: the last (PRED face) wraps onto a row of its own
-    instead of being cut off at the image edge."""
+    """At a small scale the six legend entries do not fit one row: they wrap onto more rows instead of being cut off
+    at the image edge; the last entry (model face) is drawn on the last row."""
+    from PIL import Image, ImageDraw
     r = copy.deepcopy(sim.records[10])
-    del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None        # PRED_FACE_COLOR then only in the legend
+    del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None        # FACE_COLOR then only in the legend
     for scale in (0.5, 0.15):
         img = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, scale))
-        rows = np.nonzero(np.all(img == viz.PRED_FACE_COLOR, axis=-1).any(axis=1))[0]
-        gaze_rows = np.nonzero(np.all(img == viz.GAZE_COLOR, axis=-1)[-40:].any(axis=1))[0]
-        assert len(rows) > 0                                        # the PRED face legend entry is drawn
-        if scale == 0.15:
-            assert rows.min() > img.shape[0] - 40 + gaze_rows.max()   # on a row below the GT gaze entry
-        else:                                                       # wide enough: one row, as before
-            assert rows.max() <= img.shape[0] - 40 + gaze_rows.max() and rows.min() >= img.shape[0] - 40 + gaze_rows.min()
+        H, W = img.shape[:2]
+        fs = max(9, round(W / 58))                                  # draw_camera_view's base font size
+        d = ImageDraw.Draw(Image.new("RGB", (W, H)))
+        rows = viz.camera_legend_rows(d, W, fs)
+        f_small = viz._font(max(8, fs - 2))
+        for row in rows:                                            # nothing runs off the right edge
+            x, (_k, _m, label) = row[-1]
+            assert len(row) == 1 or x + viz._legend_swatch_w(fs) + 4 + d.textlength(label, font=f_small) <= W - 6
+        assert rows[-1][-1][1][2] == "face: model"
+        y_last = H - (fs + 4) - 4                                   # top of the last legend row
+        face_rows = np.nonzero(np.all(img == viz.FACE_COLOR, axis=-1).any(axis=1))[0]
+        assert np.any(face_rows >= y_last - 2)                      # the model face swatch is drawn there
+        assert len(rows) > 1 if scale == 0.15 else len(rows) == 1   # wide enough: one row, as before
 
 
 def test_plot_cabin_standalone(sim, all_cams):
@@ -155,11 +168,12 @@ def test_pred_gaze_drawn_with_lens_distortion():
     s.frames = s.frames[:5]; s.run()
     r = copy.deepcopy(s.records[2])
     assert r["pred"]["gaze"]["valid"]
-    # the face-direction arrows are drawn on top of the gaze; without them the GT gaze tip shows the PRED gaze
+    # truth and model share the eyes colour: only the model eye line is drawn (truth gaze off the image, no faces)
     del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None
     u, v = r["truth"]["gaze"]["tip_px"]
+    r["truth"]["gaze"]["origin_px"] = r["truth"]["gaze"]["tip_px"] = [float("nan")] * 2
     img = np.asarray(viz.draw_camera_view(r, s.camera, s.cabin, 1.0))
-    assert tuple(img[int(round(v)), int(round(u))]) == viz.PRED_GAZE_COLOR      # drawn over the GT tip
+    assert tuple(img[int(round(v)), int(round(u))]) == viz.EYES_COLOR           # model tip on the GT tip
 
 
 def test_pred_face_drawn_with_lens_distortion():
@@ -189,9 +203,9 @@ def test_pred_face_drawn_with_lens_distortion():
     del r["truth"]["face_dir"]                     # only the PRED face arrow is drawn (it is on top of the rest)
     img = np.asarray(viz.draw_camera_view(r, s.camera, s.cabin, 1.0))
     px = lambda p: tuple(img[int(round(p[1])), int(round(p[0]))])
-    assert px(tip) == viz.PRED_FACE_COLOR                            # tip on the GT tip
+    assert px(tip) == viz.FACE_COLOR                                 # tip on the GT tip
     beyond = tip + 6 * (tip - o) / np.linalg.norm(tip - o)
-    assert px(beyond) != viz.PRED_FACE_COLOR                         # and the arrow ends there
+    assert px(beyond) != viz.FACE_COLOR                              # and the wedge ends there
 
 
 def test_error_rows_and_plot_timeline(tmp_path):
@@ -233,3 +247,124 @@ def test_render_uses_view_fps(tmp_path, capsys):
     from PIL import Image
     im = Image.open(gif)
     assert im.info["duration"] == 200 and im.n_frames == 57           # 11.5 s scenario at 5 fps
+
+
+# ---- one visual coding, toward-camera marks, GIF palette, story view -------------------------------------------
+@pytest.fixture(scope="module")
+def fve():
+    s = Simulation("face_vs_eyes", "steering_column", seed=0)
+    s.run()
+    return s
+
+
+def _count(img, col):
+    return int(np.all(np.asarray(img) == col, axis=-1).sum())
+
+
+def test_toward_camera_marker(sim):
+    """A direction that projects to a stub in the camera view (pointing at the camera) is drawn as a ring with a dot
+    at its origin, not as a short arrow."""
+    r = copy.deepcopy(sim.records[10])
+    del r["truth"]["face_dir"]; r["pred"]["face_dir"] = None
+    g = r["truth"]["gaze"]
+    g["tip_px"] = list(np.add(g["origin_px"], [2.0, 1.0]))          # 1 px long at scale 0.5
+    g["dir_camera"] = [0.0, 0.0, -1.0]                               # towards the camera
+    img = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5, show_pred=False))
+    u, v = np.round(np.multiply(g["origin_px"], 0.5)).astype(int)
+    assert tuple(img[v, u]) == viz.EYES_COLOR                        # the dot
+    ring = np.all(img[v - 12:v + 13, u - 12:u + 13] == viz.EYES_COLOR, axis=-1)
+    assert ring.sum() > 30 and not ring[12, 12 + 4:12 + 6].all()     # a ring around it, a gap between ring and dot
+    g["dir_camera"] = [0.0, 0.0, 1.0]                                # away: a cross, no dot in the centre ring gap
+    img2 = np.asarray(viz.draw_camera_view(r, sim.camera, sim.cabin, 0.5, show_pred=False))
+    assert np.any(img2[v - 12:v + 13, u - 12:u + 13] != img[v - 12:v + 13, u - 12:u + 13])
+
+
+def test_cabin_out_of_plane_marker(sim, all_cams):
+    """Eyes straight down: in the top-down view the sight line becomes an into-the-picture mark at the head, with no
+    long arrow."""
+    r = copy.deepcopy(sim.records[10])
+    r["truth"]["gaze"]["dir_vehicle"] = [0.0, 0.0, -1.0]
+    r["pred"] = {"dropped": True}
+    bg = viz.cabin_background(sim.cabin, all_cams, sim.camera.name, 400)
+    img = np.asarray(bg.render(r))
+    a = bg.axes[0]
+    hc = np.array(r["truth"]["head_center_vehicle"])
+    hx, hy = np.round(bg.to_px(a, hc)).astype(int)
+    near = np.all(img[hy - 15:hy + 16, hx - 15:hx + 16] == viz.EYES_COLOR, axis=-1).sum()
+    x0, y0, x1, y1 = a["box"]
+    box = np.all(img[y0:y1, x0:x1] == viz.EYES_COLOR, axis=-1).sum()
+    legend = np.all(img[y0:y1, x0:x0 + 60] == viz.EYES_COLOR, axis=-1).sum()
+    assert near > 10 and box - legend - near == 0                    # only the mark (and the legend swatches)
+
+
+def test_gif_palette_keeps_legend_colours(sim, tmp_path):
+    """A frame with no orange outside the legend keeps the legend's exact colours in the written GIF."""
+    from PIL import Image
+    r = copy.deepcopy(sim.records[10])
+    bare = copy.deepcopy(r)
+    del bare["truth"]["face_dir"]; bare["pred"] = {"dropped": True}
+    bare["truth"]["gaze"]["origin_px"] = bare["truth"]["gaze"]["tip_px"] = [float("nan")] * 2
+    frames = [viz.draw_camera_view(x, sim.camera, sim.cabin, 0.5) for x in (r, bare, r)]
+    path = tmp_path / "p.gif"
+    viz.save_gif(frames, path, 10)
+    im = Image.open(path)
+    for i, fr in enumerate(frames):
+        im.seek(i)
+        got, want = np.asarray(im.convert("RGB")), np.asarray(fr)
+        for col in (viz.EYES_COLOR, viz.FACE_COLOR, viz.GT_BOX_COLOR, viz.PRED_BOX_COLOR, viz.HUD_TRUTH):
+            m = np.all(want == col, axis=-1)
+            assert m.any() and np.all(np.all(got[m] == col, axis=-1)), (i, col)
+    viz.save_gif([f.quantize(method=Image.Quantize.FASTOCTREE) for f in frames], tmp_path / "q.gif", 10)  # P frames
+
+
+def test_story_frame(fve):
+    r = fve.records[len(fve.records) // 2]
+    img = viz.story_frame(r, fve.cabin, caption="a caption")
+    assert img.size == viz.STORY_SIZE
+    assert _count(img, viz.FACE_COLOR) > 200 and _count(img, viz.EYES_COLOR) > 200
+    line1, line2 = viz.story_lines(r)
+    assert line1.startswith("face ") and "eyes relative to face" in line1 and line2.startswith("model error: face ")
+    assert viz.story_lines(r, show_model=False)[1] is None
+    # degenerate records: dropped model output, no model face, no truth face
+    for edit in (lambda x: x.__setitem__("pred", {"dropped": True}),
+                 lambda x: x["pred"].__setitem__("face_dir", None),
+                 lambda x: x["truth"].pop("face_dir")):
+        x = copy.deepcopy(r); edit(x)
+        viz.story_frame(x, fve.cabin)
+    x = copy.deepcopy(r); x["pred"] = {"dropped": True}
+    assert viz.story_lines(x)[1] == "model: no output on this frame"
+    assert viz.dir_words(31, 10) == "31° left, 10° up" and viz.dir_words(-0.2, 1) == "ahead"
+    assert viz.dir_words(-31, -1, short=True) == "31° R"
+
+
+def test_story_moments_and_scenario(fve):
+    """face_vs_eyes: captions from the segments, the eyes-only mirror glance reaches the mirror, no blinks, and the
+    key moments are the segments where face and eyes differ most."""
+    segs = fve.behavior.segments
+    caps = viz.segment_captions(segs, fve.records)
+    assert caps[1] == "Eyes only: glance at the rear-view mirror"
+    mid = (segs[1]["start_frame"] + segs[1]["end_frame"]) // 2
+    assert fve.records[mid]["truth"]["gaze"]["zone"] == "rearview_mirror"
+    assert not any(r["truth"]["blink"] for r in fve.records)
+    m = viz.story_moments(fve.records, segs, k=4)
+    assert len(m) == 4 and [i for i, _c in m] == sorted(i for i, _c in m)
+    assert m[0][1] == caps[1] and all(c in caps for _i, c in m)
+    assert viz.segment_of_frames(segs, len(fve.records))[mid] == 1
+    tg = viz.story_targets(fve.cabin, segs, fve.records)
+    assert tg[:2] == ["road_ahead", "rearview_mirror"] and "left_mirror" not in tg
+
+
+def test_render_story_cli(tmp_path, capsys):
+    from dms_model_simulator import cli
+    from PIL import Image
+    cli.main(["render", "--scenario", "face_vs_eyes", "--story", "--view-fps", "4", "--scale", "0.2",
+              "--out", str(tmp_path)])
+    assert "story_sheet.png (4 moments)" in capsys.readouterr().out
+    d = next(tmp_path.glob("face_vs_eyes__*"))
+    gif = Image.open(d / "story.gif")
+    assert gif.info["duration"] == 250 and gif.size == (384, 288)
+    sheet = Image.open(d / "story_sheet.png")
+    assert sheet.width > 2 * 384 and sheet.height > 2 * 288
+    with pytest.raises(SystemExit):
+        cli.main(["render", "--scenario", "face_vs_eyes", "--story", "--camera", "steering_column", "dash_right",
+                  "--out", str(tmp_path)])

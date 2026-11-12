@@ -1,14 +1,16 @@
 name: face_vs_eyes
 description: Face direction and eye gaze pointing different ways (eyes-only glances, head turned while the eyes stay on the road).
-behavior: {}
+behavior:
+  blink: {rate_per_min: 0}       # showcase: no blinks, so the eye gaze is never invalid on a closed-eye frame
+# caption: one line shown above the story view (dms-sim render --story); not used by the simulation
 segments:
-  - {target: road_ahead,     duration: 2.0}
-  - {target: left_mirror,    duration: 1.5, head_pose: [0, 0, 0]}      # eyes only, head still
-  - {target: road_ahead,     duration: 1.0}
-  - {target: center_display, duration: 1.5, head_pose: [0, 0, 0]}      # eyes only, down and right
-  - {target: road_ahead,     duration: 1.0}
-  - {target: road_ahead,     duration: 2.0, head_pose: [30, 0, 0]}     # head turned left, eyes back on the road
-  - {target: road_ahead,     duration: 2.0, head_pose: [-30, 0, 0]}    # head turned right, eyes back on the road
-  - {target: road_ahead,     duration: 2.0, head_pose: [0, -20, 0]}    # head down, eyes up on the road
-  - {target: passenger,      duration: 2.0}                            # natural turn: head takes part, eyes the rest
-  - {target: road_ahead,     duration: 2.0}
+  - {target: road_ahead,      duration: 2.0, caption: "Eyes and face on the road"}
+  - {target: rearview_mirror, duration: 1.5, head_pose: [0, 0, 0], caption: "Eyes only: glance at the rear-view mirror"}   # head still
+  - {target: road_ahead,      duration: 1.0, caption: "Back to the road"}
+  - {target: center_display,  duration: 1.5, head_pose: [0, 0, 0], caption: "Eyes only: glance at the centre display"}    # down and right
+  - {target: road_ahead,      duration: 1.0, caption: "Back to the road"}
+  - {target: road_ahead,      duration: 2.0, head_pose: [30, 0, 0], caption: "Head turned left, eyes stay on the road"}
+  - {target: road_ahead,      duration: 2.0, head_pose: [-30, 0, 0], caption: "Head turned right, eyes stay on the road"}
+  - {target: road_ahead,      duration: 2.0, head_pose: [0, -20, 0], caption: "Head down, eyes up on the road"}
+  - {target: passenger,       duration: 2.0, caption: "Natural look at the passenger: head turns part way, eyes do the rest"}
+  - {target: road_ahead,      duration: 2.0, caption: "Back to the road"}
