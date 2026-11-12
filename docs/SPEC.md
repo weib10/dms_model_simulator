@@ -102,7 +102,8 @@ and gallery run at 20 fps). A run at another fps converts them so the behaviour 
 (`emulator.at_fps`, applied when `Simulation` builds the emulator, after overrides and profiles): every
 `temporal_rho` and `fast_rho` becomes rho ** (reference_fps / fps), every run length (`mean_frames`,
 `mean_miss_frames`, `drop_mean_frames`, `outlier_mean_frames`, `outlier_max_frames`) is multiplied by
-fps / reference_fps (at least 1 frame), `latency_frames` becomes
+fps / reference_fps (at least 1 frame; the outlier cap is then rounded down, so an outlier run never lasts
+longer in seconds than at the reference fps), `latency_frames` becomes
 round(latency * fps / reference_fps). Shares and probabilities (`drop_frame_prob`, `p_*`, `p`, `rate_per_frame`,
 `seatbelt_off_false_positive_rate`) stay: they are fractions of frames or of time, so per-frame rates give more
 events per second at a higher fps. At 20 fps the output is what it was before the conversion existed.

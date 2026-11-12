@@ -148,7 +148,8 @@ def capped_markov_step(n: int | None, r: float, mean_run: float, max_run: float 
     """markov_step for a rare state S whose runs are also cut at max_run frames (None = no cap). n: length of the
     current S run (0 = not in S), None = no history (S with probability r). Returns the new run length (0 = not in
     S). u ~ U(0, 1), one draw per frame.
-    In S: leave after max_run frames (rounded, at least 1), else with b = 1 / mean_run. A run then lasts
+    In S: leave after max_run frames (rounded down, at least 1: a run never lasts longer in seconds than at the
+    reference fps), else with b = 1 / mean_run. A run then lasts
     L = (1 - (1 - b) ** max_run) / b frames on average (1 / b without a cap). Out of S: enter with
     a = r / ((1 - r) L), so the share of S frames stays r (a is capped at 1; the share is then below r)."""
     r = min(max(float(r), 0.0), 1.0)
@@ -159,7 +160,7 @@ def capped_markov_step(n: int | None, r: float, mean_run: float, max_run: float 
     if r >= 1.0:
         return n + 1
     b = 1.0 / max(float(mean_run), 1.0)
-    cap = None if max_run is None else max(1, int(math.floor(float(max_run) + 0.5)))
+    cap = None if max_run is None else max(1, int(math.floor(float(max_run) + 1e-9)))
     if n > 0:
         if cap is not None and n >= cap:
             return 0

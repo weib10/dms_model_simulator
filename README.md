@@ -260,7 +260,7 @@ three parts:
 
 - a **per-run bias**, drawn once per run: the offset a model has for one person, which no smoothing removes;
 - **fast jitter** that decorrelates within about 0.1 s;
-- rare **outlier runs** of 1–3 frames at 20 fps (at most 0.15 s, `outlier_max_frames`) with a large offset,
+- rare **outlier runs** of 1–3 frames at 20 fps (at most 0.15 s at any frame rate: `outlier_max_frames`, rounded down) with a large offset,
   flagged `outlier: true` in the full JSONL and listed in the behaviour card and the timeline. The reported score
   does not drop on them.
 

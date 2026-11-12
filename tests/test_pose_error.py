@@ -300,3 +300,16 @@ def test_outliers_show_in_the_behaviour_card_and_timeline():
     assert "離群" in markdown(c0) and "`gaze`" in markdown(c0)
     plain = Simulation("mirror_check", CAM, seed=2); plain.frames = plain.frames[:100]; plain.run()
     assert injected_errors(plain.records)["outlier"] == {} and "pose/gaze outlier" not in viz._error_rows(plain.records)
+
+
+def test_outlier_cap_never_longer_in_seconds_than_at_20_fps():
+    import math
+    from dms_model_simulator import emulator as E
+    for fps in (20, 25, 30, 40):
+        cap = E.at_fps({"reference_fps": 20, "gaze": {"outlier_max_frames": 3}}, fps)["gaze"]["outlier_max_frames"]
+        n, longest, rng = None, 0, np.random.default_rng(fps)
+        for k in range(20000):
+            n = E.capped_markov_step(n, 0.3, 2 * fps / 20, cap, rng.random())
+            longest = max(longest, n)
+        assert longest / fps <= 3 / 20 + 1e-9, (fps, longest)
+        assert longest == math.floor(3 * fps / 20 + 1e-9)
