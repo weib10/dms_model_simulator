@@ -89,21 +89,21 @@ def test_flip_values_land_on_the_other_side_of_the_class_boundary():
         assert em[k]["closed_value"] < thr <= em[k]["open_value"]
 
 
-def _classes(ov, scenario, seed=1):
+def _classes(ov, scenario, seed=1, fps=None):
     """Run with emulator overrides ov (flip thresholds set to the test layout's class boundaries) and map every
     frame's detections with the test layout."""
     spec = load_yaml(MAPPED_LAYOUT)
     sync = {"eye_state_flip": {"threshold": spec["lids_threshold"]},
             "mouth_state_flip": {"threshold": spec["jaw_threshold"]}}
-    s = Simulation(scenario, CAM, seed=seed, emulator_overrides=deep_merge(sync, ov or {})); s.run()
+    s = Simulation(scenario, CAM, seed=seed, emulator_overrides=deep_merge(sync, ov or {}), fps=fps); s.run()
     return s, [[d["class"] for d in mapped_detections(r, spec)[0]] for r in s.records]
 
 
 def test_eye_flip_reports_closed_eyes_when_looking_into_the_lap():
     sc = {"name": "lap", "segments": [{"target": "road_ahead", "duration": 1.0}, {"target": "phone_lap", "duration": 5.0}]}
-    _, off = _classes(None, sc)
-    s, on = _classes({"eye_state_flip": {"enabled": True}}, sc)
-    lap = range(60, len(s.records))
+    _, off = _classes(None, sc, fps=20)            # the emulator's reference fps: mean flip run 10 frames
+    s, on = _classes({"eye_state_flip": {"enabled": True}}, sc, fps=20)
+    lap = range(40, len(s.records))                # from 2 s: the eyes have reached the lap
     assert sum(c.count("lids_shut") for c in (off[i] for i in lap)) == 0
     n_closed = sum(c.count("lids_shut") for c in (on[i] for i in lap))
     n_eye = sum(c.count("lids_shut") + c.count("lids_open") for c in (on[i] for i in lap))

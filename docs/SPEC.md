@@ -73,6 +73,16 @@ when its channel is observable. The full JSONL `truth` also
 has `held_bbox`: the image box of an object at the lips (`held`; no OD class of its own), the anchor of
 `anchor: held` context rules.
 
+## Frame rate of the error model
+The emulator's numbers given in frames are meant at `reference_fps` (`configs/emulator.yaml`, 20; catalog, exams
+and gallery run at 20 fps). A run at another fps converts them so the behaviour per second stays the same
+(`emulator.at_fps`, applied when `Simulation` builds the emulator, after overrides and profiles): every
+`temporal_rho` becomes rho ** (reference_fps / fps), every mean run length (`mean_frames`, `mean_miss_frames`,
+`drop_mean_frames`) is multiplied by fps / reference_fps (at least 1 frame), `latency_frames` becomes
+round(latency * fps / reference_fps). Shares and probabilities (`drop_frame_prob`, `p_*`, `p`, `rate_per_frame`,
+`seatbelt_off_false_positive_rate`) stay: they are fractions of frames or of time, so per-frame rates give more
+events per second at a higher fps. At 20 fps the output is what it was before the conversion existed.
+
 ## Error flags (full JSONL `pred`)
 `dropped` (whole frame without output), `latency_fill` (initial frames of a latency queue), `source_frame`,
 per detection `p_detect`, `jump` (box moved elsewhere this frame), `false_positive` (+ `context` for a

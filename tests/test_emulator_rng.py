@@ -65,21 +65,21 @@ def test_face_dir_noise_has_its_own_stream():
     assert [r["pred"]["face_dir"] for r in a.records] != [r["pred"]["face_dir"] for r in b.records]
 
 
-# pred values of _scen() at seed 7, recorded before the face-direction stream was added: the new stream is spawned
-# after all the others, so every earlier draw is unchanged (frame: gaze yaw / pitch camera, head yaw, face box x1,
-# face conf, left eye openness, mouth openness)
+# pred values of _scen() at seed 7 and 20 fps (the emulator's reference_fps): the draws of the streams that existed
+# before the face-direction stream was added (it is spawned after all of them, so they are what they were then)
+# (frame: gaze yaw / pitch camera, head yaw, face box x1, face conf, left eye openness, mouth openness)
 BEFORE_FACE_DIR = {
     10: (-1.0239830063265947, 14.33422206649113, 0.22177588412234192, 513.3803997066839, 0.957904717480573, 1.0,
          0.09883982898791255),
-    50: (8.131767362396081, 18.220401807391035, -2.825458766192057, 509.2181245851145, 0.9770406351982985, 1.0,
+    50: (70.2724231368357, 14.169512451417075, 32.67290909306239, 552.5880475429418, 0.9727539400862267, 1.0,
          0.08691294511476916),
-    90: (67.33936169651966, 4.595876465460264, 38.69299005032556, 541.5119074246511, 0.9205526439921108,
+    90: (6.625410228254332, 13.303588722981747, 0.8042461087453845, 497.3470467353068, 0.9248393391041826,
          0.956205991794334, 0.08959010486316336),
 }
 
 
 def test_face_dir_stream_left_earlier_draws_unchanged():
-    s = Simulation(_scen(), CAM, seed=7); s.run()
+    s = Simulation(_scen(), CAM, seed=7, fps=20); s.run()
     for k, exp in BEFORE_FACE_DIR.items():
         p = s.records[k]["pred"]
         face = next(d for d in p["detections"] if d["class"] == "face")

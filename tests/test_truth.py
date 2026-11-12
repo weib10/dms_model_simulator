@@ -126,7 +126,7 @@ def test_latency_constant_across_dropped_frames():
     """Regression: a dropped frame used to bypass the latency queue, adding one frame of latency per drop."""
     lat = 3
     ov = {**ZERO_GAZE_NOISE, "pipeline": {"drop_frame_prob": 0.2, "latency_frames": lat}}
-    s = Simulation("mirror_check", "steering_column", seed=4, emulator_overrides=ov); s.run()
+    s = Simulation("mirror_check", "steering_column", seed=4, emulator_overrides=ov, fps=20); s.run()   # reference fps
     assert all(r["pred"].get("latency_fill") for r in s.records[:lat])
     n_checked = 0
     for i, r in enumerate(s.records[lat:], start=lat):

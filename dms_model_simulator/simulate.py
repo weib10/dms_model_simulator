@@ -65,9 +65,15 @@ class Simulation:
         self.rng, self.emulator_rng = rng_streams(seed, emulator_seed)      # behaviour, emulator
         self.behavior = BehaviorGenerator(self.cabin, self.cfgs["behavior"], self.scenario, self.rng)
         self.frames = self.behavior.generate()
-        self.emulator = Emulator(self.cfgs["emulator"], self.cabin, self.camera, self.emulator_rng)
+        self.emulator = self._emulator(self.cfgs["emulator"], self.emulator_rng)
         self.records: list[dict] = []
         self._truths: list[dict] | None = None
+
+    def _emulator(self, cfg: dict, rng) -> Emulator:
+        """Emulator for this run: cfg (the configured emulator config, overrides and profiles already merged) with
+        its time parameters converted from reference_fps to this run's fps (emulator.at_fps)."""
+        from .emulator import at_fps
+        return Emulator(at_fps(cfg, self.behavior.fps), self.cabin, self.camera, rng)
 
     def truths(self) -> list[dict]:
         """Per-frame ground truth (with behaviour labels) of this run; computed once and cached. The emulator only
@@ -111,7 +117,7 @@ class Simulation:
         self.records."""
         from .config import deep_merge
         _, rng = rng_streams(self.seed, self.emulator_seed if emulator_seed is None else emulator_seed)
-        emu = Emulator(deep_merge(self.cfgs["emulator"], emulator_overrides or {}), self.cabin, self.camera, rng)
+        emu = self._emulator(deep_merge(self.cfgs["emulator"], emulator_overrides or {}), rng)
         return self._records(emu)
 
     def summarize(self) -> dict:

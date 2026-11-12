@@ -219,6 +219,11 @@ A scenario may carry a `cabin:` block (driver position / size) and a `camera:` b
 
 Optional modes, off by default. Each is a two-state Markov chain with a long-run share and a mean run length.
 
+Numbers given in frames (every `temporal_rho`, the mean run lengths, `latency_frames`) are meant at
+`reference_fps: 20`. A run at another fps converts them so the noise and the error runs last as long in seconds:
+rho -> rho ** (20 / fps), runs and latency x fps / 20. Shares and probabilities (`drop_frame_prob`, `p_*`,
+`rate_per_frame`) are not converted. Details in [`docs/SPEC.md`](docs/SPEC.md).
+
 | mode | config key |
 |---|---|
 | burst misses | `detection.<class>.mean_miss_frames` |

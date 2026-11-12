@@ -1,5 +1,7 @@
 """Turn ground truth into model-like outputs with condition-dependent errors."""
 from __future__ import annotations
+import copy
+import math
 import numpy as np
 from . import geometry as G
 from .camera import Camera
@@ -14,6 +16,47 @@ def _empty(**flags) -> dict:
     """Output of a frame with no model result (dropped, or latency pipeline still filling)."""
     return {**flags, "detections": [], "head_pose_camera": None, "gaze": None, "face_dir": None, "eye_openness": None,
             "mouth_openness": None}
+
+
+# Time parameters of the emulator config, all given at `reference_fps` (see at_fps)
+RHO_KEYS = ("temporal_rho",)                                          # AR(1) frame-to-frame correlation
+RUN_KEYS = ("mean_frames", "mean_miss_frames", "drop_mean_frames")   # mean run length in frames
+LATENCY_KEYS = ("latency_frames",)                                    # delay in frames
+
+
+def at_fps(cfg: dict, fps: float) -> dict:
+    """The emulator config for a run at `fps`: the time parameters are given at cfg["reference_fps"] and are
+    converted so that the behaviour per second stays the same. Every key named in RHO_KEYS (rho -> rho ** (ref /
+    fps)), RUN_KEYS (mean run N -> N * fps / ref, at least 1 frame; null stays null) and LATENCY_KEYS (L ->
+    round(L * fps / ref), halves up) is converted, wherever it sits (per class, per rule). Shares and
+    probabilities (drop_frame_prob, p_*, p, rate_per_frame, seatbelt_off_false_positive_rate) are fractions of
+    frames or of time and stay as they are. At fps == reference_fps (or without reference_fps) the result equals
+    cfg. Returns a new dict; cfg is not changed."""
+    out = copy.deepcopy(cfg)
+    ref = cfg.get("reference_fps")
+    if ref is None or float(fps) == float(ref):
+        return out
+    k = float(fps) / float(ref)
+
+    def walk(node):
+        if isinstance(node, list):
+            for x in node:
+                walk(x)
+        if not isinstance(node, dict):
+            return
+        for key, v in node.items():
+            if isinstance(v, (dict, list)):
+                walk(v)
+            elif v is None or isinstance(v, bool):
+                continue
+            elif key in RHO_KEYS:
+                node[key] = float(v) ** (1.0 / k)
+            elif key in RUN_KEYS:
+                node[key] = max(1.0, float(v) * k)
+            elif key in LATENCY_KEYS:
+                node[key] = int(math.floor(float(v) * k + 0.5))
+    walk(out)
+    return out
 
 
 def _clip_box(box, w: int, h: int) -> list[float] | None:

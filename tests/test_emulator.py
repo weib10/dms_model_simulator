@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from dms_model_simulator.camera import Camera
 from dms_model_simulator.config import deep_merge, load_configs
-from dms_model_simulator.emulator import AR1, Emulator
+from dms_model_simulator.emulator import AR1, Emulator, at_fps
 from dms_model_simulator.simulate import Simulation
 from dms_model_simulator.world import Cabin
 
@@ -111,6 +111,69 @@ def test_face_dir_zero_noise_is_exact(base):
     assert 0 < fd["angular_error_deg"] < 6 * fd["std_deg"]
 
 
+def _all_modes_cfg():
+    """The shipped emulator config with every frame-counted error mode switched on."""
+    from dms_model_simulator import catalog as C
+    cfg = deep_merge(load_configs()["emulator"], C.load_profiles()["worst"])
+    return deep_merge(cfg, {"pipeline": {"drop_mean_frames": 3.0, "latency_frames": 3},
+                            "detection": {"phone": {"mean_miss_frames": 5.0}},
+                            "box_jump": {"enabled": True}, "eye_state_flip": {"enabled": True},
+                            "mouth_state_flip": {"enabled": True}, "contextual_false_positives": {"enabled": True}})
+
+
+def test_at_fps_reference_is_the_config_itself():
+    cfg = _all_modes_cfg()
+    assert cfg["reference_fps"] == 20
+    out = at_fps(cfg, 20)
+    assert out == cfg and out is not cfg
+    assert at_fps(cfg, 20.0) == cfg
+
+
+def test_at_fps_keeps_per_second_behaviour():
+    cfg = _all_modes_cfg()
+    c40, c10 = at_fps(cfg, 40), at_fps(cfg, 10)
+    for key in ("head_pose", "gaze", "face_dir", "eye_openness", "mouth_openness"):
+        assert c40[key]["temporal_rho"] == pytest.approx(cfg[key]["temporal_rho"] ** 0.5, abs=1e-12)
+        assert c10[key]["temporal_rho"] == pytest.approx(cfg[key]["temporal_rho"] ** 2, abs=1e-12)
+    for cls, spec in cfg["detection"].items():
+        if "temporal_rho" in spec:
+            assert c40["detection"][cls]["temporal_rho"] == pytest.approx(spec["temporal_rho"] ** 0.5, abs=1e-12)
+        if spec.get("mean_miss_frames") is not None:
+            assert c40["detection"][cls]["mean_miss_frames"] == pytest.approx(2 * spec["mean_miss_frames"])
+        elif "mean_miss_frames" in spec:
+            assert c40["detection"][cls]["mean_miss_frames"] is None              # null stays null
+    assert c40["pipeline"]["drop_mean_frames"] == 6.0 and c40["pipeline"]["latency_frames"] == 6
+    assert c10["pipeline"]["latency_frames"] == 2                                  # 1.5 rounds half up
+    for key in ("eye_state_flip", "mouth_state_flip", "box_jump"):
+        assert c40[key]["mean_frames"] == pytest.approx(2 * cfg[key]["mean_frames"])
+    assert c10["box_jump"]["mean_frames"] == max(1.0, cfg["box_jump"]["mean_frames"] / 2)     # never below 1 frame
+    for r, r40 in zip(cfg["contextual_false_positives"]["rules"], c40["contextual_false_positives"]["rules"]):
+        assert r40["mean_frames"] == pytest.approx(2 * r["mean_frames"]) and r40["p"] == r["p"]
+    # shares and probabilities are not converted
+    assert c40["pipeline"]["drop_frame_prob"] == cfg["pipeline"]["drop_frame_prob"]
+    assert c40["detection"]["false_positives"] == cfg["detection"]["false_positives"]
+    assert c40["detection"]["face"]["p_max"] == cfg["detection"]["face"]["p_max"]
+    assert c40["box_jump"]["p"] == cfg["box_jump"]["p"]
+    assert c40["eye_state_flip"]["open_to_closed"] == cfg["eye_state_flip"]["open_to_closed"]
+
+
+def test_gaze_noise_correlation_per_second_does_not_depend_on_fps(base):
+    """The gaze noise of a still driver: its correlation over 0.5 s is the same at 20 and at 40 fps."""
+    lag_s, corr = 0.5, {}
+    for fps in (20, 40):
+        cfg = at_fps(deep_merge(load_configs()["emulator"], {**EXACT_DET, "perfect_detection": True}), fps)
+        cab = Cabin(load_configs()["cabin"])
+        cam = Camera.from_config(CAM, load_configs()["cameras"], cab.nominal_head_center())
+        e = Emulator(cfg, cab, cam, np.random.default_rng(3))
+        x = np.array([e._infer(base)["gaze"]["yaw_camera"] for _ in range(int(600 * fps))])
+        n = int(round(lag_s * fps))
+        corr[fps] = np.corrcoef(x[:-n], x[n:])[0, 1]
+    rho = load_configs()["emulator"]["gaze"]["temporal_rho"]
+    assert corr[20] == pytest.approx(rho ** 10, abs=0.05)
+    assert corr[40] == pytest.approx(rho ** 10, abs=0.05)             # unconverted it would be rho ** 20
+    assert abs(corr[40] - corr[20]) < 0.06
+
+
 def test_no_unused_eye_noise_stream():
     e = _emu()
     assert "eye" not in e.box_noise and {"left_eye", "right_eye"} <= set(e.box_noise)
@@ -118,11 +181,13 @@ def test_no_unused_eye_noise_stream():
 
 def test_latency_tags_source_frame():
     L = 4
-    s = Simulation("mirror_check", CAM, seed=1, emulator_overrides={"pipeline": {"latency_frames": L, "drop_frame_prob": 0.0}})
-    s.frames = s.frames[:30]
-    s.run()
-    assert all(r["pred"]["source_frame"] is None and r["pred"]["latency_fill"] for r in s.records[:L])
-    assert all(r["pred"]["source_frame"] == r["frame"] - L for r in s.records[L:])
+    for fps, lag in ((20, L), (40, 2 * L)):         # latency_frames is given at reference_fps 20
+        s = Simulation("mirror_check", CAM, seed=1, fps=fps,
+                       emulator_overrides={"pipeline": {"latency_frames": L, "drop_frame_prob": 0.0}})
+        s.frames = s.frames[:30]
+        s.run()
+        assert all(r["pred"]["source_frame"] is None and r["pred"]["latency_fill"] for r in s.records[:lag])
+        assert all(r["pred"]["source_frame"] == r["frame"] - lag for r in s.records[lag:])
     s0 = Simulation("mirror_check", CAM, seed=1, emulator_overrides={"pipeline": {"drop_frame_prob": 0.0}})
     s0.frames = s0.frames[:5]
     s0.run()
