@@ -5,13 +5,14 @@
 # context-dependent false positives (contextual_false_positives). Each is a two-state Markov chain: a share r
 # of frames in the "bad" state (miss / drop / flip / FP), in runs of mean_* frames on average.
 # Detection p = p_max * sigmoid((x - threshold) / scale) * ...: each term has a "50% of p_max" point and a width.
-# Noise: every `temporal_rho` is the AR(1) frame-to-frame correlation of a unit-variance process (stationary
-# from frame 0; after a gap of D frames where the quantity is not produced the correlation is rho**D).
+# Noise: every `temporal_rho` (and `fast_rho`) is the AR(1) frame-to-frame correlation of a unit-variance process
+# (stationary from frame 0; after a gap of D frames where the quantity is not produced the correlation is rho**D).
 #
-# Frame rate: every number given in frames (`temporal_rho`, the mean run lengths mean_frames / mean_miss_frames /
-# drop_mean_frames, latency_frames) means "at reference_fps". A run at another fps converts them so the behaviour
-# per second stays the same: rho -> rho ** (reference_fps / fps), mean run -> mean * fps / reference_fps (at least
-# 1 frame), latency -> round(latency * fps / reference_fps). Shares and probabilities (drop_frame_prob, p_*, p,
+# Frame rate: every number given in frames (`temporal_rho`, `fast_rho`, the run lengths mean_frames /
+# mean_miss_frames / drop_mean_frames / outlier_mean_frames / outlier_max_frames, latency_frames) means "at
+# reference_fps". A run at another fps converts them so the behaviour per second stays the same:
+# rho -> rho ** (reference_fps / fps), run length -> length * fps / reference_fps (at least 1 frame),
+# latency -> round(latency * fps / reference_fps). Shares and probabilities (drop_frame_prob, p_*, p, outlier_p,
 # rate_per_frame, seatbelt_off_false_positive_rate) are not converted: they are fractions of frames or of time
 # (so a per-frame false-positive rate gives more spurious boxes per second at a higher fps).
 reference_fps: 20
@@ -139,6 +140,11 @@ box_jump:
   gain: {occlusion: 0.0, rel_yaw: 0.0, small: 0.0}
   features_follow_face: false
 
+# Head pose, eye gaze and face direction: error = slow AR(1) (std formula, temporal_rho) + bias_deg, and optionally
+# the structured error of measured pose / gaze models: a per-run bias (one run = one person; no smoothing removes
+# it), fast jitter that decorrelates within a few frames, and rare outlier runs of a large offset. With
+# fast_std_deg or bias_std_deg above 0 the reported std_deg (and conf) is sqrt(std^2 + fast^2 + mean bias_std^2);
+# outlier frames do not raise it (the model does not know it is wrong).
 head_pose:
   base_std_deg: 1.5
   per_deg_rel_yaw: 0.03         # std grows with |head yaw relative to camera|
@@ -147,6 +153,16 @@ head_pose:
   temporal_rho: 0.85
   conf_base: 0.95
   conf_per_deg_std: 0.05        # score drops with predicted std
+  # structured error (off: all 0), see the comment above head_pose
+  bias_std_deg: [0.0, 0.0, 0.0] # per-run bias: N(0, std) per axis (yaw, pitch, roll), drawn once per run
+  fast_std_deg: 0.0             # fast jitter: a second AR(1) on top of the slow one above
+  fast_rho: 0.6                 # its frame-to-frame correlation (0.6 at 20 fps = 0.1 s)
+  outlier_p: 0.0                # outliers: share of frames in the outlier state
+  outlier_mean_frames: 2        # a run ends with probability 1 / this per frame ...
+  outlier_max_frames: 3         # ... and after this many frames at the latest (null = no cap); the entry
+                                # rate is raised so the share stays outlier_p
+  outlier_min_deg: 0.0          # each run adds one offset of U(min, max) deg in a random direction
+  outlier_max_deg: 0.0
 
 gaze:
   base_std_deg: 2.0
@@ -160,6 +176,16 @@ gaze:
   max_gaze_to_camera_deg: 95    # beyond this the eye is not visible enough; gaze invalid
   conf_base: 0.9
   conf_per_deg_std: 0.08        # conf drops with predicted std
+  # structured error (off: all 0), see the comment above head_pose
+  bias_std_deg: [0.0, 0.0]      # per-run bias: N(0, std) per axis (yaw, pitch), drawn once per run
+  fast_std_deg: 0.0             # fast jitter: a second AR(1) on top of the slow one above
+  fast_rho: 0.6                 # its frame-to-frame correlation (0.6 at 20 fps = 0.1 s)
+  outlier_p: 0.0                # outliers: share of frames in the outlier state
+  outlier_mean_frames: 2        # a run ends with probability 1 / this per frame ...
+  outlier_max_frames: 3         # ... and after this many frames at the latest (null = no cap); the entry
+                                # rate is raised so the share stays outlier_p
+  outlier_min_deg: 0.0          # each run adds one offset of U(min, max) deg in a random direction
+  outlier_max_deg: 0.0
 
 # Face direction of the gaze model (where the head points: the head's forward axis), output whenever the face is
 # found, also when the eye gaze is refused. Noise independent of head_pose (a second estimate of the same head).
@@ -171,6 +197,16 @@ face_dir:
   temporal_rho: 0.9
   conf_base: 0.95
   conf_per_deg_std: 0.05        # score drops with predicted std
+  # structured error (off: all 0), see the comment above head_pose
+  bias_std_deg: [0.0, 0.0]      # per-run bias: N(0, std) per axis (yaw, pitch), drawn once per run
+  fast_std_deg: 0.0             # fast jitter: a second AR(1) on top of the slow one above
+  fast_rho: 0.6                 # its frame-to-frame correlation (0.6 at 20 fps = 0.1 s)
+  outlier_p: 0.0                # outliers: share of frames in the outlier state
+  outlier_mean_frames: 2        # a run ends with probability 1 / this per frame ...
+  outlier_max_frames: 3         # ... and after this many frames at the latest (null = no cap); the entry
+                                # rate is raised so the share stays outlier_p
+  outlier_min_deg: 0.0          # each run adds one offset of U(min, max) deg in a random direction
+  outlier_max_deg: 0.0
 
 # Openness outputs = clip(truth + noise, 0, 1), null for an eye / the mouth the model did not detect this frame.
 # The clip biases values near the ends: truth 1.0 with noise_std 0.05 gives a mean of ~0.98 and exactly 1.0
@@ -178,6 +214,7 @@ face_dir:
 eye_openness:
   noise_std: 0.05
   temporal_rho: 0.7
+  bias_std: 0.0                 # per-run open level: N(0, bias_std) added to both eyes, drawn once per run
 
 mouth_openness:
   noise_std: 0.06

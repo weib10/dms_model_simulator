@@ -19,8 +19,9 @@ def _empty(**flags) -> dict:
 
 
 # Time parameters of the emulator config, all given at `reference_fps` (see at_fps)
-RHO_KEYS = ("temporal_rho",)                                          # AR(1) frame-to-frame correlation
-RUN_KEYS = ("mean_frames", "mean_miss_frames", "drop_mean_frames")   # mean run length in frames
+RHO_KEYS = ("temporal_rho", "fast_rho")                              # AR(1) frame-to-frame correlation
+RUN_KEYS = ("mean_frames", "mean_miss_frames", "drop_mean_frames",   # mean run length in frames
+            "outlier_mean_frames", "outlier_max_frames")
 LATENCY_KEYS = ("latency_frames",)                                    # delay in frames
 
 
@@ -57,6 +58,20 @@ def at_fps(cfg: dict, fps: float) -> dict:
                 node[key] = int(math.floor(float(v) * k + 0.5))
     walk(out)
     return out
+
+
+# Quantities with the structured pose / gaze error (Emulator._pose_error) and their number of axes
+POSE_KEYS = {"head_pose": 3, "gaze": 2, "face_dir": 2}      # yaw, pitch(, roll)
+
+
+def _per_axis(v, dim: int) -> np.ndarray:
+    """A config value given for all axes (a number) or per axis (a list of dim numbers) as an array of dim."""
+    a = np.asarray(v, dtype=float).reshape(-1)
+    if a.size == 1:
+        return np.full(dim, float(a[0]))
+    if a.size != dim:
+        raise ValueError(f"expected one number or a list of {dim}, got {v!r}")
+    return a
 
 
 def _clip_box(box, w: int, h: int) -> list[float] | None:
@@ -129,6 +144,31 @@ def markov_step(state: bool | None, r: float, mean_run: float, u: float) -> bool
     return (u >= b) if state else (u < a)
 
 
+def capped_markov_step(n: int | None, r: float, mean_run: float, max_run: float | None, u: float) -> int:
+    """markov_step for a rare state S whose runs are also cut at max_run frames (None = no cap). n: length of the
+    current S run (0 = not in S), None = no history (S with probability r). Returns the new run length (0 = not in
+    S). u ~ U(0, 1), one draw per frame.
+    In S: leave after max_run frames (rounded, at least 1), else with b = 1 / mean_run. A run then lasts
+    L = (1 - (1 - b) ** max_run) / b frames on average (1 / b without a cap). Out of S: enter with
+    a = r / ((1 - r) L), so the share of S frames stays r (a is capped at 1; the share is then below r)."""
+    r = min(max(float(r), 0.0), 1.0)
+    if n is None:
+        return 1 if u < r else 0
+    if r <= 0.0:
+        return 0
+    if r >= 1.0:
+        return n + 1
+    b = 1.0 / max(float(mean_run), 1.0)
+    cap = None if max_run is None else max(1, int(math.floor(float(max_run) + 0.5)))
+    if n > 0:
+        if cap is not None and n >= cap:
+            return 0
+        return n + 1 if u >= b else 0
+    mean_len = 1.0 / b if cap is None else (1.0 - (1.0 - b) ** cap) / b
+    a = min(1.0, r / ((1.0 - r) * mean_len))
+    return 1 if u < a else 0
+
+
 class AR1:
     """Temporally correlated unit-variance noise, scaled per call by the current std.
 
@@ -169,14 +209,18 @@ class Emulator:
     positives (`contextual_false_positives`) and box jumps (`box_jump`). Each is a two-state Markov chain
     (markov_step). `box_conditions` scales the box noise with the view (occlusion, head yaw, small boxes); its gains
     are 0 in the shipped config. The box-jump stream is spawned after those, so enabling it changes nothing else.
-    The face-direction noise (`face_dir`) has the last stream: adding it left every earlier draw unchanged."""
+    The face-direction noise (`face_dir`) stream came next: adding it left every earlier draw unchanged.
+    The structured pose / gaze error (`_pose_error`: per-run bias, fast jitter, outlier runs of head_pose, gaze and
+    face_dir, plus the per-run eye-openness bias) has the last streams: one for all per-run biases (drawn once,
+    here, in a fixed order and size whatever the config), then one fast AR(1) and one outlier stream per quantity.
+    Their gains default to 0, so the default output is what it was before they existed."""
 
     def __init__(self, cfg: dict, cabin: Cabin, cam: Camera, rng: np.random.Generator):
         self.cfg, self.cabin, self.cam, self.rng = cfg, cabin, cam, rng
         d = cfg["detection"]
         classes = [c for c in d if c not in ("false_positives", "eye")] + ["left_eye", "right_eye"]
         spec = {c: d["eye" if c.endswith("_eye") else c] for c in classes}
-        streams = iter(rng.spawn(3 + 2 * len(classes) + 4 + 3 + 1 + 1))
+        streams = iter(rng.spawn(3 + 2 * len(classes) + 4 + 3 + 1 + 1 + 1 + 2 * len(POSE_KEYS)))
         self.drop_rng, self.fp_rng, self.sb_fp_rng = next(streams), next(streams), next(streams)
         self.det_rng = {c: next(streams) for c in classes}
         self.box_noise = {c: AR1(next(streams), spec[c]["temporal_rho"], 4) for c in classes}
@@ -187,6 +231,16 @@ class Emulator:
         self.eye_flip_rng, self.mouth_flip_rng, self.ctx_fp_rng = next(streams), next(streams), next(streams)
         self.jump_rng = next(streams)
         self.face_dir_noise = AR1(next(streams), cfg["face_dir"]["temporal_rho"], 2)
+        bias_rng = next(streams)                     # per-run biases: unit normals in a fixed order and size
+        z = {key: bias_rng.standard_normal(dim) for key, dim in POSE_KEYS.items()}
+        z_open = float(bias_rng.standard_normal())
+        self.run_bias = {key: z[key] * _per_axis(cfg[key].get("bias_std_deg", 0.0), dim)
+                         for key, dim in POSE_KEYS.items()}
+        self.open_bias = z_open * float(cfg["eye_openness"].get("bias_std", 0.0))
+        self.fast_noise = {key: AR1(next(streams), cfg[key].get("fast_rho", 0.0), dim) for key, dim in POSE_KEYS.items()}
+        self.outlier_rng = {key: next(streams) for key in POSE_KEYS}
+        self.outlier_state: dict[str, int | None] = {key: None for key in POSE_KEYS}   # outlier run length so far
+        self.outlier_offset: dict[str, np.ndarray] = {}
         self.miss_state: dict[str, bool] = {}        # class -> missed last time it was evaluated (burst misses)
         self.jump_state: dict[str, bool | None] = {} # class -> box jumped last time it was produced (box_jump)
         self.jump_offset: dict[str, tuple] = {}      # class -> (dx, dy as box fractions, size factor) of the jump
@@ -381,6 +435,41 @@ class Emulator:
             return None
         return float(fc["open_value"] if low else fc["closed_value"])
 
+    # ---- structured pose / gaze error ------------------------------------------------
+    def _pose_error(self, key: str, std: float) -> tuple[np.ndarray, float, bool]:
+        """Error of head_pose / gaze / face_dir this frame beyond the slow AR(1): per-run bias + fast jitter +
+        outlier offset, and the std to report. key: a POSE_KEYS quantity; std: the slow part's std this frame.
+        - per-run bias: N(0, bias_std_deg) per axis, drawn once per Emulator (one run = one person): no
+          smoothing removes it;
+        - fast jitter: a second AR(1) (fast_std_deg, fast_rho; rho given at reference_fps);
+        - outliers: a two-state chain (capped_markov_step) in the outlier state on a share outlier_p of the frames
+          the quantity is produced, in runs that end with probability 1 / outlier_mean_frames per frame and at the
+          latest after outlier_max_frames frames; each run adds one offset of magnitude
+          U(outlier_min_deg, outlier_max_deg) in a random direction (drawn when the run starts, kept for it).
+        All gains default to 0. Reported std: the slow std unchanged while fast_std_deg and bias_std_deg are 0,
+        else sqrt(std^2 + fast_std_deg^2 + mean over axes of bias_std_deg^2), so a profile that moves error from
+        the slow part into the bias / jitter does not report a higher confidence. Outlier frames do not raise the
+        reported std (the model does not know). Returns (error, std, outlier)."""
+        c, dim = self.cfg[key], POSE_KEYS[key]
+        fast = float(c.get("fast_std_deg", 0.0))
+        err = self.fast_noise[key].step(self.frame) * fast + self.run_bias[key]
+        rng = self.outlier_rng[key]
+        prev = self.outlier_state[key]
+        n_run = self.outlier_state[key] = capped_markov_step(
+            prev, float(c.get("outlier_p", 0.0)), float(c.get("outlier_mean_frames", 1.0)),
+            c.get("outlier_max_frames"), rng.random())
+        on = n_run > 0
+        if on:
+            if not prev:
+                d = rng.standard_normal(dim)
+                d /= max(float(np.linalg.norm(d)), 1e-12)
+                self.outlier_offset[key] = d * rng.uniform(float(c["outlier_min_deg"]), float(c["outlier_max_deg"]))
+            err = err + self.outlier_offset[key]
+        bias_var = float(np.mean(_per_axis(c.get("bias_std_deg", 0.0), dim) ** 2))
+        if fast > 0.0 or bias_var > 0.0:
+            std = math.sqrt(std * std + fast * fast + bias_var)
+        return err, std, on
+
     # ---- directions (eye gaze, face direction) ------------------------------------
     def _direction(self, yaw_c: float, pitch_c: float, origin, truth_dir_vehicle, std: float, c: dict) -> dict:
         """Output of a noisy direction given as camera face-frame angles: vector in camera and vehicle frame,
@@ -470,8 +559,12 @@ class Emulator:
             std = c["base_std_deg"] + c["per_deg_rel_yaw"] * abs(rel_yaw) + c["per_px_inv_face_width"] / fw
             tp = truth["head_pose_camera"]
             n = self.hp_noise.step(k) * std + np.array(c["bias_deg"])
+            e, std, outlier = self._pose_error("head_pose", std)
+            n = n + e
             hp_out = {"yaw": tp["yaw"] + n[0], "pitch": tp["pitch"] + n[1], "roll": tp["roll"] + n[2], "std_deg": float(std),
                       "conf": float(np.clip(c["conf_base"] - c["conf_per_deg_std"] * std, 0, 1))}
+            if outlier:
+                hp_out["outlier"] = True
 
         # eye openness: per eye, only for an eye the model detected this frame (else null); null if neither was
         eo = None
@@ -479,6 +572,8 @@ class Emulator:
         if face_pred and any(eye_found.get(f"{s}_eye") for s in ("left", "right")):
             c = self.cfg["eye_openness"]
             n = self.open_noise.step(k) * c["noise_std"]
+            if self.open_bias:                       # per-run open level (bias_std; 0 = off)
+                n = n + self.open_bias
             eo = {s: float(np.clip(truth["eye_openness"][s] + n[i], 0, 1)) if eye_found.get(f"{s}_eye") else None
                   for i, s in enumerate(("left", "right"))}
             t_eo = truth["eye_openness"]
@@ -510,8 +605,12 @@ class Emulator:
             std = (c["base_std_deg"] + c["per_deg_gaze_to_camera"] * tg["gaze_to_camera_deg"]
                    + c["per_deg_rel_head_yaw"] * abs(rel_yaw) + c["per_px_inv_eye_width"] / max(eye_w, 1.0))
             n = self.gaze_noise.step(k) * std + np.array(c["bias_deg"])
+            e, std, outlier = self._pose_error("gaze", std)
+            n = n + e
             gz = self._direction(tg["yaw_camera"] + n[0], tg["pitch_camera"] + n[1], tg["origin_vehicle"],
                                  tg["dir_vehicle"], std, c)
+            if outlier:
+                gz["outlier"] = True
 
         # face direction (where the head points): whenever the face is found, also when the eye gaze is refused
         fd = None
@@ -521,8 +620,12 @@ class Emulator:
             fw = max(face_truth["width_px"], 1.0)
             std = c["base_std_deg"] + c["per_deg_rel_yaw"] * abs(rel_yaw) + c["per_px_inv_face_width"] / fw
             n = self.face_dir_noise.step(k) * std + np.array(c["bias_deg"])
+            e, std, outlier = self._pose_error("face_dir", std)
+            n = n + e
             fd = self._direction(tf["yaw_camera"] + n[0], tf["pitch_camera"] + n[1], tf["origin_vehicle"],
                                  tf["dir_vehicle"], std, c)
+            if outlier:
+                fd["outlier"] = True
 
         out = {"dropped": False, "detections": dets, "head_pose_camera": hp_out, "gaze": gz, "face_dir": fd,
                "eye_openness": eo, "mouth_openness": mo}

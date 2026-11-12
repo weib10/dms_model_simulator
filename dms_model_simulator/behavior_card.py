@@ -103,9 +103,11 @@ def timeline(sim) -> list[dict]:
 
 def injected_errors(records: list[dict]) -> dict:
     """Runs of frames per injected error kind: {"latency_frames", "dropped", "missed": {class: runs},
-    "class_flip": {eye|mouth: runs}, "jump": {class: runs}, "false_positive": {class: runs}}; each run is
-    [first frame, last frame]. A missed box = the class is in the truth detections but not in the model output
-    of a frame that was not dropped (with latency, the output of an earlier frame is compared, as written)."""
+    "class_flip": {eye|mouth: runs}, "jump": {class: runs}, "false_positive": {class: runs},
+    "outlier": {head_pose|gaze|face_dir: runs}}; each run is [first frame, last frame]. A missed box = the class
+    is in the truth detections but not in the model output of a frame that was not dropped (with latency, the
+    output of an earlier frame is compared, as written). outlier: frames the model output of that quantity carries
+    an injected outlier offset."""
     n = len(records)
     dropped = [bool(r["pred"].get("dropped")) for r in records]
     lat = max((r["frame"] - r["pred"]["source_frame"] for r in records
@@ -131,8 +133,13 @@ def injected_errors(records: list[dict]) -> dict:
         flags = [key in (r["pred"].get("class_flip") or []) for r in records]
         if any(flags):
             flip[key] = _runs(flags)
+    outlier = {}
+    for key, field in (("head_pose", "head_pose_camera"), ("gaze", "gaze"), ("face_dir", "face_dir")):
+        flags = [bool((r["pred"].get(field) or {}).get("outlier")) for r in records]
+        if any(flags):
+            outlier[key] = _runs(flags)
     return {"frames": n, "latency_frames": int(lat), "dropped": _runs(dropped), "missed": missed,
-            "class_flip": flip, "jump": jump, "false_positive": fp}
+            "class_flip": flip, "jump": jump, "false_positive": fp, "outlier": outlier}
 
 
 def card(sim, row: dict | None = None) -> dict:
@@ -186,8 +193,9 @@ def markdown(c: dict) -> str:
           "模型輸出跟真值不同的地方，都是模擬器故意加的。後處理在這些時段的反應，要分開看。", ""]
     L.append(f"- 延遲：{e['latency_frames']} 幀" + ("（輸出比真值晚，開頭補空幀）" if e["latency_frames"] else ""))
     L.append(f"- 掉幀（整幀沒有輸出）：{_run_list(e['dropped'], fps) if e['dropped'] else '無'}")
-    for title, key in (("漏框", "missed"), ("開閉類別判反", "class_flip"), ("框跳到別處", "jump"), ("誤報框", "false_positive")):
-        if not e[key]:
+    for title, key in (("漏框", "missed"), ("開閉類別判反", "class_flip"), ("框跳到別處", "jump"), ("誤報框", "false_positive"),
+                       ("頭姿／臉朝向／視線離群", "outlier")):
+        if not e.get(key):
             L.append(f"- {title}：無")
             continue
         L.append(f"- {title}：")
@@ -196,7 +204,7 @@ def markdown(c: dict) -> str:
     L += ["", "## 檔案", "",
           "- `*.frames/labels/<frame>.yaml`：每幀的模型輸出（檔名 = frame index，`timestamp_msec` = round(t × 1000)）",
           "- `*.pipeline.jsonl`：同一份模型輸出的 JSONL；`*.truth.jsonl`：每幀真值；`*.jsonl`：真值與模型輸出並排，"
-          "含誤差標記（`dropped`、`jump`、`false_positive`、`class_flip`）",
+          "含誤差標記（`dropped`、`jump`、`false_positive`、`class_flip`、`outlier`）",
           "- `card.json`：這份卡片的機器可讀版"]
     return "\n".join(x for x in L if x is not None) + "\n"
 

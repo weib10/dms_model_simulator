@@ -252,6 +252,21 @@ rho -> rho ** (20 / fps), runs and latency x fps / 20. Shares and probabilities 
 | context-dependent false positives: hand at the ear → phone, hand at the mouth → cigarette, bottle at the lips → phone | `contextual_false_positives` |
 | box jumps | `box_jump` |
 | view-dependent jitter | `box_conditions` |
+| structured head pose / face direction / eye gaze error (below) | `bias_std_deg`, `fast_*`, `outlier_*` in `head_pose`, `face_dir`, `gaze`; `eye_openness.bias_std` |
+
+By default the head pose, face direction and eye gaze error is one slow AR(1) per axis, growing with head yaw and
+gaze angle. Errors measured on real pose / gaze models have a different structure, which can be switched on in
+three parts:
+
+- a **per-run bias**, drawn once per run: the offset a model has for one person, which no smoothing removes;
+- **fast jitter** that decorrelates within about 0.1 s;
+- rare **outlier runs** of 1–3 frames at 20 fps (at most 0.15 s, `outlier_max_frames`) with a large offset,
+  flagged `outlier: true` in the full JSONL and listed in the behaviour card and the timeline. The reported score
+  does not drop on them.
+
+A tracker tuned on the default noise looks better than it will on real data: it can smooth the slow wander, but
+not a constant offset. With the bias on, each model seed is a different person, so compare results over several.
+Numbers given in frames here (`fast_rho`, `outlier_mean_frames`, `outlier_max_frames`) are converted with the fps like the others.
 
 ### Error profiles
 
@@ -267,8 +282,9 @@ rho -> rho ** (20 / fps), runs and latency x fps / 20. Shares and probabilities 
 | `cnf1..2` | scores near typical thresholds |
 | `flp1..2` | class flips |
 | `fp1..2` | false positives |
-| `bad`, `worst` | bundles |
-| `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze (face and eye) noise, and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
+| `pg1..3` | head pose / face direction / eye gaze error with the structure above: `pg1` a typical generic model (offset + fast jitter, total close to nominal), `pg2` in-car average (larger, with outliers), `pg3` hard (larger still, more outliers, error grows faster with head yaw) |
+| `bad`, `worst` | bundles (`bad` includes `pg2`, `worst` includes `pg3`) |
+| `ideal`, `exact` | logic tests. `ideal`: no dropped frames, false positives or score noise; box corner noise and misses in hard views (strong yaw, occlusion, small boxes) remain. `exact` (= `ideal+pose0+alldet`): also no head pose / gaze (face and eye) noise (`pose0` also zeroes the `pg` parts), and every box of the truth is reported, so the output holds exactly what the truth marks `observable` |
 
 Stack them with `+`, e.g. `--profile jit2+jmp2+mis1`. Use them on the command line, in `catalog expand --profile`,
 or in a catalog entry's `variation.profiles`.

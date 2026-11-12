@@ -19,7 +19,12 @@
 #   cnf  scores close to typical output thresholds (eye / mouth / phone / cigarette / seatbelt boxes fall under them)
 #   flp  eye / mouth open-closed class flips
 #   fp   false positives: random boxes, and hand at the ear / mouth reported as a phone / cigarette
-# Bundles: bad = level 2 of the box dimensions + level 1 of the rest; worst = level 3 / 2.
+#   pg   head pose / face direction / eye gaze error, with the structure measured on real pose / gaze models: a
+#        per-person offset (per-run bias) + fast jitter (decorrelates in ~0.1 s) + rare outlier runs (levels 2-3).
+#        The slow AR(1) shrinks to ~1 deg with a ~2 s correlation time. Unlike the other dimensions, pg1 is not
+#        worse than nominal: about the same total as nominal, different structure (per-run offset + fast jitter);
+#        a typical generic model. pg2 in-car average, pg3 hard (cross-domain)
+# Bundles: bad = level 2 of the box dimensions + level 1 of the rest + pg2; worst = level 3 / 2 + pg3.
 profiles:
   nominal:                     # configs/emulator.yaml as is
     emulator_overrides: {}
@@ -35,14 +40,16 @@ profiles:
         cigarette: {p_max: 1.0, conf_noise_std: 0.0}
         seatbelt:  {p_max: 1.0, conf_noise_std: 0.0, seatbelt_off_false_positive_rate: 0.0}
         false_positives: {rate_per_frame: 0.0}
-      eye_openness: {noise_std: 0.0}
+      eye_openness: {noise_std: 0.0, bias_std: 0.0}
       mouth_openness: {noise_std: 0.0}
-  pose0:                       # head pose, gaze and face direction without noise (std 0, no bias); stack it on ideal for exact
-    emulator_overrides:
-      head_pose: {base_std_deg: 0.0, per_deg_rel_yaw: 0.0, per_px_inv_face_width: 0.0, bias_deg: [0.0, 0.0, 0.0]}
+  pose0:                       # head pose, gaze and face direction without noise (std 0, no bias, no structured
+    emulator_overrides:        # error: also exact stacked after a pg level); stack it on ideal for exact
+      head_pose: {base_std_deg: 0.0, per_deg_rel_yaw: 0.0, per_px_inv_face_width: 0.0, bias_deg: [0.0, 0.0, 0.0],
+                  bias_std_deg: [0.0, 0.0, 0.0], fast_std_deg: 0.0, outlier_p: 0.0}
       gaze: {base_std_deg: 0.0, per_deg_gaze_to_camera: 0.0, per_deg_rel_head_yaw: 0.0, per_px_inv_eye_width: 0.0,
-             bias_deg: [0.0, 0.0]}
-      face_dir: {base_std_deg: 0.0, per_deg_rel_yaw: 0.0, per_px_inv_face_width: 0.0, bias_deg: [0.0, 0.0]}
+             bias_deg: [0.0, 0.0], bias_std_deg: [0.0, 0.0], fast_std_deg: 0.0, outlier_p: 0.0}
+      face_dir: {base_std_deg: 0.0, per_deg_rel_yaw: 0.0, per_px_inv_face_width: 0.0, bias_deg: [0.0, 0.0],
+                 bias_std_deg: [0.0, 0.0], fast_std_deg: 0.0, outlier_p: 0.0}
   alldet:                      # every box of the ground truth is reported, also in hard views (strong head yaw,
     emulator_overrides:        # occlusion, small boxes): the output holds exactly what the truth marks `observable`
       perfect_detection: true
@@ -248,8 +255,37 @@ profiles:
       detection: {false_positives: {rate_per_frame: 0.05}}
       contextual_false_positives: {enabled: true}
 
+  # pg: measured gaze / head-pose error structure: per-person offset + fast jitter + outliers. bias_std_deg is
+  # [yaw, pitch(, roll)]; eye gaze varies a bit more in yaw, head pose / face direction more in pitch. fast_rho 0.6
+  # at 20 fps = ~0.1 s; temporal_rho 0.975 = ~2 s (the slow part). Face direction jitter ~0.4x the eye gaze jitter.
+  pg1:                         # typical generic model: offset + fast jitter, no outliers
+    emulator_overrides:
+      head_pose: {base_std_deg: 0.5, temporal_rho: 0.975, bias_std_deg: [1.5, 2.0, 1.5], fast_std_deg: 0.6}
+      face_dir: {base_std_deg: 0.5, temporal_rho: 0.975, bias_std_deg: [1.5, 2.0], fast_std_deg: 0.6}
+      gaze: {base_std_deg: 0.0, temporal_rho: 0.975, bias_std_deg: [2.5, 2.0], fast_std_deg: 1.5}
+  pg2:                         # in-car average: larger offset and jitter, outliers in runs of 1-3 frames
+                               # (outlier_max_frames 3, the default; 1.75 frames on average)
+    emulator_overrides:
+      head_pose: {base_std_deg: 0.8, temporal_rho: 0.975, bias_std_deg: [2.5, 3.0, 2.5], fast_std_deg: 0.8,
+                  outlier_p: 0.01, outlier_mean_frames: 2, outlier_min_deg: 5.0, outlier_max_deg: 15.0}
+      face_dir: {base_std_deg: 0.8, temporal_rho: 0.975, bias_std_deg: [2.5, 3.0], fast_std_deg: 0.8,
+                 outlier_p: 0.01, outlier_mean_frames: 2, outlier_min_deg: 5.0, outlier_max_deg: 15.0}
+      gaze: {base_std_deg: 0.5, temporal_rho: 0.975, bias_std_deg: [3.5, 3.0], fast_std_deg: 2.0,
+             outlier_p: 0.02, outlier_mean_frames: 2, outlier_min_deg: 10.0, outlier_max_deg: 30.0}
+  pg3:                         # hard (cross-domain): large offset and jitter, more outliers, error grows ~2x faster
+    emulator_overrides:        # with head yaw / gaze angle
+      head_pose: {base_std_deg: 1.0, per_deg_rel_yaw: 0.06, temporal_rho: 0.975, bias_std_deg: [4.0, 4.5, 4.0],
+                  fast_std_deg: 1.2, outlier_p: 0.03, outlier_mean_frames: 2, outlier_min_deg: 5.0,
+                  outlier_max_deg: 15.0}
+      face_dir: {base_std_deg: 1.0, per_deg_rel_yaw: 0.06, temporal_rho: 0.975, bias_std_deg: [4.0, 4.5],
+                 fast_std_deg: 1.2, outlier_p: 0.03, outlier_mean_frames: 2, outlier_min_deg: 5.0,
+                 outlier_max_deg: 15.0}
+      gaze: {base_std_deg: 1.0, per_deg_gaze_to_camera: 0.08, per_deg_rel_head_yaw: 0.06, temporal_rho: 0.975,
+             bias_std_deg: [5.0, 4.5], fast_std_deg: 3.0, outlier_p: 0.05, outlier_mean_frames: 2,
+             outlier_min_deg: 10.0, outlier_max_deg: 30.0}
+
   # ---- bundles ----
   bad:
-    compose: "jit2+jmp2+mis2+drp1+cnf1+flp1+fp1"
+    compose: "jit2+jmp2+mis2+drp1+cnf1+flp1+fp1+pg2"
   worst:
-    compose: "jit3+jmp3+mis3+drp2+lat1+cnf2+flp2+fp2"
+    compose: "jit3+jmp3+mis3+drp2+lat1+cnf2+flp2+fp2+pg3"

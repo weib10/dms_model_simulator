@@ -317,44 +317,32 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
         d.line([P(lm["nose_bridge"]), P(lm["nose_tip"])], fill=(170, 170, 180), width=2)
     _draw_mouth(d, lm, ok, P, tr.get("mouth_openness", 0))
     eo = tr.get("eye_openness", {"left": 1.0, "right": 1.0})
-    for eye in ("left_eye", "right_eye"):     # ellipse height follows openness
-        o, i_, c = f"{eye}_outer", f"{eye}_inner", f"{eye}_center"
-        if not (ok(o) and ok(i_) and ok(c)):
-            continue
-        w = np.linalg.norm(lm[o] - lm[i_]) * s
-        opn = eo["left" if eye == "left_eye" else "right"]
-        h = max(w * 0.45 * opn, 1.0)
-        cx, cy = P(lm[c])
-        col = (240, 240, 240) if vis.get(c) else (110, 90, 90)
-        d.ellipse([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2], outline=col, width=2)
-        if opn > 0.2:
-            d.ellipse([cx - h / 3, cy - h / 3, cx + h / 3, cy + h / 3], fill=col)
-    if clean:
-        return img
-    for k, uv in lm.items():
-        if ok(k):
-            x, y = P(uv)
-            col = (200, 230, 200) if vis.get(k) else (200, 70, 70)
-            d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=col)
 
-    # ---- boxes: truth solid, model dashed ------------------------------------------
+    def draw_eyes():
+        for eye in ("left_eye", "right_eye"):     # ellipse height follows openness
+            o, i_, c = f"{eye}_outer", f"{eye}_inner", f"{eye}_center"
+            if not (ok(o) and ok(i_) and ok(c)):
+                continue
+            ew = np.linalg.norm(lm[o] - lm[i_]) * s
+            opn = eo["left" if eye == "left_eye" else "right"]
+            h = max(ew * 0.45 * opn, 1.0)
+            cx, cy = P(lm[c])
+            col = (240, 240, 240) if vis.get(c) else (110, 90, 90)
+            d.ellipse([cx - ew / 2, cy - h / 2, cx + ew / 2, cy + h / 2], outline=col, width=2)
+            if opn > 0.2:
+                d.ellipse([cx - h / 3, cy - h / 3, cx + h / 3, cy + h / 3], fill=col)
+    if clean:
+        draw_eyes()
+        return img
+
+    # ---- face (wedge) and eyes (line): truth solid, model dashed and hollow. The model rays have the truth rays'
+    # length (0.15 m) and projection (incl. lens distortion, truth.py), from the projected head centre. The face
+    # wedges go under the eyes, landmarks, boxes and labels (a filled wedge would hide the near eye at a head
+    # turn); the eye lines go on top of everything.
     w = _stroke(H)
-    for det in tr.get("detections", []):
-        x1, y1, x2, y2 = [v * s for v in det["bbox"]]
-        d.rectangle([x1, y1, x2, y2], outline=GT_BOX_COLOR, width=2)
-        d.text((x1 + 2, y1 - fs - 1), str(det.get("class", det.get("label", "?"))), fill=GT_BOX_COLOR, font=f_small)
     dropped = bool(pr.get("dropped"))
     pg = None if dropped else pr.get("gaze")
     pf = None if dropped else pr.get("face_dir")
-    if show_pred and not dropped:
-        for det in pr.get("detections", []):
-            x1, y1, x2, y2 = [v * s for v in det["bbox"]]
-            _outline(d, [(x1, y1), (x2, y1), (x2, y2), (x1, y2)], PRED_BOX_COLOR, 2, dashed=True)
-            conf = det.get("conf", det.get("score", 0.0))
-            d.text((x1 + 2, y2 + 1), f"{det.get('class', det.get('label', '?'))} {conf:.2f}", fill=PRED_BOX_COLOR, font=f_small)
-
-    # ---- face (wedge) and eyes (line): truth solid, model dashed and hollow. The model rays have the truth rays'
-    # length (0.15 m) and projection (incl. lens distortion, truth.py), from the projected head centre.
     g = tr["gaze"]
     fg = tr.get("face_dir")
     items = []                                   # (quantity, model, p0, p1, toward the camera)
@@ -370,7 +358,27 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
         seg = _project_ray(cam, tr["head_center_vehicle"], pg["dir_vehicle"])
         if seg:
             items.append(("eyes", True, P(seg[0]), P(seg[1]), _toward_camera(pg)))
-    _draw_camera_dirs(d, items, w, H)
+    _draw_camera_dirs(d, items, w, H, only="face")
+
+    draw_eyes()
+    for k, uv in lm.items():
+        if ok(k):
+            x, y = P(uv)
+            col = (200, 230, 200) if vis.get(k) else (200, 70, 70)
+            d.ellipse([x - 2, y - 2, x + 2, y + 2], fill=col)
+
+    # ---- boxes: truth solid, model dashed ------------------------------------------
+    for det in tr.get("detections", []):
+        x1, y1, x2, y2 = [v * s for v in det["bbox"]]
+        d.rectangle([x1, y1, x2, y2], outline=GT_BOX_COLOR, width=2)
+        d.text((x1 + 2, y1 - fs - 1), str(det.get("class", det.get("label", "?"))), fill=GT_BOX_COLOR, font=f_small)
+    if show_pred and not dropped:
+        for det in pr.get("detections", []):
+            x1, y1, x2, y2 = [v * s for v in det["bbox"]]
+            _outline(d, [(x1, y1), (x2, y1), (x2, y2), (x1, y2)], PRED_BOX_COLOR, 2, dashed=True)
+            conf = det.get("conf", det.get("score", 0.0))
+            d.text((x1 + 2, y2 + 1), f"{det.get('class', det.get('label', '?'))} {conf:.2f}", fill=PRED_BOX_COLOR, font=f_small)
+    _draw_camera_dirs(d, items, w, H, only="eyes")
 
     # ---- HUD text (wrapped to the image width): plain words in the vehicle frame first ------------------------
     hp_gt = tr["head_pose_camera"]
@@ -378,7 +386,7 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
              f"eyes {dir_words(g['yaw_vehicle'], g['pitch_vehicle'], short=True)}"]
     if fg:
         truth.append(f"eyes−face {_rel_words(g, fg, short=True)}")
-    state = [f"roll {hp_gt['roll']:+.0f}°", f"eye opening {eo['left']:.2f}/{eo['right']:.2f}",
+    state = [f"roll (cam) {hp_gt['roll']:+.0f}°", f"eye opening {eo['left']:.2f}/{eo['right']:.2f}",
              f"mouth {float(tr.get('mouth_openness', 0) or 0):.2f}", f"hand={tr.get('hand')}", f"phone={tr.get('phone')}"]
     if dropped:
         model = ["model: frame dropped" + (" (latency fill)" if pr.get("latency_fill") else "")]
@@ -387,12 +395,12 @@ def draw_camera_view(record: dict, cam: Camera, cabin: Cabin, scale: float = 0.5
                               f"(err {_err(pf)})" if _valid_dir(pf) else "face none")]
         if _valid_dir(pg):
             model += [f"eyes {dir_words(pg['yaw_vehicle'], pg['pitch_vehicle'], short=True)} (err {_err(pg)})",
-                      f"conf {pg.get('conf', pg.get('score', 0)):.2f}"]
+                      f"eyes conf {pg.get('conf', pg.get('score', 0)):.2f}"]
         else:
             model.append(f"eyes invalid ({pg.get('reason') if pg else 'none'})")
         hp = pr.get("head_pose_camera")
         if hp:
-            model.append(f"roll {hp['roll']:+.0f}°")
+            model.append(f"roll (cam) {hp['roll']:+.0f}°")
     camf = ["camera frame:"]
     if fg:
         camf.append(f"face yaw/pitch {fg['yaw_camera']:+.0f}/{fg['pitch_camera']:+.0f}")
@@ -482,17 +490,23 @@ def _project_ray(cam: Camera, origin_vehicle, dir_vehicle, length: float = 0.15)
     return (uv0, uv1) if _finite(uv0, uv1) else None
 
 
-def _draw_camera_dirs(d, items, w: int, H: int):
-    """Face wedges, then eye lines on top (both stay visible when they coincide). A ray that projects shorter than
-    TOWARD_CAM_PX (scaled to the image height) points along the line of sight: a ring with a dot (towards the
-    camera) or a cross (away), larger for the face than for the eyes."""
+def _draw_camera_dirs(d, items, w: int, H: int, only: str | None = None):
+    """Face wedges and eye lines (only: draw just "face" or "eyes"; draw_camera_view puts the wedges under the
+    features and the eye lines on top). A ray that projects shorter than TOWARD_CAM_PX (scaled to the image height)
+    points along the line of sight: a ring with a dot (towards the camera) or a cross (away), larger for the face
+    than for the eyes. Ring or ray is decided by the truth direction of that quantity and used for the model too,
+    so a small model error never swaps the symbol."""
     min_px = TOWARD_CAM_PX * H / 400.0
     r_face = max(7, round(H / 30))
     r_eyes = max(4, round(r_face * 0.5))
+    length = lambda p0, p1: float(np.linalg.norm(np.subtract(p1, p0)))
+    stub = {q: length(p0, p1) < min_px for q, model, p0, p1, _t in items if not model}
     for q, model, p0, p1, toward in items:
+        if only is not None and q != only:
+            continue
         col = FACE_COLOR if q == "face" else EYES_COLOR
-        L = float(np.linalg.norm(np.subtract(p1, p0)))
-        if L < min_px:
+        L = length(p0, p1)
+        if stub.get(q, L < min_px):
             _plane_marker(d, p0, r_face if q == "face" else r_eyes, col, w if q == "face" else max(2, w - 1),
                           toward, model=model, casing=CAM_CASING)
         elif q == "face":
@@ -611,15 +625,17 @@ def _record_dirs(record: dict, show_model: bool = True) -> list[tuple[str, bool,
 def _draw_head_dirs(d, to_px, hc, dirs, px_per_m: float, w: int, casing, out_vec, head: bool = True):
     """Head disc, face "nose" wedges (FACE_LEN_M) and eye sight lines (EYES_LEN_M) in one 2D view. A direction that
     projects shorter than STUB_RATIO of its length becomes a ring with a dot (out of the picture, towards the
-    viewer) or a cross (into it); the face ring is larger than the eyes ring."""
+    viewer) or a cross (into it); the face ring is larger than the eyes ring. Ring or ray is decided by the truth
+    direction of that quantity and used for the model too, so a small model error never swaps the symbol."""
     hx, hy = to_px(hc)
     r = HEAD_R_M * px_per_m
     if head:
         d.ellipse([hx - r, hy - r, hx + r, hy + r], fill=HEAD_FILL, outline=HEAD_EDGE, width=max(1, w // 2))
+    ratio = lambda dv: float(np.linalg.norm(np.subtract(to_px(hc + dv), (hx, hy)))) / px_per_m
+    stub = {q: ratio(dv) < STUB_RATIO for q, model, dv in dirs if not model}
     for q, model, dv in dirs:
         col = FACE_COLOR if q == "face" else EYES_COLOR
-        ratio = float(np.linalg.norm(np.subtract(to_px(hc + dv), (hx, hy)))) / px_per_m
-        if ratio < STUB_RATIO:
+        if stub.get(q, ratio(dv) < STUB_RATIO):
             toward = float(np.dot(dv, out_vec)) > 0
             _plane_marker(d, (hx, hy), r * (0.8 if q == "face" else 0.42), col, w if q == "face" else max(2, w - 1),
                           toward, model=model, casing=casing)
@@ -637,14 +653,17 @@ def _mpl_head_dirs(ax, hc, dirs, ia, ib, sa, sb):
     out_vec = _out_of_screen(ia, ib, sa, sb)
     h = P(hc)
     ax.add_patch(Circle(h, HEAD_R_M, fc=_hex(HEAD_FILL), ec=_hex(HEAD_EDGE), zorder=3))
+    stub = {q: np.linalg.norm(P(hc + dv) - h) < STUB_RATIO for q, model, dv in dirs if not model}
     for q, model, dv in dirs:
         col = _hex(FACE_COLOR if q == "face" else EYES_COLOR)
         ls = (0, (4, 3)) if model else "-"
         v2 = P(hc + dv) - h
-        if np.linalg.norm(v2) < STUB_RATIO:
+        if stub.get(q, np.linalg.norm(v2) < STUB_RATIO):
             toward = float(np.dot(dv, out_vec)) > 0
             ax.plot(*h, marker="o", ms=16 if q == "face" else 9, mfc="none", mec=col, ls="none", zorder=5)
             ax.plot(*h, marker="." if toward else "x", ms=6, color=col, ls="none", zorder=5)
+        elif np.linalg.norm(v2) < 1e-9:              # model straight along the view, truth not: nothing to draw
+            continue
         elif q == "face":
             u = v2 / np.linalg.norm(v2)
             n = np.array([-u[1], u[0]]) * FACE_HALF_W_M
@@ -731,22 +750,30 @@ class CabinBackground:
         return out
 
     def _legend(self, out: Image.Image, w: int):
-        """Legend, top-left of the first subplot, each swatch in the style it stands for."""
+        """Legend, bottom-left of the top-down view, each swatch in the style it stands for."""
         d = ImageDraw.Draw(out)
+        entries = (("eyes", False, "eyes: truth"), ("eyes", True, "eyes: model"), ("face", False, "face: truth"),
+                   ("face", True, "face: model"), ("plane", False, "toward / away"))
+        # left-rear corner of the top-down view (behind the driver, to the left: X < 0, Y > 0.5 m), where no sight
+        # line of a forward, mirror or passenger glance passes; part of the static background, so the per-frame
+        # overlays draw over it rather than under it. The font shrinks until the box ends left of Y = 0.5 m.
+        a = self.axes[0]
+        x0, _y0, _x1, y1 = a["box"]
+        x_max = self.to_px(a, [0.0, 0.5, 0.0])[0] - 2
         fs = round(_label_px(out.height))
-        f = _font(fs)
-        sw = _legend_swatch_w(fs)
-        entries = (("eyes", False, "eyes: truth"), ("eyes", True, "eyes: model"), ("face", False, "face (nose): truth"),
-                   ("face", True, "face (nose): model"), ("plane", False, "toward / away from you"))
-        # top-left corner of the top-down view: ahead-left of the driver, far from the head (at the origin); part of
-        # the static background, so the per-frame overlays draw over it rather than under it
-        x0, y0, _x1, y1 = self.axes[0]["box"]
+        while True:
+            f = _font(fs)
+            sw = _legend_swatch_w(fs)
+            cw = sw + 10 + max(d.textlength(t, font=f) for *_k, t in entries) + 6
+            if x0 + 2 + cw <= x_max or fs <= 7:
+                break
+            fs -= 1
         lh = fs + (6 if out.height >= 300 else 3)          # tighter rows on small pictures
-        cw = sw + 10 + max(d.textlength(t, font=f) for *_k, t in entries) + 6
-        cols, rows = 1, len(entries)       # one column: even at 200 px it ends above the head (y = 0.3 m or more)
-        d.rectangle([x0 + 2, y0 + 2, x0 + 2 + cw * cols, y0 + 2 + lh * rows + 6], fill=PAPER, outline=(200, 200, 200))
+        rows = len(entries)
+        top = y1 - 2 - (lh * rows + 6)
+        d.rectangle([x0 + 2, top, x0 + 2 + cw, y1 - 2], fill=PAPER, outline=(200, 200, 200))
         for n, (kind, model, label) in enumerate(entries):
-            x, y = x0 + 7 + (n // rows) * cw, y0 + 5 + (n % rows) * lh
+            x, y = x0 + 7, top + 3 + n * lh
             _legend_swatch(d, kind, model, x, y + lh // 2, sw, fs, max(2, w - 1), PAPER)
             d.text((x + sw + 6, y + 1), label, fill=INK, font=f)
 
@@ -921,7 +948,8 @@ def _mean_eo(eo):
 
 def _error_rows(records: list[dict]) -> dict[str, list[bool]]:
     """Injected model errors per frame (full simulator records only): dropped frame, missed face box, eye / mouth
-    open-closed class flip, any false-positive box, any box jump. Rows that never occur are left out."""
+    open-closed class flip, any false-positive box, any box jump, a head pose / face direction / eye gaze outlier.
+    Rows that never occur are left out."""
     if not records or not isinstance(records[0].get("pred"), dict):
         return {}
     rows = {
@@ -932,6 +960,8 @@ def _error_rows(records: list[dict]) -> dict[str, list[bool]]:
         "mouth class flip": ["mouth" in (r["pred"].get("class_flip") or []) for r in records],
         "false positive": [any(d.get("false_positive") for d in r["pred"]["detections"]) for r in records],
         "box jump": [any(d.get("jump") for d in r["pred"]["detections"]) for r in records],
+        "pose/gaze outlier": [any((r["pred"].get(k) or {}).get("outlier")
+                                  for k in ("head_pose_camera", "gaze", "face_dir")) for r in records],
     }
     return {k: v for k, v in rows.items() if any(v)}
 

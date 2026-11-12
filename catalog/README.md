@@ -19,7 +19,7 @@
 - 難度：參數寫成 `{levels: {small: …, medium: …, large: …}}`。難度 = 離它像的那個違規門檻多近（small 一看就知道，large 貼著門檻但不跨過），
   每條在 summary 寫明對照的門檻。一列只取一個難度，條目裡所有 levels 參數同時取那一級（不做笛卡兒積）。
 - 標準：[standards.yaml](standards.yaml)。外部法規的中性代號（目前只有 `STD-A`）與它的要求項目編號，條目用 `standards:` 指過去，標「跟哪幾項要求有關」，不是「符合」。見下面「標準」一節。
-- 模型誤差設定：[profiles.yaml](profiles.yaml)。分維度分等級（`jit` 抖動、`jmp` 跳動、`mis` 漏框、`drp` 掉幀、`lat` 延遲、`cnf` 分數偏低、`flp` 開閉眼嘴判錯、`fp` 誤報，各 1–3 級），用 `+` 疊加，例如 `jit2+jmp2+mis1`；`bad`、`worst` 是現成組合。等級是刻意粗略的，用來看後處理撐得住多少誤差。
+- 模型誤差設定：[profiles.yaml](profiles.yaml)。分維度分等級（`jit` 抖動、`jmp` 跳動、`mis` 漏框、`drp` 掉幀、`lat` 延遲、`cnf` 分數偏低、`flp` 開閉眼嘴判錯、`fp` 誤報、`pg` 頭姿／臉朝向／視線誤差（每人固定偏差＋快速抖動＋偶發離群），各 1–3 級），用 `+` 疊加，例如 `jit2+jmp2+mis1`；`bad`、`worst` 是現成組合（分別含 `pg2`、`pg3`）。等級是刻意粗略的，用來看後處理撐得住多少誤差。
 
 ## 怎麼讀 id
 

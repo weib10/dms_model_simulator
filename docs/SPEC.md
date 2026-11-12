@@ -73,12 +73,36 @@ when its channel is observable. The full JSONL `truth` also
 has `held_bbox`: the image box of an object at the lips (`held`; no OD class of its own), the anchor of
 `anchor: held` context rules.
 
+## Pose and gaze error
+Head pose, face direction and eye gaze (`head_pose`, `face_dir`, `gaze` in `configs/emulator.yaml`) get, per axis:
+- a **slow AR(1)**: unit noise (`temporal_rho`) times a std that grows with the view (head yaw, gaze angle to the
+  camera, small face / eyes), plus the constant `bias_deg`. This is the whole error by default.
+- a **per-run bias** (`bias_std_deg`, one number or one per axis): drawn once per run from N(0, std) and kept for
+  the whole run. One run stands for one person: the offset a model has for a given face, which no tracker or
+  smoothing removes. Results therefore differ between model seeds; compare several.
+- **fast jitter** (`fast_std_deg`, `fast_rho`): a second AR(1) that decorrelates within a few frames.
+- **outliers** (`outlier_p`, `outlier_mean_frames`, `outlier_max_frames`, `outlier_min_deg`, `outlier_max_deg`): a
+  two-state chain in the outlier state on a share `outlier_p` of the frames the quantity is produced. A run ends
+  with probability 1 / `outlier_mean_frames` per frame and after `outlier_max_frames` frames at the latest (default
+  3; null = no cap), so with mean 2 and cap 3 runs last 1-3 frames, 1.75 on average. The entry rate is raised for
+  the shorter capped runs (a = r / ((1 - r) L), L the capped mean run length), so the share stays `outlier_p`. Each
+  run adds one offset of magnitude U(min, max) in a random direction, drawn when the run starts. The frames carry `outlier: true` in the full JSONL `pred` (on `head_pose_camera`, `gaze`, `face_dir`).
+
+The three structured parts are off by default (gains 0). With `fast_std_deg` or `bias_std_deg` above 0 the
+reported `std_deg`, and the score derived from it, is sqrt(std^2 + fast_std_deg^2 + mean over axes of
+bias_std_deg^2); otherwise it is the slow std as before. Outlier frames do not raise the reported std or lower the
+score, as with many real models, which do not know when they are wrong. Eye openness may get a per-run open level
+(`eye_openness.bias_std`, the same for both eyes). Profiles `pg1`..`pg3` (`catalog/profiles.yaml`) grade this
+error: they move most of it from the slow part into the bias and the fast jitter (slow part ~1 deg with a ~2 s
+correlation time) and add outliers at levels 2 and 3.
+
 ## Frame rate of the error model
 The emulator's numbers given in frames are meant at `reference_fps` (`configs/emulator.yaml`, 20; catalog, exams
 and gallery run at 20 fps). A run at another fps converts them so the behaviour per second stays the same
 (`emulator.at_fps`, applied when `Simulation` builds the emulator, after overrides and profiles): every
-`temporal_rho` becomes rho ** (reference_fps / fps), every mean run length (`mean_frames`, `mean_miss_frames`,
-`drop_mean_frames`) is multiplied by fps / reference_fps (at least 1 frame), `latency_frames` becomes
+`temporal_rho` and `fast_rho` becomes rho ** (reference_fps / fps), every run length (`mean_frames`,
+`mean_miss_frames`, `drop_mean_frames`, `outlier_mean_frames`, `outlier_max_frames`) is multiplied by
+fps / reference_fps (at least 1 frame), `latency_frames` becomes
 round(latency * fps / reference_fps). Shares and probabilities (`drop_frame_prob`, `p_*`, `p`, `rate_per_frame`,
 `seatbelt_off_false_positive_rate`) stay: they are fractions of frames or of time, so per-frame rates give more
 events per second at a higher fps. At 20 fps the output is what it was before the conversion existed.
@@ -86,14 +110,16 @@ events per second at a higher fps. At 20 fps the output is what it was before th
 ## Error flags (full JSONL `pred`)
 `dropped` (whole frame without output), `latency_fill` (initial frames of a latency queue), `source_frame`,
 per detection `p_detect`, `jump` (box moved elsewhere this frame), `false_positive` (+ `context` for a
-context rule), and `class_flip` (`["eye"]` / `["mouth"]` on frames whose open / closed class is reported wrong).
+context rule), `class_flip` (`["eye"]` / `["mouth"]` on frames whose open / closed class is reported wrong),
+and `outlier` on `head_pose_camera` / `gaze` / `face_dir` (an outlier run of that quantity).
 A missed box is a class present in the truth detections and absent from a non-dropped `pred`.
 
 ## Random streams
 - `Simulation`: `SeedSequence(seed)` spawns a behaviour and an emulator stream; `emulator_seed` replaces the
   emulator stream, so the model noise can vary with the behaviour fixed.
 - `Emulator` splits its stream per error source (drops, false positives, each class's detection draws, each AR(1)
-  noise process, flips, jumps), so changing one error rate does not change the others' draws. AR(1) noise is
+  noise process, flips, jumps, the per-run biases, each quantity's fast jitter and outliers; the streams added
+  later are spawned after the older ones), so changing one error rate does not change the others' draws. AR(1) noise is
   stationary from frame 0 and spans gaps with correlation rho**gap.
 - `scenario_gen`: the target chain and each episode kind use their own stream; kinds with `target_bias`
   re-weight target transitions.
