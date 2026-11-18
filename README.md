@@ -87,6 +87,7 @@ dms-sim render --scenario face_vs_eyes --fps 25 --out out                       
 dms-sim render --scenario face_vs_eyes --fps 25 --story --out out                  # the same as a story: top-down view in plain words
 dms-sim compare --scenario phone_distraction                                      # model-vs-truth table per camera
 dms-sim cabin --out out                                                           # cabin with all cameras
+dms-sim view3d --out out/view3d                                                   # the same layout in 3D, turn it in a browser
 dms-sim inspect-bin out/drowsy__steering_column.dms.bin --head 3                  # dms.bin as text
 dms-sim gen-scenario --duration 120 --seed 1                                      # random scenario
 dms-sim batch --gen 3 --variants 5 --out out/batch                                # scenarios x drivers x cameras
@@ -145,6 +146,13 @@ of the engineering view, `story.gif` (one large top-down picture per frame, real
 most or the eyes are off the road). Under each picture: the directions in plain words and the model error. Each
 moment's title is the segment's optional `caption:` key, else a description such as "face 30° left, eyes ahead".
 One camera only; `--scale` sets the size (0.5 = 960x720).
+
+**3D layout** (`dms-sim view3d`): `cabin3d.html` (Chinese) and `cabin3d.en.html` (English), one file each that
+opens straight from disk (no network). It shows what `configs/cabin.yaml` and `configs/cameras.yaml` put where:
+gaze targets with their zone tolerance as a ring, cameras with their field-of-view pyramid, steering wheel, seat
+belt and the head at rest. Drag to turn, wheel or pinch to zoom; preset views (top, side, the driver's eyes,
+through any camera). Layout only, no scenario. `--cabin` / `--cameras` take other YAML files; `--camera` limits
+the cameras. The pyramids are pinhole (no lens distortion); far targets (the road) are drawn as directions.
 
 ## Checking a post-processing program
 

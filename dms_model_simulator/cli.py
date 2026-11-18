@@ -291,6 +291,15 @@ def cmd_cabin(a):
     print(f"wrote {a.out}/cabin.png")
 
 
+def cmd_view3d(a):
+    from . import view3d
+    cfgs = load_configs(cabin=a.cabin, cameras=a.cameras)
+    cabin, cams = _cameras(cfgs, a.camera)
+    src = (Path(a.cabin).name if a.cabin else "configs/cabin.yaml", Path(a.cameras).name if a.cameras else "configs/cameras.yaml")
+    for path in view3d.write(a.out, cabin, cams, langs=a.lang, sources=src):
+        print(f"wrote {path}")
+
+
 def cmd_compare(a):
     cfgs = load_configs()
     _, cams = _cameras(cfgs, None)
@@ -672,6 +681,14 @@ def main(argv=None):
     d.add_argument("--scale", type=float, default=0.4, help="GIF: camera view scale")
     d.add_argument("--grid-cols", type=int, default=None, help="columns of the all-camera grid GIF"); d.set_defaults(fn=cmd_demo)
     c = sub.add_parser("cabin", help="plot the cabin with all camera presets"); c.add_argument("--out", default="out"); c.set_defaults(fn=cmd_cabin)
+    v3 = sub.add_parser("view3d", help="cabin layout (targets, cameras, wheel, head) as an HTML page with a 3D view "
+                                       "you can turn; opens from disk, no network")
+    v3.add_argument("--out", default="out/view3d", help="folder for cabin3d.html (zh) and cabin3d.en.html (en)")
+    v3.add_argument("--camera", nargs="+", default=["all"], help="camera names or 'all'")
+    v3.add_argument("--cabin", default=None, help="cabin YAML (default configs/cabin.yaml)")
+    v3.add_argument("--cameras", default=None, help="camera presets YAML (default configs/cameras.yaml)")
+    v3.add_argument("--lang", nargs="+", choices=["zh", "en"], default=["zh", "en"])
+    v3.set_defaults(fn=cmd_view3d)
     m = sub.add_parser("compare", help="run one scenario over all cameras and print a metrics table")
     m.add_argument("--scenario", required=True)
     m.add_argument("--out", default=None, help="also write compare__<scenario>.md / .json here (default: print only)"); m.add_argument("--seed", type=int, default=0)

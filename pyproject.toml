@@ -18,3 +18,6 @@ dms-sim = "dms_model_simulator.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["dms_model_simulator*"]
+
+[tool.setuptools.package-data]
+dms_model_simulator = ["view3d_template.html"]

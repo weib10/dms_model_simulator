@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="{{lang}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<style>
+  html, body { margin: 0; height: 100%; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif; color: #222; background: #fafafa; }
+  #app { display: flex; height: 100%; }
+  #side { width: 290px; flex: none; overflow-y: auto; padding: 12px 14px; box-sizing: border-box; border-right: 1px solid #ddd; background: #fff; }
+  #main { flex: 1; position: relative; min-width: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+  h1 { font-size: 17px; margin: 0 0 6px; }
+  h2 { font-size: 13px; margin: 14px 0 6px; color: #555; text-transform: uppercase; letter-spacing: .03em; }
+  .small { font-size: 12px; color: #666; }
+  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
+  button { font: inherit; font-size: 13px; padding: 3px 8px; border: 1px solid #bbb; border-radius: 4px; background: #f4f4f4; cursor: pointer; }
+  button.on { background: #e33; border-color: #c22; color: #fff; }
+  button.view.on { background: #333; border-color: #333; }
+  label { display: block; font-size: 13px; margin: 2px 0; cursor: pointer; }
+  #tip { position: absolute; pointer-events: none; background: rgba(30,30,30,.88); color: #fff; font-size: 12px; padding: 3px 7px; border-radius: 4px; display: none; white-space: nowrap; }
+  #info { margin-top: 8px; font-size: 12px; min-height: 2.6em; }
+  @media (max-width: 720px) {
+    #app { flex-direction: column; }
+    #side { width: 100%; max-height: 42%; border-right: none; border-bottom: 1px solid #ddd; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <h1 id="title"></h1>
+    <div class="small" id="hint"></div>
+    <h2 id="h_views"></h2>
+    <div class="btns" id="views"></div>
+    <h2 id="h_cams"></h2>
+    <div class="btns" id="cams"></div>
+    <div id="info"></div>
+    <h2 id="h_layers"></h2>
+    <div id="layers"></div>
+    <p class="small" id="frame"></p>
+    <p class="small" id="note"></p>
+    <p class="small" id="src"></p>
+  </div>
+  <div id="main"><canvas id="cv"></canvas><div id="tip"></div></div>
+</div>
+<script>
+"use strict";
+const DATA = /*{{DATA}}*/null;
+const S = DATA.scene, T = DATA.text;
+
+// ---- vectors (vehicle frame: X forward, Y left, Z up) ----
+const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const norm = a => { const n = Math.hypot(a[0], a[1], a[2]); return n > 0 ? mul(a, 1 / n) : a; };
+const RAD = Math.PI / 180, UP = [0, 0, 1], NEAR = 0.02;
+
+const lo = S.bounds.lo, hi = S.bounds.hi;
+const center = mul(add(lo, hi), 0.5);
+const radius = 0.5 * Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+
+// ---- view state ----
+// orbit: eye on a sphere around `tgt`; look: eye fixed, turn the view direction (yaw / pitch, or a camera's basis)
+let V = {};
+let layers = { targets: true, rings: true, cams: true, fov: false, wheel: true, belt: true, head: true, grid: true };
+let selCam = null, activeView = "iso";
+
+// points an orbit preset must keep on screen (the far road targets are rays, not part of the fit)
+const FIT = S.targets.filter(t => !t.far).map(t => t.shown).concat(S.cameras.map(c => c.p), S.wheel.rim.flat(),
+                                                                       S.belt, [S.head.c]);
+function setOrbit(az, el) {
+  V = { mode: "orbit", tgt: center.slice(), az: az * RAD, el: el * RAD, D: radius * 2.5, fov: 40 * RAD, fit: true };
+}
+function fitOrbit() {                    // smallest distance at which every FIT point is inside 90 % of the canvas
+  V.fit = false;
+  const f0 = 0.5 * Math.min(W, H) / Math.tan(V.fov / 2);
+  const ok = D => {
+    V.D = D; const b = basis();
+    return FIT.every(p => {
+      const v = sub(p, b.eye), z = dot(v, b.f);
+      return z > NEAR && Math.abs(f0 * dot(v, b.r) / z) < 0.45 * W && Math.abs(f0 * dot(v, b.u) / z) < 0.45 * H;
+    });
+  };
+  let a = 0.05, b = 60;
+  if (!ok(b)) { V.D = b; return; }
+  for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (ok(m)) b = m; else a = m; }
+  V.D = b;
+}
+function setLook(eye, yaw, pitch, hfov) {
+  V = { mode: "look", eye: eye.slice(), yaw: yaw * RAD, pitch: pitch * RAD, hfov: hfov * RAD, basis: null };
+}
+const VIEWS = {
+  iso:    () => setOrbit(215, 28),
+  top:    () => setOrbit(180, 89.9),
+  side:   () => setOrbit(270, 0),
+  front:  () => setOrbit(0, 8),
+  driver: () => setLook(S.eye_point, 0, -8, 120),
+};
+
+function basis() {
+  if (V.mode === "orbit") {
+    const ce = Math.cos(V.el);
+    const eye = add(V.tgt, mul([ce * Math.cos(V.az), ce * Math.sin(V.az), Math.sin(V.el)], V.D));
+    const f = norm(sub(V.tgt, eye)), r = norm(cross(f, UP)), u = cross(r, f);
+    return { eye, f, r, u };
+  }
+  if (V.basis) return { eye: V.eye, ...V.basis };
+  const cp = Math.cos(V.pitch);
+  const f = [cp * Math.cos(V.yaw), cp * Math.sin(V.yaw), Math.sin(V.pitch)];
+  const r = norm(cross(f, UP)), u = cross(r, f);
+  return { eye: V.eye, f, r, u };
+}
+
+// ---- canvas ----
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d"), tip = document.getElementById("tip");
+let W = 0, H = 0, F = 1, B = null, frameRect = null, picks = [];
+
+function resize() {
+  const dpr = window.devicePixelRatio || 1, rc = cv.getBoundingClientRect();
+  W = rc.width; H = rc.height;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+
+function toView(p) { const v = sub(p, B.eye); return [dot(v, B.r), dot(v, B.u), dot(v, B.f)]; }
+function scr(v) { return [W / 2 + F * v[0] / v[2], H / 2 - F * v[1] / v[2]]; }
+function clip(a, b) {                         // view-space segment cut at the near plane, or null
+  if (a[2] < NEAR && b[2] < NEAR) return null;
+  if (a[2] < NEAR || b[2] < NEAR) {
+    const t = (NEAR - a[2]) / (b[2] - a[2]);
+    const m = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]), NEAR];
+    return a[2] < NEAR ? [m, b] : [a, m];
+  }
+  return [a, b];
+}
+
+let prims = [];
+function line(p, q, style) {
+  const s = clip(toView(p), toView(q));
+  if (s) prims.push({ k: "l", a: scr(s[0]), b: scr(s[1]), z: (s[0][2] + s[1][2]) / 2, ...style });
+}
+function poly(pts, style) { for (let i = 0; i + 1 < pts.length; i++) line(pts[i], pts[i + 1], style); }
+function fill(pts, style) {
+  const vs = pts.map(toView);
+  if (vs.some(v => v[2] < NEAR)) return;
+  prims.push({ k: "f", pts: vs.map(scr), z: vs.reduce((s, v) => s + v[2], 0) / vs.length, ...style });
+}
+function mark(p, style, name) {
+  const v = toView(p);
+  if (v[2] < NEAR) return;
+  const s = scr(v);
+  prims.push({ k: "m", s, z: v[2], ...style });
+  if (name) picks.push({ s, name, p });
+}
+function text(p, str, style) {
+  const v = toView(p);
+  if (v[2] < NEAR) return;
+  prims.push({ k: "t", s: scr(v), z: -1, str, ...style });
+}
+function sphere(c, r, style) {
+  const v = toView(c);
+  if (v[2] < r + NEAR) return;
+  prims.push({ k: "c", s: scr(v), rad: F * r / v[2], z: v[2] + r, ...style });
+}
+
+const fmt = (x) => (Math.round(x * 1000) / 1000).toFixed(3).replace(/\.?0+$/, "") || "0";
+const coord = p => "(" + p.map(fmt).join(", ") + ")";
+
+function build() {
+  prims = []; picks = [];
+  if (layers.grid) {
+    const z = lo[2] - 0.05, x0 = Math.floor((lo[0] - 0.3) * 5) / 5, x1 = Math.ceil((hi[0] + 0.3) * 5) / 5;
+    const y0 = Math.floor((lo[1] - 0.3) * 5) / 5, y1 = Math.ceil((hi[1] + 0.3) * 5) / 5;
+    const g = { col: "#e2e2e2", w: 1 };
+    for (let x = x0; x <= x1 + 1e-9; x += 0.2) line([x, y0, z], [x, y1, z], g);
+    for (let y = y0; y <= y1 + 1e-9; y += 0.2) line([x0, y, z], [x1, y, z], g);
+    const ym = (y0 + y1) / 2, xm = (x0 + x1) / 2, big = { col: "#999", size: 15, bold: true };
+    text([x1 + 0.15, ym, z], T.front, big); text([x0 - 0.15, ym, z], T.rear, big);
+    text([xm, y1 + 0.15, z], T.left, big); text([xm, y0 - 0.15, z], T.right, big);
+    const o = S.eye_point;
+    line(o, add(o, [0.15, 0, 0]), { col: "#d33", w: 2 }); text(add(o, [0.17, 0, 0]), "X", { col: "#d33", size: 11 });
+    line(o, add(o, [0, 0.15, 0]), { col: "#2a2", w: 2 }); text(add(o, [0, 0.17, 0]), "Y", { col: "#2a2", size: 11 });
+    line(o, add(o, [0, 0, 0.15]), { col: "#33d", w: 2 }); text(add(o, [0, 0, 0.17]), "Z", { col: "#33d", size: 11 });
+  }
+  if (layers.wheel) {
+    const s = { col: "#7a7a7a", w: 3 };
+    S.wheel.rim.forEach(pl => poly(pl, s));
+    S.wheel.hub.forEach(pl => { fill(pl, { col: "rgba(150,150,150,.35)" }); poly(pl, { col: "#8a8a8a", w: 1.5 }); });
+    S.wheel.spokes.forEach(sg => line(sg[0], sg[1], s));
+  }
+  if (layers.belt) poly(S.belt, { col: "#5b8c5a", w: 4 });
+  const inHead = V.mode === "look" && Math.hypot(...sub(B.eye, S.head.c)) < S.head.r * 1.5;
+  if (layers.head && !inHead) {
+    sphere(S.head.c, S.head.r, { col: "rgba(205,208,214,.8)", edge: "#787c86" });
+    poly(S.head.outline, { col: "#787c86", w: 1.2 });
+    S.head.eyes.forEach(e => mark(e, { col: "#f09600", r: 2.5, shape: "o" }));
+    line(S.head.c, S.head.face_tip, { col: "#2d7de1", w: 3, arrow: true });
+  }
+  if (layers.targets) {
+    for (const t of S.targets) {
+      if (t.far) line(S.eye_point, t.shown, { col: "#a5a5a5", w: 1.5, dash: [6, 4], arrow: true });
+      if (layers.rings && t.ring) poly(t.ring, { col: "#c4c4c4", w: 1 });
+      mark(t.shown, { col: "#8d8d8d", r: 4.5, shape: "s" }, t.far ? t.name + " → " + coord(t.p) : t.name + " " + coord(t.p));
+      const lab = t.far ? T.far.replace("{name}", t.name).replace("{dist:.0f}", Math.round(t.dist)) : t.name;
+      text(t.shown, lab, { col: "#444", size: 12, dx: 7, dy: -6 });
+    }
+  }
+  if (layers.cams) {
+    const viewing = V.camView;
+    for (const c of S.cameras) {
+      const sel = c.name === selCam, own = c.name === viewing;
+      if (!own) {
+        mark(c.p, { col: sel ? "#e33" : "#777", r: sel ? 6 : 4.5, shape: "^" }, c.name + " " + coord(c.p));
+        text(c.p, c.name, { col: sel ? "#c22" : "#777", size: 12, dx: 7, dy: 12, bold: sel });
+      }
+      if (own || !(sel || layers.fov)) continue;
+      const col = sel ? "#e33" : "#b0b0b0", w = sel ? 1.5 : 1, k = c.corners;
+      for (let i = 0; i < 4; i++) {
+        line(c.p, k[i], { col, w });
+        line(k[i], k[(i + 1) % 4], { col, w });
+        if (sel) fill([c.p, k[i], k[(i + 1) % 4]], { col: "rgba(238,51,51,.07)" });
+      }
+      line(c.p, c.axis, { col, w, dash: [4, 3] });
+    }
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  prims.sort((a, b) => b.z - a.z);
+  for (const p of prims) {
+    ctx.setLineDash(p.dash || []);
+    if (p.k === "l") {
+      ctx.strokeStyle = p.col; ctx.lineWidth = p.w; ctx.beginPath();
+      ctx.moveTo(p.a[0], p.a[1]); ctx.lineTo(p.b[0], p.b[1]); ctx.stroke();
+      if (p.arrow) {
+        const dx = p.b[0] - p.a[0], dy = p.b[1] - p.a[1], L = Math.hypot(dx, dy);
+        if (L > 8) {
+          const ux = dx / L, uy = dy / L, h = 7 + p.w * 1.5;
+          ctx.setLineDash([]); ctx.fillStyle = p.col; ctx.beginPath();
+          ctx.moveTo(p.b[0], p.b[1]);
+          ctx.lineTo(p.b[0] - h * ux + h * 0.45 * uy, p.b[1] - h * uy - h * 0.45 * ux);
+          ctx.lineTo(p.b[0] - h * ux - h * 0.45 * uy, p.b[1] - h * uy + h * 0.45 * ux);
+          ctx.fill();
+        }
+      }
+    } else if (p.k === "f") {
+      ctx.fillStyle = p.col; ctx.beginPath();
+      p.pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]));
+      ctx.closePath(); ctx.fill();
+    } else if (p.k === "c") {
+      ctx.fillStyle = p.col; ctx.strokeStyle = p.edge; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(p.s[0], p.s[1], Math.max(1, p.rad), 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
+    } else if (p.k === "m") {
+      const [x, y] = p.s, r = p.r;
+      ctx.fillStyle = p.col; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.beginPath();
+      if (p.shape === "s") ctx.rect(x - r, y - r, 2 * r, 2 * r);
+      else if (p.shape === "^") { ctx.moveTo(x, y - r * 1.2); ctx.lineTo(x + r, y + r * 0.8); ctx.lineTo(x - r, y + r * 0.8); ctx.closePath(); }
+      else ctx.arc(x, y, r, 0, 2 * Math.PI);
+      ctx.fill(); ctx.stroke();
+    } else if (p.k === "t") {
+      ctx.font = (p.bold ? "bold " : "") + p.size + "px system-ui, sans-serif";
+      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(250,250,250,.9)"; ctx.fillStyle = p.col;
+      const x = p.s[0] + (p.dx || 0), y = p.s[1] + (p.dy || 0);
+      ctx.textAlign = p.dx ? "left" : "center"; ctx.textBaseline = "middle";
+      ctx.strokeText(p.str, x, y); ctx.fillText(p.str, x, y);
+    }
+  }
+  ctx.setLineDash([]);
+  if (frameRect) {                                   // the image area of the camera we look through
+    ctx.strokeStyle = "#e33"; ctx.lineWidth = 2;
+    ctx.strokeRect(frameRect[0], frameRect[1], frameRect[2], frameRect[3]);
+  }
+}
+
+function draw() {
+  if (!W) return;
+  if (V.fit) fitOrbit();
+  B = basis(); frameRect = null;
+  if (V.mode === "orbit") F = 0.5 * Math.min(W, H) / Math.tan(V.fov / 2);
+  else if (V.cam) {
+    const c = V.cam, tx = Math.tan(c.hfov * RAD / 2), ty = Math.tan(c.vfov * RAD / 2);
+    F = 0.94 * Math.min((W / 2) / tx, (H / 2) / ty);
+    frameRect = [W / 2 - F * tx, H / 2 - F * ty, 2 * F * tx, 2 * F * ty];
+  } else F = (W / 2) / Math.tan(V.hfov / 2);
+  build(); render();
+}
+
+// ---- interaction (pointer events: mouse, pen and touch) ----
+const pts = new Map();
+let pinch0 = null;
+cv.addEventListener("contextmenu", e => e.preventDefault());
+cv.addEventListener("pointerdown", e => {
+  try { cv.setPointerCapture(e.pointerId); } catch (_) { /* pointer already gone */ }
+  pts.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, pan: e.button === 2 || e.shiftKey });
+  cv.classList.add("dragging"); tip.style.display = "none";
+  if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
+});
+function release(e) {
+  const p = pts.get(e.pointerId);              // a tap that did not move: show the nearest point (touch has no hover)
+  if (p && e.type === "pointerup" && pts.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 6) {
+    pts.delete(e.pointerId); cv.classList.remove("dragging"); hover(e); return;
+  }
+  pts.delete(e.pointerId); if (pts.size < 2) pinch0 = null; if (!pts.size) cv.classList.remove("dragging"); }
+cv.addEventListener("pointerup", release);
+cv.addEventListener("pointercancel", release);
+cv.addEventListener("pointermove", e => {
+  const p = pts.get(e.pointerId);
+  if (!p) { hover(e); return; }
+  const dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (pts.size === 2) {
+    const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch0) zoom(pinch0 / d);
+    pinch0 = d; return;
+  }
+  if (V.mode === "orbit") {
+    if (p.pan) { const k = V.D / F; V.tgt = add(V.tgt, add(mul(B.r, -dx * k), mul(B.u, dy * k))); }
+    else { V.az -= dx * 0.008; V.el = Math.max(-89.9 * RAD, Math.min(89.9 * RAD, V.el + dy * 0.008)); }
+  } else {
+    if (V.basis) {                                    // leave the camera's exact basis: keep its direction, drop roll
+      const f = V.basis.f;
+      V.yaw = Math.atan2(f[1], f[0]); V.pitch = Math.asin(Math.max(-1, Math.min(1, f[2])));
+      V.hfov = V.cam ? V.cam.hfov * RAD : V.hfov; V.basis = null; V.cam = null;
+    }
+    V.yaw += dx * 0.004;
+    V.pitch = Math.max(-89 * RAD, Math.min(89 * RAD, V.pitch + dy * 0.004));
+  }
+  draw();
+});
+function zoom(k) {
+  if (V.mode === "orbit") V.D = Math.max(0.2, Math.min(40, V.D * k));
+  else {
+    if (V.basis) { V.hfov = V.cam.hfov * RAD; V.cam = null; }
+    V.hfov = Math.max(10 * RAD, Math.min(150 * RAD, V.hfov * k));
+  }
+  draw();
+}
+cv.addEventListener("wheel", e => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+function hover(e) {
+  const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+  let best = null, bd = 12;
+  for (const q of picks) { const d = Math.hypot(q.s[0] - x, q.s[1] - y); if (d < bd) { bd = d; best = q; } }
+  if (!best) { tip.style.display = "none"; return; }
+  tip.style.left = "0px";
+  tip.textContent = best.name; tip.style.display = "block";
+  tip.style.left = Math.min(x + 12, W - tip.offsetWidth - 4) + "px"; tip.style.top = (y + 14) + "px";
+}
+
+// ---- side panel ----
+function el(tag, attrs, txt) { const n = document.createElement(tag); Object.assign(n, attrs || {}); if (txt != null) n.textContent = txt; return n; }
+document.getElementById("title").textContent = T.title;
+document.getElementById("hint").textContent = T.hint;
+document.getElementById("h_views").textContent = T.views;
+document.getElementById("h_cams").textContent = T.cameras;
+document.getElementById("h_layers").textContent = T.layers;
+document.getElementById("frame").textContent = T.frame;
+document.getElementById("note").textContent = T.note;
+document.getElementById("src").textContent = T.src;
+
+const viewBtns = {};
+function showView(name) {
+  activeView = name;
+  for (const [k, b] of Object.entries(viewBtns)) b.classList.toggle("on", k === name);
+}
+for (const k of ["iso", "top", "side", "front", "driver"]) {
+  const b = el("button", { className: "view" }, T["v_" + k]);
+  b.onclick = () => { VIEWS[k](); V.camView = null; showView(k); draw(); };
+  viewBtns[k] = b; document.getElementById("views").appendChild(b);
+}
+const fromBtn = el("button", { className: "view" }, T.from_cam);
+fromBtn.onclick = () => {
+  const c = S.cameras.find(c => c.name === selCam) || S.cameras[0];
+  selectCam(c.name);
+  V = { mode: "look", eye: c.p.slice(), cam: c, camView: c.name,
+        basis: { r: c.R[0], u: mul(c.R[1], -1), f: c.R[2] }, yaw: 0, pitch: 0, hfov: c.hfov * RAD };
+  showView("cam"); draw();
+};
+viewBtns.cam = fromBtn; document.getElementById("views").appendChild(fromBtn);
+
+const camBtns = {};
+function selectCam(name) {
+  selCam = name;
+  for (const [k, b] of Object.entries(camBtns)) b.classList.toggle("on", k === name);
+  const c = S.cameras.find(c => c.name === name);
+  document.getElementById("info").textContent = c ? T.cam_info.replace("{name}", c.name)
+    .replace("{x}", fmt(c.p[0])).replace("{y}", fmt(c.p[1])).replace("{z}", fmt(c.p[2]))
+    .replace("{hfov}", Math.round(c.hfov * 10) / 10).replace("{vfov}", Math.round(c.vfov * 10) / 10).replace("{w}", c.w).replace("{h}", c.h) : "";
+}
+for (const c of S.cameras) {
+  const b = el("button", {}, c.name);
+  b.onclick = () => {
+    selectCam(selCam === c.name ? null : c.name);
+    if (V.camView && selCam) fromBtn.onclick();
+    else draw();
+  };
+  camBtns[c.name] = b; document.getElementById("cams").appendChild(b);
+}
+for (const k of ["targets", "rings", "cams", "fov", "wheel", "belt", "head", "grid"]) {
+  const lab = el("label"), box = el("input", { type: "checkbox", checked: layers[k] });
+  box.onchange = () => { layers[k] = box.checked; draw(); };
+  lab.appendChild(box); lab.appendChild(document.createTextNode(" " + T["l_" + k]));
+  document.getElementById("layers").appendChild(lab);
+}
+
+VIEWS.iso(); showView("iso"); selectCam(S.cameras.length ? S.cameras[0].name : null);
+window.addEventListener("resize", resize);
+resize();
+</script>
+</body>
+</html>
