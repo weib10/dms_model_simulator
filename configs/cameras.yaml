@@ -26,8 +26,10 @@ cameras:
   rearview_mirror:
     position: [0.40, -0.35, 0.15]
     hfov_deg: 70.0
+  # On the inner trim of the left A-pillar, a little above the eye (was [0.45, 0.62, 0.08], which sat outside the
+  # door trim, about where the side window is; moved 2026-11-19 so it sits on the pillar).
   a_pillar_left:
-    position: [0.45, 0.62, 0.08]
+    position: [0.76, 0.47, 0.10]
     hfov_deg: 70.0
   center_stack:
     position: [0.65, -0.45, -0.20]
