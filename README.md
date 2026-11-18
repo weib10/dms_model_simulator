@@ -87,7 +87,7 @@ dms-sim render --scenario face_vs_eyes --fps 25 --out out                       
 dms-sim render --scenario face_vs_eyes --fps 25 --story --out out                  # the same as a story: top-down view in plain words
 dms-sim compare --scenario phone_distraction                                      # model-vs-truth table per camera
 dms-sim cabin --out out                                                           # cabin with all cameras
-dms-sim view3d --out out/view3d                                                   # the same layout in 3D, turn it in a browser
+dms-sim view3d --out out/view3d                                                   # the layout inside a 3D car, in a browser
 dms-sim inspect-bin out/drowsy__steering_column.dms.bin --head 3                  # dms.bin as text
 dms-sim gen-scenario --duration 120 --seed 1                                      # random scenario
 dms-sim batch --gen 3 --variants 5 --out out/batch                                # scenarios x drivers x cameras
@@ -147,12 +147,16 @@ most or the eyes are off the road). Under each picture: the directions in plain 
 moment's title is the segment's optional `caption:` key, else a description such as "face 30° left, eyes ahead".
 One camera only; `--scale` sets the size (0.5 = 960x720).
 
-**3D layout** (`dms-sim view3d`): `cabin3d.html` (Chinese) and `cabin3d.en.html` (English), one file each that
-opens straight from disk (no network). It shows what `configs/cabin.yaml` and `configs/cameras.yaml` put where:
-gaze targets with their zone tolerance as a ring, cameras with their field-of-view pyramid, steering wheel, seat
-belt and the head at rest. Drag to turn, wheel or pinch to zoom; preset views (top, side, the driver's eyes,
-through any camera). Layout only, no scenario. `--cabin` / `--cameras` take other YAML files; `--camera` limits
-the cameras. The pyramids are pinhole (no lens distortion); far targets (the road) are drawn as directions.
+**3D layout** (`dms-sim view3d`): `cabin3d.html`, one file that opens straight from disk (no network, WebGL). It
+puts what `configs/cabin.yaml` and `configs/cameras.yaml` define inside a generic car interior
+(`configs/body.yaml`: shell, dashboard, seats, a seated driver; display only, the simulation never reads it). Two
+modes, one at a time: *where the driver looks* (gaze targets, each with its zone tolerance as a ring) and *where
+the cameras are* (camera bodies, the chosen camera's field of view, "look through this camera"). Views: facing the
+driver, back seat, passenger seat, the driver's eyes, top, left side cut away. Drag to turn, scroll or pinch to
+zoom, shift-drag to move; hover or tap a point for its coordinates. A link can open a state:
+`cabin3d.html#mode=cams&cam=dash_right&view=through`. `--cabin` / `--cameras` / `--body` take other YAML files;
+`--camera` limits the cameras. Camera views are pinhole (no lens distortion); far targets (the road) are drawn as
+directions. Layout only, no scenario.
 
 ## Checking a post-processing program
 

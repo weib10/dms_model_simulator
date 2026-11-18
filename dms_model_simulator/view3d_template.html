@@ -1,54 +1,101 @@
 <!DOCTYPE html>
-<html lang="{{lang}}">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{title}}</title>
+<title>Cabin layout</title>
 <style>
-  html, body { margin: 0; height: 100%; font: 14px/1.45 system-ui, -apple-system, "Segoe UI", "Microsoft JhengHei", sans-serif; color: #222; background: #fafafa; }
-  #app { display: flex; height: 100%; }
-  #side { width: 290px; flex: none; overflow-y: auto; padding: 12px 14px; box-sizing: border-box; border-right: 1px solid #ddd; background: #fff; }
-  #main { flex: 1; position: relative; min-width: 0; }
-  canvas { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
-  canvas.dragging { cursor: grabbing; }
-  h1 { font-size: 17px; margin: 0 0 6px; }
-  h2 { font-size: 13px; margin: 14px 0 6px; color: #555; text-transform: uppercase; letter-spacing: .03em; }
-  .small { font-size: 12px; color: #666; }
-  .btns { display: flex; flex-wrap: wrap; gap: 5px; }
-  button { font: inherit; font-size: 13px; padding: 3px 8px; border: 1px solid #bbb; border-radius: 4px; background: #f4f4f4; cursor: pointer; }
-  button.on { background: #e33; border-color: #c22; color: #fff; }
-  button.view.on { background: #333; border-color: #333; }
-  label { display: block; font-size: 13px; margin: 2px 0; cursor: pointer; }
-  #tip { position: absolute; pointer-events: none; background: rgba(30,30,30,.88); color: #fff; font-size: 12px; padding: 3px 7px; border-radius: 4px; display: none; white-space: nowrap; }
-  #info { margin-top: 8px; font-size: 12px; min-height: 2.6em; }
-  @media (max-width: 720px) {
-    #app { flex-direction: column; }
-    #side { width: 100%; max-height: 42%; border-right: none; border-bottom: 1px solid #ddd; }
+  :root {
+    --bg: #f8fafc; --card: #ffffff; --fg: #0f172a; --muted: #475569; --border: #e2e8f0;
+    --primary: #1e3a5f; --target: #2563eb; --camera: #dc2626; --focus: #2563eb;
   }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+  #app { display: flex; height: 100%; }
+  #side { width: 300px; flex: none; overflow-y: auto; padding: 18px 18px 14px; background: var(--card);
+    border-right: 1px solid var(--border); }
+  #main { flex: 1; position: relative; min-width: 0; background: #eef2f6; }
+  #gl, #ov { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  #ov { touch-action: none; cursor: grab; }
+  #ov.dragging { cursor: grabbing; }
+  h1 { font-size: 18px; line-height: 1.3; margin: 0 0 4px; font-weight: 650; }
+  .sub { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  h2 { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 18px 0 8px; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 3px; background: #f1f5f9; }
+  .seg button { border: 0; background: transparent; border-radius: 6px; padding: 7px 6px; font-weight: 550; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--fg); box-shadow: 0 1px 2px rgba(15,23,42,.12); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  button { font: inherit; font-size: 13px; color: var(--fg); cursor: pointer; min-height: 32px; }
+  .chip { border: 1px solid var(--border); background: var(--card); border-radius: 999px; padding: 4px 11px; transition: background .15s, border-color .15s; }
+  .chip:hover { border-color: #94a3b8; }
+  .chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .chip.cam[aria-pressed="true"] { background: var(--camera); border-color: var(--camera); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .card { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 10px; font-size: 13px; background: #fbfcfd; }
+  .card b { font-weight: 600; }
+  .card dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 6px 0 8px; }
+  .card dt { color: var(--muted); }
+  .card dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .primary { width: 100%; border: 0; border-radius: 6px; background: var(--fg); color: #fff; padding: 7px 10px; font-weight: 550; }
+  .legend { display: grid; grid-template-columns: 22px 1fr; gap: 6px 8px; align-items: center; font-size: 13px; color: var(--muted); }
+  .sw { width: 18px; height: 18px; display: inline-block; }
+  label.opt { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; cursor: pointer; }
+  .foot { color: var(--muted); font-size: 12px; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 10px; }
+  .foot p { margin: 0 0 6px; }
+  #tip { position: absolute; pointer-events: none; background: rgba(15,23,42,.92); color: #fff; font-size: 12px;
+    padding: 4px 8px; border-radius: 6px; display: none; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #nogl { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; color: var(--muted); padding: 20px; text-align: center; }
+  @media (max-width: 760px) {
+    #app { flex-direction: column; }
+    #side { width: 100%; max-height: 46%; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px 14px; }
+    button { min-height: 40px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="side">
-    <h1 id="title"></h1>
-    <div class="small" id="hint"></div>
-    <h2 id="h_views"></h2>
-    <div class="btns" id="views"></div>
-    <h2 id="h_cams"></h2>
-    <div class="btns" id="cams"></div>
-    <div id="info"></div>
-    <h2 id="h_layers"></h2>
-    <div id="layers"></div>
-    <p class="small" id="frame"></p>
-    <p class="small" id="note"></p>
-    <p class="small" id="src"></p>
+  <aside id="side">
+    <h1>Cabin layout</h1>
+    <p class="sub">Generic left-hand-drive sedan. Drag to look around, scroll or pinch to zoom, shift-drag to move.</p>
+    <div class="seg" role="group" aria-label="What to show">
+      <button id="m_targets" type="button" aria-pressed="true">Where the driver looks</button>
+      <button id="m_cams" type="button" aria-pressed="false">Where the cameras are</button>
+    </div>
+    <h2>View</h2>
+    <div class="chips" id="views"></div>
+    <div id="p_targets">
+      <h2>Legend</h2>
+      <div class="legend">
+        <svg class="sw" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="5" fill="#2563eb" stroke="#fff" stroke-width="2"/></svg><span>Gaze target</span>
+        <svg class="sw" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="7" fill="none" stroke="#2563eb" stroke-opacity=".55" stroke-width="1.5"/></svg><span id="ring_txt"></span>
+        <svg class="sw" viewBox="0 0 18 18" aria-hidden="true"><line x1="1" y1="9" x2="17" y2="9" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 3"/></svg><span>Road target, direction only (15–20 m away)</span>
+      </div>
+    </div>
+    <div id="p_cams" hidden>
+      <h2>Cameras</h2>
+      <div class="chips" id="cams"></div>
+      <div class="card" id="cam_card"></div>
+    </div>
+    <h2>Show</h2>
+    <label class="opt"><input type="checkbox" id="o_driver" checked> Driver and seat belt</label>
+    <label class="opt"><input type="checkbox" id="o_labels" checked> Names</label>
+    <div class="foot">
+      <p>Origin = driver eye point. X forward, Y left, Z up, metres. Hover or tap a point for its coordinates.</p>
+      <p>The car body is a placeholder for orientation; the simulation uses only the targets, cameras, wheel, belt and head. Camera views are pinhole (no lens distortion).</p>
+      <p id="src"></p>
+    </div>
+  </aside>
+  <div id="main">
+    <canvas id="gl"></canvas><canvas id="ov"></canvas><div id="tip"></div>
+    <div id="nogl">This page needs WebGL, which this browser has turned off.</div>
   </div>
-  <div id="main"><canvas id="cv"></canvas><div id="tip"></div></div>
 </div>
 <script>
 "use strict";
 const DATA = /*{{DATA}}*/null;
-const S = DATA.scene, T = DATA.text;
+const S = DATA.scene;
 
 // ---- vectors (vehicle frame: X forward, Y left, Z up) ----
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
@@ -56,50 +103,31 @@ const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const mul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
-const norm = a => { const n = Math.hypot(a[0], a[1], a[2]); return n > 0 ? mul(a, 1 / n) : a; };
-const RAD = Math.PI / 180, UP = [0, 0, 1], NEAR = 0.02;
-
-const lo = S.bounds.lo, hi = S.bounds.hi;
-const center = mul(add(lo, hi), 0.5);
-const radius = 0.5 * Math.hypot(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]);
+const len = a => Math.hypot(a[0], a[1], a[2]);
+const norm = a => { const n = len(a); return n > 0 ? mul(a, 1 / n) : a; };
+const RAD = Math.PI / 180, UP = [0, 0, 1], NEAR = 0.01, FAR = 80;
+const fmt = x => { const s = (Math.round(x * 1000) / 1000).toFixed(3).replace(/0+$/, "").replace(/\.$/, ""); return s === "-0" ? "0" : s; };
+const coord = p => "(" + p.map(fmt).join(", ") + ")";
 
 // ---- view state ----
-// orbit: eye on a sphere around `tgt`; look: eye fixed, turn the view direction (yaw / pitch, or a camera's basis)
-let V = {};
-let layers = { targets: true, rings: true, cams: true, fov: false, wheel: true, belt: true, head: true, grid: true };
-let selCam = null, activeView = "iso";
-
-// points an orbit preset must keep on screen (the far road targets are rays, not part of the fit)
-const FIT = S.targets.filter(t => !t.far).map(t => t.shown).concat(S.cameras.map(c => c.p), S.wheel.rim.flat(),
-                                                                       S.belt, [S.head.c]);
-function setOrbit(az, el) {
-  V = { mode: "orbit", tgt: center.slice(), az: az * RAD, el: el * RAD, D: radius * 2.5, fov: 40 * RAD, fit: true };
+// orbit: eye on a sphere around a pivot; look: eye fixed, the view turns (yaw / pitch, or a camera's own axes)
+let V = {}, mode = "targets", selCam = S.cameras.length ? S.cameras[0].name : null, activeView = "front";
+const opt = { driver: true, labels: true };
+const CABIN_MID = [0.05, -0.36, -0.30];
+function orbit(pivot, az, el, D) { V = { mode: "orbit", tgt: pivot.slice(), az: az * RAD, el: el * RAD, D, vfov: 55 * RAD }; }
+function look(eye, yaw, pitch, hfov) { V = { mode: "look", eye: eye.slice(), yaw: yaw * RAD, pitch: pitch * RAD, hfov: hfov * RAD }; }
+const VIEWS = [
+  ["front", "Facing the driver", () => orbit([0.15, -0.10, -0.12], -38, 12, 1.8)],
+  ["back", "Back seat", () => orbit([0.35, -0.15, -0.15], 193, 15, 1.3)],
+  ["passenger", "Passenger seat", () => look(add(S.passenger_eye, [-0.15, 0, 0.03]), 72, -12, 95)],
+  ["driver", "Driver's eyes", () => look(S.eye_point, 0, -8, 100)],
+  ["top", "Top", () => orbit(CABIN_MID, 180, 89.9, 3.4)],
+  ["side", "Left side, cut away", () => orbit(CABIN_MID, 90, 6, 3.3)],
+];
+function lookThrough(c) {
+  V = { mode: "look", eye: c.p.slice(), cam: c, camView: c.name, yaw: 0, pitch: 0, hfov: c.hfov * RAD,
+        basis: { r: c.R[0], u: mul(c.R[1], -1), f: c.R[2] } };
 }
-function fitOrbit() {                    // smallest distance at which every FIT point is inside 90 % of the canvas
-  V.fit = false;
-  const f0 = 0.5 * Math.min(W, H) / Math.tan(V.fov / 2);
-  const ok = D => {
-    V.D = D; const b = basis();
-    return FIT.every(p => {
-      const v = sub(p, b.eye), z = dot(v, b.f);
-      return z > NEAR && Math.abs(f0 * dot(v, b.r) / z) < 0.45 * W && Math.abs(f0 * dot(v, b.u) / z) < 0.45 * H;
-    });
-  };
-  let a = 0.05, b = 60;
-  if (!ok(b)) { V.D = b; return; }
-  for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (ok(m)) b = m; else a = m; }
-  V.D = b;
-}
-function setLook(eye, yaw, pitch, hfov) {
-  V = { mode: "look", eye: eye.slice(), yaw: yaw * RAD, pitch: pitch * RAD, hfov: hfov * RAD, basis: null };
-}
-const VIEWS = {
-  iso:    () => setOrbit(215, 28),
-  top:    () => setOrbit(180, 89.9),
-  side:   () => setOrbit(270, 0),
-  front:  () => setOrbit(0, 8),
-  driver: () => setLook(S.eye_point, 0, -8, 120),
-};
 
 function basis() {
   if (V.mode === "orbit") {
@@ -109,207 +137,232 @@ function basis() {
     return { eye, f, r, u };
   }
   if (V.basis) return { eye: V.eye, ...V.basis };
-  const cp = Math.cos(V.pitch);
-  const f = [cp * Math.cos(V.yaw), cp * Math.sin(V.yaw), Math.sin(V.pitch)];
-  const r = norm(cross(f, UP)), u = cross(r, f);
-  return { eye: V.eye, f, r, u };
+  const cp = Math.cos(V.pitch), f = [cp * Math.cos(V.yaw), cp * Math.sin(V.yaw), Math.sin(V.pitch)];
+  const r = norm(cross(f, UP));
+  return { eye: V.eye, f, r, u: cross(r, f) };
 }
 
-// ---- canvas ----
-const cv = document.getElementById("cv"), ctx = cv.getContext("2d"), tip = document.getElementById("tip");
+// ---- canvases ----
+const glc = document.getElementById("gl"), ov = document.getElementById("ov"), tip = document.getElementById("tip");
+const ctx = ov.getContext("2d");
+const gl = glc.getContext("webgl", { antialias: true, alpha: false });
 let W = 0, H = 0, F = 1, B = null, frameRect = null, picks = [];
 
-function resize() {
-  const dpr = window.devicePixelRatio || 1, rc = cv.getBoundingClientRect();
-  W = rc.width; H = rc.height;
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  draw();
+// ---- WebGL ----
+const VS = `attribute vec3 aP; attribute vec3 aN; uniform mat4 uM; uniform vec3 uEye; varying vec3 vN; varying vec3 vV;
+void main() { gl_Position = uM * vec4(aP, 1.0); vN = aN; vV = uEye - aP; }`;
+const FS = `precision mediump float; uniform vec4 uC; uniform float uTwo; varying vec3 vN; varying vec3 vV;
+void main() {
+  vec3 n = normalize(vN), v = normalize(vV);
+  if (uTwo > 0.5 && dot(n, v) < 0.0) n = -n;
+  float key = max(dot(n, normalize(vec3(0.35, 0.30, 0.88))), 0.0);
+  float head = max(dot(n, v), 0.0);
+  gl_FragColor = vec4(min(uC.rgb * (0.55 + 0.25 * key + 0.30 * head), 1.0), uC.a);
+}`;
+let prog, loc, meshes = [], camMeshes = {}, frustumBuf = null;
+function shader(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; }
+function upload(pos) {                       // flat normals per triangle
+  const n = new Float32Array(pos.length), p = new Float32Array(pos);
+  for (let i = 0; i < pos.length; i += 9) {
+    const a = [p[i], p[i + 1], p[i + 2]], b = [p[i + 3], p[i + 4], p[i + 5]], c = [p[i + 6], p[i + 7], p[i + 8]];
+    const nn = norm(cross(sub(b, a), sub(c, a)));
+    for (let k = 0; k < 3; k++) n.set(nn, i + 3 * k);
+  }
+  const bp = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bp); gl.bufferData(gl.ARRAY_BUFFER, p, gl.STATIC_DRAW);
+  const bn = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, bn); gl.bufferData(gl.ARRAY_BUFFER, n, gl.STATIC_DRAW);
+  let cx = 0, cy = 0, cz = 0; const nv = p.length / 3;
+  for (let i = 0; i < p.length; i += 3) { cx += p[i]; cy += p[i + 1]; cz += p[i + 2]; }
+  return { bp, bn, count: nv, centroid: [cx / nv, cy / nv, cz / nv] };
+}
+function initGL() {
+  prog = gl.createProgram();
+  gl.attachShader(prog, shader(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, shader(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  loc = { p: gl.getAttribLocation(prog, "aP"), n: gl.getAttribLocation(prog, "aN"), M: gl.getUniformLocation(prog, "uM"),
+          eye: gl.getUniformLocation(prog, "uEye"), C: gl.getUniformLocation(prog, "uC"), two: gl.getUniformLocation(prog, "uTwo") };
+  meshes = S.meshes.map(m => ({ ...upload(m.pos), layer: m.layer, color: m.color, alpha: m.alpha, two: m.two_sided }));
+  for (const c of S.cameras) camMeshes[c.name] = upload(c.mesh);
+  frustumBuf = { bp: gl.createBuffer(), bn: gl.createBuffer(), count: 0 };
+  gl.enable(gl.DEPTH_TEST); gl.frontFace(gl.CCW); gl.cullFace(gl.BACK);
+}
+function setFrustum(c) {
+  const pos = [], nrm = [];
+  for (let i = 0; i < 4; i++) {
+    const a = c.p, b = c.corners[i], d = c.corners[(i + 1) % 4], nn = norm(cross(sub(b, a), sub(d, a)));
+    pos.push(...a, ...b, ...d); for (let k = 0; k < 3; k++) nrm.push(...nn);
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER, frustumBuf.bp); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(pos), gl.DYNAMIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, frustumBuf.bn); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(nrm), gl.DYNAMIC_DRAW);
+  frustumBuf.count = 12;
+}
+function drawMesh(m, rgb, alpha, two) {
+  if (two) gl.disable(gl.CULL_FACE); else gl.enable(gl.CULL_FACE);
+  gl.uniform4f(loc.C, rgb[0], rgb[1], rgb[2], alpha); gl.uniform1f(loc.two, two ? 1 : 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, m.bp); gl.enableVertexAttribArray(loc.p); gl.vertexAttribPointer(loc.p, 3, gl.FLOAT, false, 0, 0);
+  gl.bindBuffer(gl.ARRAY_BUFFER, m.bn); gl.enableVertexAttribArray(loc.n); gl.vertexAttribPointer(loc.n, 3, gl.FLOAT, false, 0, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, m.count);
+}
+function matrix() {                             // projection * view, column-major, consistent with scr()
+  const { eye, r, u, f } = B, a = (FAR + NEAR) / (FAR - NEAR), b = 2 * FAR * NEAR / (FAR - NEAR);
+  const sx = 2 * F / W, sy = 2 * F / H;
+  const rowX = [sx * r[0], sx * r[1], sx * r[2], -sx * dot(r, eye)];
+  const rowY = [sy * u[0], sy * u[1], sy * u[2], -sy * dot(u, eye)];
+  const rowZ = [a * f[0], a * f[1], a * f[2], -a * dot(f, eye) - b];
+  const rowW = [f[0], f[1], f[2], -dot(f, eye)];
+  const M = new Float32Array(16);
+  for (let c = 0; c < 4; c++) { M[4 * c] = rowX[c]; M[4 * c + 1] = rowY[c]; M[4 * c + 2] = rowZ[c]; M[4 * c + 3] = rowW[c]; }
+  return M;
+}
+const showDriver = () => opt.driver && !(V.mode === "look" && len(sub(B.eye, S.head.c)) < 0.3);
+function render3d() {
+  gl.viewport(0, 0, glc.width, glc.height);
+  gl.clearColor(0.933, 0.949, 0.965, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.uniformMatrix4fv(loc.M, false, matrix()); gl.uniform3f(loc.eye, B.eye[0], B.eye[1], B.eye[2]);
+  const vis = m => m.layer === "body" || ((m.layer === "driver" || m.layer === "belt") && showDriver());
+  gl.depthMask(true); gl.disable(gl.BLEND);
+  for (const m of meshes) if (m.alpha >= 1 && vis(m)) drawMesh(m, m.color, 1, m.two);
+  for (const c of S.cameras) {
+    if (c.name === V.camView) continue;
+    const hi = mode === "cams" && c.name === selCam;
+    drawMesh(camMeshes[c.name], hi ? [0.86, 0.15, 0.15] : (mode === "cams" ? [0.2, 0.25, 0.33] : [0.16, 0.18, 0.21]), 1, false);
+  }
+  gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  const tr = meshes.filter(m => m.alpha < 1 && vis(m)).map(m => [len(sub(m.centroid, B.eye)), m]);
+  tr.sort((a, b) => b[0] - a[0]);
+  for (const [, m] of tr) drawMesh(m, m.color, m.alpha, m.two);
+  const sc = S.cameras.find(c => c.name === selCam);
+  if (mode === "cams" && sc && sc.name !== V.camView) { setFrustum(sc); drawMesh(frustumBuf, [0.86, 0.15, 0.15], 0.13, true); }
+  gl.depthMask(true);
 }
 
+// ---- overlay (markers, rings, names) ----
 function toView(p) { const v = sub(p, B.eye); return [dot(v, B.r), dot(v, B.u), dot(v, B.f)]; }
 function scr(v) { return [W / 2 + F * v[0] / v[2], H / 2 - F * v[1] / v[2]]; }
-function clip(a, b) {                         // view-space segment cut at the near plane, or null
+function seg(p, q) {
+  let a = toView(p), b = toView(q);
   if (a[2] < NEAR && b[2] < NEAR) return null;
   if (a[2] < NEAR || b[2] < NEAR) {
-    const t = (NEAR - a[2]) / (b[2] - a[2]);
-    const m = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]), NEAR];
-    return a[2] < NEAR ? [m, b] : [a, m];
+    const t = (NEAR - a[2]) / (b[2] - a[2]), m = [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1]), NEAR];
+    if (a[2] < NEAR) a = m; else b = m;
   }
-  return [a, b];
+  return [scr(a), scr(b)];
 }
-
-let prims = [];
-function line(p, q, style) {
-  const s = clip(toView(p), toView(q));
-  if (s) prims.push({ k: "l", a: scr(s[0]), b: scr(s[1]), z: (s[0][2] + s[1][2]) / 2, ...style });
+function polyline(pts, style) {
+  ctx.strokeStyle = style.col; ctx.lineWidth = style.w; ctx.setLineDash(style.dash || []);
+  ctx.beginPath();
+  for (let i = 0; i + 1 < pts.length; i++) { const s = seg(pts[i], pts[i + 1]); if (s) { ctx.moveTo(...s[0]); ctx.lineTo(...s[1]); } }
+  ctx.stroke(); ctx.setLineDash([]);
 }
-function poly(pts, style) { for (let i = 0; i + 1 < pts.length; i++) line(pts[i], pts[i + 1], style); }
-function fill(pts, style) {
-  const vs = pts.map(toView);
-  if (vs.some(v => v[2] < NEAR)) return;
-  prims.push({ k: "f", pts: vs.map(scr), z: vs.reduce((s, v) => s + v[2], 0) / vs.length, ...style });
-}
-function mark(p, style, name) {
-  const v = toView(p);
-  if (v[2] < NEAR) return;
-  const s = scr(v);
-  prims.push({ k: "m", s, z: v[2], ...style });
-  if (name) picks.push({ s, name, p });
-}
-function text(p, str, style) {
-  const v = toView(p);
-  if (v[2] < NEAR) return;
-  prims.push({ k: "t", s: scr(v), z: -1, str, ...style });
-}
-function sphere(c, r, style) {
-  const v = toView(c);
-  if (v[2] < r + NEAR) return;
-  prims.push({ k: "c", s: scr(v), rad: F * r / v[2], z: v[2] + r, ...style });
-}
-
-const fmt = (x) => (Math.round(x * 1000) / 1000).toFixed(3).replace(/\.?0+$/, "") || "0";
-const coord = p => "(" + p.map(fmt).join(", ") + ")";
-
-function build() {
-  prims = []; picks = [];
-  if (layers.grid) {
-    const z = lo[2] - 0.05, x0 = Math.floor((lo[0] - 0.3) * 5) / 5, x1 = Math.ceil((hi[0] + 0.3) * 5) / 5;
-    const y0 = Math.floor((lo[1] - 0.3) * 5) / 5, y1 = Math.ceil((hi[1] + 0.3) * 5) / 5;
-    const g = { col: "#e2e2e2", w: 1 };
-    for (let x = x0; x <= x1 + 1e-9; x += 0.2) line([x, y0, z], [x, y1, z], g);
-    for (let y = y0; y <= y1 + 1e-9; y += 0.2) line([x0, y, z], [x1, y, z], g);
-    const ym = (y0 + y1) / 2, xm = (x0 + x1) / 2, big = { col: "#999", size: 15, bold: true };
-    text([x1 + 0.15, ym, z], T.front, big); text([x0 - 0.15, ym, z], T.rear, big);
-    text([xm, y1 + 0.15, z], T.left, big); text([xm, y0 - 0.15, z], T.right, big);
-    const o = S.eye_point;
-    line(o, add(o, [0.15, 0, 0]), { col: "#d33", w: 2 }); text(add(o, [0.17, 0, 0]), "X", { col: "#d33", size: 11 });
-    line(o, add(o, [0, 0.15, 0]), { col: "#2a2", w: 2 }); text(add(o, [0, 0.17, 0]), "Y", { col: "#2a2", size: 11 });
-    line(o, add(o, [0, 0, 0.15]), { col: "#33d", w: 2 }); text(add(o, [0, 0, 0.17]), "Z", { col: "#33d", size: 11 });
+function onScreen(p) { const v = toView(p); return v[2] > NEAR ? scr(v) : null; }
+function marker(s, kind, hi) {
+  ctx.lineWidth = 2; ctx.strokeStyle = "#fff";
+  if (kind === "target") { ctx.fillStyle = "#2563eb"; ctx.beginPath(); ctx.arc(s[0], s[1], 5.5, 0, 2 * Math.PI); ctx.fill(); ctx.stroke(); }
+  else {
+    const r = hi ? 8 : 6; ctx.fillStyle = hi ? "#dc2626" : "#334155"; ctx.beginPath();
+    ctx.moveTo(s[0], s[1] - r); ctx.lineTo(s[0] + r, s[1]); ctx.lineTo(s[0], s[1] + r); ctx.lineTo(s[0] - r, s[1]); ctx.closePath();
+    ctx.fill(); ctx.stroke();
   }
-  if (layers.wheel) {
-    const s = { col: "#7a7a7a", w: 3 };
-    S.wheel.rim.forEach(pl => poly(pl, s));
-    S.wheel.hub.forEach(pl => { fill(pl, { col: "rgba(150,150,150,.35)" }); poly(pl, { col: "#8a8a8a", w: 1.5 }); });
-    S.wheel.spokes.forEach(sg => line(sg[0], sg[1], s));
+}
+function labels(items) {                         // name pills, nearest first; a name with no free spot is skipped
+  ctx.font = "500 12px system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const placed = [], pad = 6, h = 20;
+  items.sort((a, b) => (b.pri || 0) - (a.pri || 0) || a.z - b.z);
+  for (const it of items) {
+    const w = ctx.measureText(it.text).width + 2 * pad, [x, y] = it.s;
+    const cand = [[x + 10, y - h - 4], [x + 10, y + 4], [x - 10 - w, y - h - 4], [x - 10 - w, y + 4], [x - w / 2, y - h - 12], [x - w / 2, y + 12]];
+    const spot = cand.find(([cx, cy]) => cx >= 2 && cy >= 2 && cx + w <= W - 2 && cy + h <= H - 2 &&
+      !placed.some(r => cx < r[0] + r[2] + 3 && cx + w + 3 > r[0] && cy < r[1] + r[3] + 3 && cy + h + 3 > r[1]));
+    if (!spot) continue;
+    placed.push([spot[0], spot[1], w, h]);
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = it.hi ? "#dc2626" : "#cbd5e1"; ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(spot[0], spot[1], w, h, 6); else ctx.rect(spot[0], spot[1], w, h);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = it.hi ? "#b91c1c" : "#0f172a"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.fillText(it.text, spot[0] + pad, spot[1] + h / 2 + 0.5);
   }
-  if (layers.belt) poly(S.belt, { col: "#5b8c5a", w: 4 });
-  const inHead = V.mode === "look" && Math.hypot(...sub(B.eye, S.head.c)) < S.head.r * 1.5;
-  if (layers.head && !inHead) {
-    sphere(S.head.c, S.head.r, { col: "rgba(205,208,214,.8)", edge: "#787c86" });
-    poly(S.head.outline, { col: "#787c86", w: 1.2 });
-    S.head.eyes.forEach(e => mark(e, { col: "#f09600", r: 2.5, shape: "o" }));
-    line(S.head.c, S.head.face_tip, { col: "#2d7de1", w: 3, arrow: true });
-  }
-  if (layers.targets) {
-    for (const t of S.targets) {
-      if (t.far) line(S.eye_point, t.shown, { col: "#a5a5a5", w: 1.5, dash: [6, 4], arrow: true });
-      if (layers.rings && t.ring) poly(t.ring, { col: "#c4c4c4", w: 1 });
-      mark(t.shown, { col: "#8d8d8d", r: 4.5, shape: "s" }, t.far ? t.name + " → " + coord(t.p) : t.name + " " + coord(t.p));
-      const lab = t.far ? T.far.replace("{name}", t.name).replace("{dist:.0f}", Math.round(t.dist)) : t.name;
-      text(t.shown, lab, { col: "#444", size: 12, dx: 7, dy: -6 });
+}
+function render2d() {
+  ctx.clearRect(0, 0, W, H); picks = [];
+  const items = [];
+  if (mode === "targets") {
+    // a target right at the viewpoint (the passenger target seen from the passenger seat) would fill the screen
+    const shown = S.targets.filter(t => len(sub(t.shown, B.eye)) > 0.35);
+    for (const t of shown) {
+      if (t.far) polyline([S.eye_point, t.shown], { col: "#64748b", w: 1.5, dash: [6, 4] });
+      else polyline(t.ring, { col: "rgba(37,99,235,.55)", w: 1.5 });
+    }
+    for (const t of shown) {
+      const s = onScreen(t.shown); if (!s) continue;
+      marker(s, "target"); picks.push({ s, text: t.name + "  " + coord(t.p) });
+      items.push({ s, z: toView(t.shown)[2], text: t.far ? t.name + " · " + Math.round(t.dist) + " m" : t.name });
+    }
+  } else {
+    const c = S.cameras.find(c => c.name === selCam);
+    if (c && c.name !== V.camView) {
+      const k = c.corners;
+      polyline([k[0], k[1], k[2], k[3], k[0]], { col: "rgba(220,38,38,.85)", w: 1.5 });
+      for (const q of k) polyline([c.p, q], { col: "rgba(220,38,38,.6)", w: 1 });
+    }
+    for (const cm of S.cameras) {
+      if (cm.name === V.camView) continue;
+      const s = onScreen(cm.p); if (!s) continue;
+      const hi = cm.name === selCam;
+      marker(s, "camera", hi); picks.push({ s, text: cm.name + "  " + coord(cm.p), cam: cm.name });
+      items.push({ s, z: toView(cm.p)[2], text: cm.name, hi, pri: hi ? 1 : 0 });
     }
   }
-  if (layers.cams) {
-    const viewing = V.camView;
-    for (const c of S.cameras) {
-      const sel = c.name === selCam, own = c.name === viewing;
-      if (!own) {
-        mark(c.p, { col: sel ? "#e33" : "#777", r: sel ? 6 : 4.5, shape: "^" }, c.name + " " + coord(c.p));
-        text(c.p, c.name, { col: sel ? "#c22" : "#777", size: 12, dx: 7, dy: 12, bold: sel });
-      }
-      if (own || !(sel || layers.fov)) continue;
-      const col = sel ? "#e33" : "#b0b0b0", w = sel ? 1.5 : 1, k = c.corners;
-      for (let i = 0; i < 4; i++) {
-        line(c.p, k[i], { col, w });
-        line(k[i], k[(i + 1) % 4], { col, w });
-        if (sel) fill([c.p, k[i], k[(i + 1) % 4]], { col: "rgba(238,51,51,.07)" });
-      }
-      line(c.p, c.axis, { col, w, dash: [4, 3] });
-    }
-  }
-}
-
-function render() {
-  ctx.clearRect(0, 0, W, H);
-  prims.sort((a, b) => b.z - a.z);
-  for (const p of prims) {
-    ctx.setLineDash(p.dash || []);
-    if (p.k === "l") {
-      ctx.strokeStyle = p.col; ctx.lineWidth = p.w; ctx.beginPath();
-      ctx.moveTo(p.a[0], p.a[1]); ctx.lineTo(p.b[0], p.b[1]); ctx.stroke();
-      if (p.arrow) {
-        const dx = p.b[0] - p.a[0], dy = p.b[1] - p.a[1], L = Math.hypot(dx, dy);
-        if (L > 8) {
-          const ux = dx / L, uy = dy / L, h = 7 + p.w * 1.5;
-          ctx.setLineDash([]); ctx.fillStyle = p.col; ctx.beginPath();
-          ctx.moveTo(p.b[0], p.b[1]);
-          ctx.lineTo(p.b[0] - h * ux + h * 0.45 * uy, p.b[1] - h * uy - h * 0.45 * ux);
-          ctx.lineTo(p.b[0] - h * ux - h * 0.45 * uy, p.b[1] - h * uy + h * 0.45 * ux);
-          ctx.fill();
-        }
-      }
-    } else if (p.k === "f") {
-      ctx.fillStyle = p.col; ctx.beginPath();
-      p.pts.forEach((q, i) => i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]));
-      ctx.closePath(); ctx.fill();
-    } else if (p.k === "c") {
-      ctx.fillStyle = p.col; ctx.strokeStyle = p.edge; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.arc(p.s[0], p.s[1], Math.max(1, p.rad), 0, 2 * Math.PI); ctx.fill(); ctx.stroke();
-    } else if (p.k === "m") {
-      const [x, y] = p.s, r = p.r;
-      ctx.fillStyle = p.col; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.beginPath();
-      if (p.shape === "s") ctx.rect(x - r, y - r, 2 * r, 2 * r);
-      else if (p.shape === "^") { ctx.moveTo(x, y - r * 1.2); ctx.lineTo(x + r, y + r * 0.8); ctx.lineTo(x - r, y + r * 0.8); ctx.closePath(); }
-      else ctx.arc(x, y, r, 0, 2 * Math.PI);
-      ctx.fill(); ctx.stroke();
-    } else if (p.k === "t") {
-      ctx.font = (p.bold ? "bold " : "") + p.size + "px system-ui, sans-serif";
-      ctx.lineWidth = 3; ctx.strokeStyle = "rgba(250,250,250,.9)"; ctx.fillStyle = p.col;
-      const x = p.s[0] + (p.dx || 0), y = p.s[1] + (p.dy || 0);
-      ctx.textAlign = p.dx ? "left" : "center"; ctx.textBaseline = "middle";
-      ctx.strokeText(p.str, x, y); ctx.fillText(p.str, x, y);
-    }
-  }
-  ctx.setLineDash([]);
-  if (frameRect) {                                   // the image area of the camera we look through
-    ctx.strokeStyle = "#e33"; ctx.lineWidth = 2;
-    ctx.strokeRect(frameRect[0], frameRect[1], frameRect[2], frameRect[3]);
+  if (opt.labels) labels(items);
+  if (frameRect) {
+    ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.strokeRect(...frameRect);
+    ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = "#b91c1c"; ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+    ctx.fillText(V.camView + " image (the driver appears mirrored)", frameRect[0] + 4, frameRect[1] - 4);
   }
 }
 
 function draw() {
   if (!W) return;
-  if (V.fit) fitOrbit();
   B = basis(); frameRect = null;
-  if (V.mode === "orbit") F = 0.5 * Math.min(W, H) / Math.tan(V.fov / 2);
+  if (V.mode === "orbit") F = (H / 2) / Math.tan(V.vfov / 2);
   else if (V.cam) {
     const c = V.cam, tx = Math.tan(c.hfov * RAD / 2), ty = Math.tan(c.vfov * RAD / 2);
-    F = 0.94 * Math.min((W / 2) / tx, (H / 2) / ty);
+    F = 0.92 * Math.min((W / 2) / tx, (H / 2 - 14) / ty);
     frameRect = [W / 2 - F * tx, H / 2 - F * ty, 2 * F * tx, 2 * F * ty];
   } else F = (W / 2) / Math.tan(V.hfov / 2);
-  build(); render();
+  if (gl) render3d();
+  render2d();
+}
+function resize() {
+  const dpr = window.devicePixelRatio || 1, rc = ov.getBoundingClientRect();
+  W = rc.width; H = rc.height;
+  for (const c of [glc, ov]) { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
 }
 
 // ---- interaction (pointer events: mouse, pen and touch) ----
 const pts = new Map();
 let pinch0 = null;
-cv.addEventListener("contextmenu", e => e.preventDefault());
-cv.addEventListener("pointerdown", e => {
-  try { cv.setPointerCapture(e.pointerId); } catch (_) { /* pointer already gone */ }
+ov.addEventListener("contextmenu", e => e.preventDefault());
+ov.addEventListener("pointerdown", e => {
+  try { ov.setPointerCapture(e.pointerId); } catch (_) { /* pointer already gone */ }
   pts.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, pan: e.button === 2 || e.shiftKey });
-  cv.classList.add("dragging"); tip.style.display = "none";
+  ov.classList.add("dragging"); tip.style.display = "none";
   if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); }
 });
 function release(e) {
-  const p = pts.get(e.pointerId);              // a tap that did not move: show the nearest point (touch has no hover)
-  if (p && e.type === "pointerup" && pts.size === 1 && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 6) {
-    pts.delete(e.pointerId); cv.classList.remove("dragging"); hover(e); return;
+  const p = pts.get(e.pointerId);
+  pts.delete(e.pointerId);
+  if (pts.size < 2) pinch0 = null;
+  if (!pts.size) ov.classList.remove("dragging");
+  if (p && e.type === "pointerup" && !pts.size && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) < 6) {
+    const q = hover(e);                         // a tap or click that did not move: name + coordinates
+    if (q && q.cam && mode === "cams") { selectCam(q.cam); draw(); }
   }
-  pts.delete(e.pointerId); if (pts.size < 2) pinch0 = null; if (!pts.size) cv.classList.remove("dragging"); }
-cv.addEventListener("pointerup", release);
-cv.addEventListener("pointercancel", release);
-cv.addEventListener("pointermove", e => {
+}
+ov.addEventListener("pointerup", release);
+ov.addEventListener("pointercancel", release);
+ov.addEventListener("pointermove", e => {
   const p = pts.get(e.pointerId);
   if (!p) { hover(e); return; }
   const dx = e.clientX - p.x, dy = e.clientY - p.y;
@@ -321,12 +374,12 @@ cv.addEventListener("pointermove", e => {
   }
   if (V.mode === "orbit") {
     if (p.pan) { const k = V.D / F; V.tgt = add(V.tgt, add(mul(B.r, -dx * k), mul(B.u, dy * k))); }
-    else { V.az -= dx * 0.008; V.el = Math.max(-89.9 * RAD, Math.min(89.9 * RAD, V.el + dy * 0.008)); }
+    else { V.az -= dx * 0.007; V.el = Math.max(-89.9 * RAD, Math.min(89.9 * RAD, V.el + dy * 0.007)); }
   } else {
-    if (V.basis) {                                    // leave the camera's exact basis: keep its direction, drop roll
+    if (V.basis) {                              // leave the camera's own axes: keep its direction, drop roll
       const f = V.basis.f;
       V.yaw = Math.atan2(f[1], f[0]); V.pitch = Math.asin(Math.max(-1, Math.min(1, f[2])));
-      V.hfov = V.cam ? V.cam.hfov * RAD : V.hfov; V.basis = null; V.cam = null;
+      V.basis = null; V.cam = null;
     }
     V.yaw += dx * 0.004;
     V.pitch = Math.max(-89 * RAD, Math.min(89 * RAD, V.pitch + dy * 0.004));
@@ -334,82 +387,84 @@ cv.addEventListener("pointermove", e => {
   draw();
 });
 function zoom(k) {
-  if (V.mode === "orbit") V.D = Math.max(0.2, Math.min(40, V.D * k));
-  else {
-    if (V.basis) { V.hfov = V.cam.hfov * RAD; V.cam = null; }
-    V.hfov = Math.max(10 * RAD, Math.min(150 * RAD, V.hfov * k));
-  }
+  if (V.mode === "orbit") V.D = Math.max(0.3, Math.min(10, V.D * k));
+  else { if (V.cam) V.cam = null; V.hfov = Math.max(15 * RAD, Math.min(140 * RAD, V.hfov * k)); }
   draw();
 }
-cv.addEventListener("wheel", e => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
+ov.addEventListener("wheel", e => { e.preventDefault(); zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
 function hover(e) {
-  const rc = cv.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
-  let best = null, bd = 12;
+  const rc = ov.getBoundingClientRect(), x = e.clientX - rc.left, y = e.clientY - rc.top;
+  let best = null, bd = 14;
   for (const q of picks) { const d = Math.hypot(q.s[0] - x, q.s[1] - y); if (d < bd) { bd = d; best = q; } }
-  if (!best) { tip.style.display = "none"; return; }
-  tip.style.left = "0px";
-  tip.textContent = best.name; tip.style.display = "block";
-  tip.style.left = Math.min(x + 12, W - tip.offsetWidth - 4) + "px"; tip.style.top = (y + 14) + "px";
+  if (!best) { tip.style.display = "none"; return null; }
+  tip.textContent = best.text; tip.style.display = "block"; tip.style.left = "0px";
+  tip.style.left = Math.max(4, Math.min(x + 12, W - tip.offsetWidth - 4)) + "px"; tip.style.top = (y + 16) + "px";
+  return best;
 }
 
 // ---- side panel ----
+const $ = id => document.getElementById(id);
 function el(tag, attrs, txt) { const n = document.createElement(tag); Object.assign(n, attrs || {}); if (txt != null) n.textContent = txt; return n; }
-document.getElementById("title").textContent = T.title;
-document.getElementById("hint").textContent = T.hint;
-document.getElementById("h_views").textContent = T.views;
-document.getElementById("h_cams").textContent = T.cameras;
-document.getElementById("h_layers").textContent = T.layers;
-document.getElementById("frame").textContent = T.frame;
-document.getElementById("note").textContent = T.note;
-document.getElementById("src").textContent = T.src;
-
+$("ring_txt").textContent = "Zone tolerance ±" + S.zone_tol_deg + "°: a gaze inside the ring counts as that zone";
+$("src").textContent = "Source: " + DATA.sources.join(", ");
 const viewBtns = {};
-function showView(name) {
-  activeView = name;
-  for (const [k, b] of Object.entries(viewBtns)) b.classList.toggle("on", k === name);
+function showView(name) { activeView = name; for (const [k, b] of Object.entries(viewBtns)) b.setAttribute("aria-pressed", String(k === name)); }
+for (const [k, label, fn] of VIEWS) {
+  const b = el("button", { className: "chip", type: "button" }, label);
+  b.setAttribute("aria-pressed", "false");
+  b.onclick = () => { fn(); showView(k); draw(); };
+  viewBtns[k] = b; $("views").appendChild(b);
 }
-for (const k of ["iso", "top", "side", "front", "driver"]) {
-  const b = el("button", { className: "view" }, T["v_" + k]);
-  b.onclick = () => { VIEWS[k](); V.camView = null; showView(k); draw(); };
-  viewBtns[k] = b; document.getElementById("views").appendChild(b);
+function setMode(m) {
+  mode = m;
+  $("m_targets").setAttribute("aria-pressed", String(m === "targets")); $("m_cams").setAttribute("aria-pressed", String(m === "cams"));
+  $("p_targets").hidden = m !== "targets"; $("p_cams").hidden = m !== "cams";
+  if (m === "targets" && V.camView) { VIEWS[0][2](); showView("front"); }
+  draw();
 }
-const fromBtn = el("button", { className: "view" }, T.from_cam);
-fromBtn.onclick = () => {
-  const c = S.cameras.find(c => c.name === selCam) || S.cameras[0];
-  selectCam(c.name);
-  V = { mode: "look", eye: c.p.slice(), cam: c, camView: c.name,
-        basis: { r: c.R[0], u: mul(c.R[1], -1), f: c.R[2] }, yaw: 0, pitch: 0, hfov: c.hfov * RAD };
-  showView("cam"); draw();
-};
-viewBtns.cam = fromBtn; document.getElementById("views").appendChild(fromBtn);
-
+$("m_targets").onclick = () => setMode("targets");
+$("m_cams").onclick = () => setMode("cams");
 const camBtns = {};
 function selectCam(name) {
   selCam = name;
-  for (const [k, b] of Object.entries(camBtns)) b.classList.toggle("on", k === name);
-  const c = S.cameras.find(c => c.name === name);
-  document.getElementById("info").textContent = c ? T.cam_info.replace("{name}", c.name)
-    .replace("{x}", fmt(c.p[0])).replace("{y}", fmt(c.p[1])).replace("{z}", fmt(c.p[2]))
-    .replace("{hfov}", Math.round(c.hfov * 10) / 10).replace("{vfov}", Math.round(c.vfov * 10) / 10).replace("{w}", c.w).replace("{h}", c.h) : "";
+  for (const [k, b] of Object.entries(camBtns)) b.setAttribute("aria-pressed", String(k === name));
+  const c = S.cameras.find(c => c.name === name), card = $("cam_card");
+  card.textContent = "";
+  if (!c) return;
+  card.appendChild(el("b", {}, c.name));
+  const dl = el("dl");
+  for (const [k, v] of [["position", coord(c.p)], ["aim", "yaw " + c.yaw + "°, pitch " + c.pitch + "°"],
+                        ["field of view", Math.round(c.hfov * 10) / 10 + "° × " + Math.round(c.vfov * 10) / 10 + "°"],
+                        ["image", c.w + " × " + c.h]]) { dl.appendChild(el("dt", {}, k)); dl.appendChild(el("dd", {}, v)); }
+  card.appendChild(dl);
+  const b = el("button", { className: "primary", type: "button" }, "Look through this camera");
+  b.onclick = () => { lookThrough(c); showView(null); draw(); };
+  card.appendChild(b);
+  if (V.camView && V.camView !== name) lookThrough(c);
 }
 for (const c of S.cameras) {
-  const b = el("button", {}, c.name);
-  b.onclick = () => {
-    selectCam(selCam === c.name ? null : c.name);
-    if (V.camView && selCam) fromBtn.onclick();
-    else draw();
-  };
-  camBtns[c.name] = b; document.getElementById("cams").appendChild(b);
+  const b = el("button", { className: "chip cam", type: "button" }, c.name);
+  b.onclick = () => { selectCam(c.name); draw(); };
+  camBtns[c.name] = b; $("cams").appendChild(b);
 }
-for (const k of ["targets", "rings", "cams", "fov", "wheel", "belt", "head", "grid"]) {
-  const lab = el("label"), box = el("input", { type: "checkbox", checked: layers[k] });
-  box.onchange = () => { layers[k] = box.checked; draw(); };
-  lab.appendChild(box); lab.appendChild(document.createTextNode(" " + T["l_" + k]));
-  document.getElementById("layers").appendChild(lab);
-}
+$("o_driver").onchange = e => { opt.driver = e.target.checked; draw(); };
+$("o_labels").onchange = e => { opt.labels = e.target.checked; draw(); };
 
-VIEWS.iso(); showView("iso"); selectCam(S.cameras.length ? S.cameras[0].name : null);
+// a link can open a given state: #mode=cams&cam=dash_right&view=through  (view: a VIEWS key, or "through")
+function fromHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  if (h.get("cam") && S.cameras.some(c => c.name === h.get("cam"))) selCam = h.get("cam");
+  selectCam(selCam);
+  setMode(h.get("mode") === "cams" ? "cams" : "targets");
+  const v = VIEWS.find(x => x[0] === h.get("view"));
+  if (h.get("view") === "through" && selCam) { setMode("cams"); lookThrough(S.cameras.find(c => c.name === selCam)); showView(null); }
+  else { (v || VIEWS[0])[2](); showView((v || VIEWS[0])[0]); }
+  draw();
+}
+if (gl) initGL(); else $("nogl").style.display = "flex";
 window.addEventListener("resize", resize);
+window.addEventListener("hashchange", fromHash);
+fromHash();                                    // sets the view first: resize() draws
 resize();
 </script>
 </body>

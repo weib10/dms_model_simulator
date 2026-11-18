@@ -1,0 +1,99 @@
+# Generic left-hand-drive sedan body, for the 3D layout page only (dms-sim view3d). Nothing here enters the
+# simulation: model output and truth never read this file. Numbers are round PLACEHOLDERS that fit
+# configs/cabin.yaml (side mirrors symmetric about a centreline 0.36 m right of the driver, passenger 0.72 m right).
+# Vehicle frame: X forward, Y left, Z up, metres, origin = driver eye point.
+#
+# Part types
+#   quad:     4 corners. Shell parts (shell: true, the default for quads) are seen from inside only: they face
+#             `toward` (default: the cabin point below) and vanish when the view is behind them, so a view from
+#             outside looks into the cabin through walls and roof.
+#   box:      center, size [x, y, z], optional pitch_deg (about Y: > 0 tips the top backwards).
+#   cylinder: a -> b, radius.
+#   panel:    flat rectangle at a gaze target (configs/cabin.yaml targets), facing the eye point; size [w, h].
+#   housing:  box at a gaze target, size, optional offset; `arm_to`: a point the housing is held from (rod).
+# Every part has a layer (body | driver) and a colour (#rrggbb, optional alpha 0..1).
+
+toward: [0.0, -0.36, -0.10]
+
+colors:
+  trim: "#8a919c"
+  trim_dark: "#5d646e"
+  dash: "#4a5059"
+  floor: "#6b717a"
+  headliner: "#e3e5e8"
+  seat: "#525a66"
+  glass: "#9fc3dc"
+  screen: "#0f1720"
+  mirror: "#c9d6e2"
+  driver: "#8d98aa"
+  skin: "#c9ced6"
+
+parts:
+  # ---- shell ----
+  - {name: floor, type: quad, layer: body, color: floor,
+     points: [[-1.00, 0.50, -0.95], [1.15, 0.50, -0.95], [1.15, -1.22, -0.95], [-1.00, -1.22, -0.95]]}
+  - {name: roof, type: quad, layer: body, color: headliner,
+     points: [[-1.00, 0.50, 0.43], [0.38, 0.50, 0.43], [0.38, -1.22, 0.43], [-1.00, -1.22, 0.43]]}
+  - {name: windshield, type: quad, layer: body, color: glass, alpha: 0.18,
+     points: [[1.05, 0.50, -0.12], [0.38, 0.50, 0.43], [0.38, -1.22, 0.43], [1.05, -1.22, -0.12]]}
+  - {name: firewall, type: quad, layer: body, color: trim_dark,
+     points: [[1.15, 0.50, -0.95], [1.15, 0.50, -0.62], [1.15, -1.22, -0.62], [1.15, -1.22, -0.95]]}
+  # side walls: door trim below the beltline (z -0.15), glass above, pillars
+  - {name: door_left, type: quad, layer: body, color: trim,
+     points: [[-1.00, 0.50, -0.95], [1.05, 0.50, -0.95], [1.05, 0.50, -0.15], [-1.00, 0.50, -0.15]]}
+  - {name: door_right, type: quad, layer: body, color: trim,
+     points: [[-1.00, -1.22, -0.95], [1.05, -1.22, -0.95], [1.05, -1.22, -0.15], [-1.00, -1.22, -0.15]]}
+  - {name: window_left, type: quad, layer: body, color: glass, alpha: 0.16,
+     points: [[0.98, 0.50, -0.15], [-1.00, 0.50, -0.15], [-1.00, 0.50, 0.43], [0.38, 0.50, 0.43]]}
+  - {name: window_right, type: quad, layer: body, color: glass, alpha: 0.16,
+     points: [[0.98, -1.22, -0.15], [-1.00, -1.22, -0.15], [-1.00, -1.22, 0.43], [0.38, -1.22, 0.43]]}
+  - {name: a_pillar_left, type: quad, layer: body, color: trim_dark,
+     points: [[1.05, 0.49, -0.15], [0.96, 0.49, -0.15], [0.32, 0.49, 0.43], [0.40, 0.49, 0.43]]}
+  - {name: a_pillar_right, type: quad, layer: body, color: trim_dark,
+     points: [[1.05, -1.21, -0.15], [0.96, -1.21, -0.15], [0.32, -1.21, 0.43], [0.40, -1.21, 0.43]]}
+  - {name: b_pillar_left, type: quad, layer: body, color: trim,
+     points: [[-0.30, 0.49, -0.15], [-0.42, 0.49, -0.15], [-0.42, 0.49, 0.43], [-0.30, 0.49, 0.43]]}
+  - {name: b_pillar_right, type: quad, layer: body, color: trim,
+     points: [[-0.30, -1.21, -0.15], [-0.42, -1.21, -0.15], [-0.42, -1.21, 0.43], [-0.30, -1.21, 0.43]]}
+  - {name: header, type: quad, layer: body, color: trim,
+     points: [[0.46, 0.50, 0.37], [0.38, 0.50, 0.43], [0.38, -1.22, 0.43], [0.46, -1.22, 0.37]]}
+  # ---- dashboard: top, brow over the cluster, face, knee panel ----
+  - {name: dash_top, type: quad, layer: body, color: dash,
+     points: [[1.05, 0.50, -0.12], [0.60, 0.50, -0.10], [0.60, -1.22, -0.10], [1.05, -1.22, -0.12]]}
+  - {name: dash_brow, type: quad, layer: body, color: dash,
+     points: [[0.60, 0.50, -0.10], [0.72, 0.50, -0.17], [0.72, -1.22, -0.17], [0.60, -1.22, -0.10]]}
+  - {name: dash_face, type: quad, layer: body, color: dash,
+     points: [[0.72, 0.50, -0.17], [0.72, 0.50, -0.48], [0.72, -1.22, -0.48], [0.72, -1.22, -0.17]]}
+  - {name: knee_panel, type: quad, layer: body, color: trim_dark,
+     points: [[0.72, 0.50, -0.48], [1.00, 0.50, -0.68], [1.00, -1.22, -0.68], [0.72, -1.22, -0.48]]}
+  - {name: center_stack, type: box, layer: body, color: trim_dark, center: [0.85, -0.40, -0.50], size: [0.20, 0.34, 0.50]}
+  - {name: center_console, type: box, layer: body, color: trim_dark, center: [0.10, -0.36, -0.75], size: [1.20, 0.24, 0.40]}
+  - {name: armrest_left, type: box, layer: body, color: trim_dark, center: [0.05, 0.46, -0.45], size: [0.45, 0.08, 0.05]}
+  - {name: cluster, type: panel, layer: body, color: screen, target: cluster, size: [0.30, 0.12]}
+  - {name: center_display, type: panel, layer: body, color: screen, target: center_display, size: [0.26, 0.16]}
+  # ---- mirrors (at the gaze targets) ----
+  - {name: mirror_left, type: housing, layer: body, color: trim_dark, target: left_mirror, size: [0.08, 0.20, 0.13],
+     offset: [0.04, 0.0, 0.0], glass: mirror, arm_to: [0.90, 0.50, -0.12]}
+  - {name: mirror_right, type: housing, layer: body, color: trim_dark, target: right_mirror, size: [0.08, 0.20, 0.13],
+     offset: [0.04, 0.0, 0.0], glass: mirror, arm_to: [0.90, -1.22, -0.12]}
+  - {name: mirror_rearview, type: housing, layer: body, color: trim_dark, target: rearview_mirror, size: [0.04, 0.26, 0.07],
+     offset: [0.03, 0.0, 0.0], glass: mirror, arm_to: [0.45, -0.35, 0.37]}
+  # ---- seats ----
+  - {name: seat_driver, type: box, layer: body, color: seat, center: [-0.05, 0.0, -0.72], size: [0.52, 0.52, 0.14]}
+  - {name: seatback_driver, type: box, layer: body, color: seat, center: [-0.33, 0.0, -0.38], size: [0.13, 0.52, 0.62], pitch_deg: 12}
+  - {name: headrest_driver, type: box, layer: body, color: seat, center: [-0.29, 0.0, 0.03], size: [0.10, 0.27, 0.19], pitch_deg: 6}
+  - {name: seat_passenger, type: box, layer: body, color: seat, center: [-0.05, -0.72, -0.72], size: [0.52, 0.52, 0.14]}
+  - {name: seatback_passenger, type: box, layer: body, color: seat, center: [-0.33, -0.72, -0.38], size: [0.13, 0.52, 0.62], pitch_deg: 12}
+  - {name: headrest_passenger, type: box, layer: body, color: seat, center: [-0.29, -0.72, 0.03], size: [0.10, 0.27, 0.19], pitch_deg: 6}
+  - {name: steering_column, type: cylinder, layer: body, color: trim_dark, a: [0.44, 0.0, -0.23], b: [0.74, 0.0, -0.37], radius: 0.04}
+  # ---- driver (the head itself comes from configs/cabin.yaml) ----
+  - {name: neck, type: cylinder, layer: driver, color: skin, a: [-0.10, 0.0, -0.10], b: [-0.12, 0.0, -0.20], radius: 0.05}
+  - {name: torso, type: box, layer: driver, color: driver, center: [-0.14, 0.0, -0.40], size: [0.22, 0.42, 0.46], pitch_deg: 10}
+  - {name: upper_arm_left, type: cylinder, layer: driver, color: driver, a: [-0.12, 0.20, -0.22], b: [0.12, 0.24, -0.38], radius: 0.045}
+  - {name: forearm_left, type: cylinder, layer: driver, color: driver, a: [0.12, 0.24, -0.38], b: [0.40, 0.16, -0.16], radius: 0.038}
+  - {name: upper_arm_right, type: cylinder, layer: driver, color: driver, a: [-0.12, -0.20, -0.22], b: [0.12, -0.24, -0.38], radius: 0.045}
+  - {name: forearm_right, type: cylinder, layer: driver, color: driver, a: [0.12, -0.24, -0.38], b: [0.40, -0.16, -0.16], radius: 0.038}
+  - {name: thigh_left, type: cylinder, layer: driver, color: driver, a: [-0.10, 0.10, -0.60], b: [0.36, 0.13, -0.56], radius: 0.075}
+  - {name: shin_left, type: cylinder, layer: driver, color: driver, a: [0.36, 0.13, -0.56], b: [0.78, 0.13, -0.90], radius: 0.055}
+  - {name: thigh_right, type: cylinder, layer: driver, color: driver, a: [-0.10, -0.10, -0.60], b: [0.36, -0.13, -0.56], radius: 0.075}
+  - {name: shin_right, type: cylinder, layer: driver, color: driver, a: [0.36, -0.13, -0.56], b: [0.78, -0.13, -0.90], radius: 0.055}
