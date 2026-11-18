@@ -187,7 +187,15 @@ def body_meshes(body: dict, cabin: Cabin, M: _Meshes) -> None:
             M.add(cylinder(p["a"], p["b"], float(p["radius"])), layer, color, alpha)
         elif t == "panel":
             w, h = p["size"]
-            M.add(panel(cabin.targets[p["target"]], eye, w, h), layer, color, alpha, two_sided=True)
+            tg = cabin.targets[p["target"]]
+            M.add(panel(tg, eye, w, h, lift=0.003), layer, color, alpha, two_sided=True)
+            if p.get("back_x") is not None and float(p["back_x"]) > tg[0]:
+                # housing behind the screen, tilted with it, reaching back to the dash face (x = back_x)
+                n = G.normalize(eye - tg)
+                wa = G.normalize(np.cross([0.0, 0.0, 1.0], n))
+                depth = (float(p["back_x"]) - tg[0]) / max(-n[0], 0.2)
+                M.add(box(tg - n * depth / 2, [depth, w, h], np.column_stack([n, wa, np.cross(n, wa)])),
+                      layer, body.get("housing_color", "dash"))
         elif t == "housing":
             tg = cabin.targets[p["target"]]
             c = tg + np.asarray(p.get("offset", [0.0, 0.0, 0.0]), float)
