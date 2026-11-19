@@ -31,6 +31,7 @@ WHEEL_TUBE_M = 0.016    # rim tube radius when the cabin gives none
 WHEEL_COLOR = "#24282e"
 HUB_COLOR = "#2f343b"
 BELT_COLOR = "#4f7f5a"
+HAND_COLOR = "#b08d7a"  # the hand occluders of the resting hand state (configs/behavior.yaml hand)
 FACE_COLOR = "#3c373c"   # the face in the 2D camera render's colours (viz.py face fill, eyes, nose / mouth)
 FACE_EYE_COLOR = "#f0f0f0"
 FACE_LINE_COLOR = "#aaaab4"
@@ -251,17 +252,20 @@ def face_meshes(cabin: Cabin, head, M: _Meshes) -> None:
                   FACE_LINE_COLOR)
 
 
-def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None) -> dict:
-    """Everything the page draws, as plain lists (vehicle frame, metres)."""
+def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None, hand: str | None = None) -> dict:
+    """Everything the page draws, as plain lists (vehicle frame, metres). hand: the hand state drawn (default the
+    resting one, configs/behavior.yaml hand), with its hand / forearm occluders."""
     body = load_yaml(BODY) if body is None else body
+    hand = load_yaml(CONFIG_DIR / "behavior.yaml")["hand"] if hand is None else hand
     M = _Meshes(body.get("colors", {}))
     body_meshes(body, cabin, M)
     eye, tol = cabin.eye_point, cabin.zone_tol
     head = cabin.head_state(0.0, 0.0, 0.0)
-    for oc in cabin.occluder_geometry("none", head):           # steering wheel (hand occluders are not drawn)
-        if "active_when_hand" in oc:
-            continue
-        if oc["type"] == "torus":
+    for oc in cabin.occluder_geometry(hand, head):            # steering wheel, and the hand at rest
+        col = HAND_COLOR if "active_when_hand" in oc else WHEEL_COLOR
+        if oc["type"] == "sphere":
+            M.add(sphere(oc["center_world"], float(oc["radius"])), "driver", col)
+        elif oc["type"] == "torus":
             M.add(tube(oc["polyline"], float(oc.get("tube_radius", WHEEL_TUBE_M))), "body", WHEEL_COLOR)
         elif oc["type"] == "disc":
             c, r = oc["center_world"], float(oc["radius"])
@@ -270,7 +274,8 @@ def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None) -> dict
             M.add([(c, c + r * (np.cos(a0) * u + np.sin(a0) * v), c + r * (np.cos(a1) * u + np.sin(a1) * v))
                    for a0, a1 in zip(ang[:-1], ang[1:])], "body", HUB_COLOR, two_sided=True)
         elif oc["type"] == "cylinder":
-            M.add(cylinder(oc["a_world"], oc["b_world"], float(oc["radius"])), "body", WHEEL_COLOR)
+            M.add(cylinder(oc["a_world"], oc["b_world"], float(oc["radius"])), "driver" if "active_when_hand" in oc
+                  else "body", col)
     hc = cabin.nominal_head_center()
     face_meshes(cabin, head, M)
     for a, b in cabin.seatbelt_labelled_pieces():
