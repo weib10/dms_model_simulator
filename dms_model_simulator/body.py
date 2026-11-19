@@ -78,13 +78,28 @@ def panel(center, eye, w, h, lift=0.0) -> list:
     return quad([c + sw * w / 2 * wa + sh * h / 2 * ha for sw, sh in ((-1, -1), (1, -1), (1, 1), (-1, 1))], c + n)
 
 
+def _moved(p: dict, d: np.ndarray) -> dict:
+    """Part p translated by d (its points, centre or end points)."""
+    q = dict(p)
+    for k in ("center", "a", "b"):
+        if k in q:
+            q[k] = (np.asarray(q[k], float) + d).tolist()
+    if "points" in q:
+        q["points"] = (np.asarray(q["points"], float) + d).tolist()
+    return q
+
+
 def parts(body: dict, targets: dict, eye) -> list[dict]:
     """Every configs/body.yaml part as {name, layer, color, alpha, two_sided, closed, tris}. closed: a solid whose
     triangles face outwards (box, cylinder); the rest are open surfaces (quads, panels). Several pieces of one part
     (a mirror's housing, glass and arm) come as several entries with the same name. Panels and housings sit at
-    the gaze targets (`targets`, facing the eye point `eye`), so they move with configs/cabin.yaml."""
+    the gaze targets (`targets`, facing the nominal eye point, the origin), so they move with configs/cabin.yaml
+    and not with the driver. A part with `follows: driver` (the torso) is written for the nominal driver and moves
+    with the driver's eye point `eye` (driver variants; the seat belt moves the same way); `follows: seat` (the
+    driver's seat) moves with its fore / aft and lateral part only (sitting height is the driver, not the seat)."""
     toward = np.asarray(body.get("toward", [0.0, 0.0, 0.0]), float)
     eye = np.asarray(eye, float)
+    nominal_eye = np.zeros(3)
     out = []
 
     def add(p, tris, color=None, alpha=None, two_sided=False, closed=True):
@@ -93,6 +108,12 @@ def parts(body: dict, targets: dict, eye) -> list[dict]:
                     "closed": closed, "tris": tris})
 
     for p in body.get("parts", []):
+        if p.get("follows") == "driver":
+            p = _moved(p, eye)
+        elif p.get("follows") == "seat":
+            p = _moved(p, eye * np.array([1.0, 1.0, 0.0]))
+        elif p.get("follows") not in (None, "car"):
+            raise ValueError(f"body part {p.get('name')!r}: follows must be driver | seat | car, got {p.get('follows')!r}")
         t = p["type"]
         if t == "quad":
             shell = p.get("shell", True)
@@ -104,10 +125,10 @@ def parts(body: dict, targets: dict, eye) -> list[dict]:
         elif t == "panel":
             w, h = p["size"]
             tg = np.asarray(targets[p["target"]], float)
-            add(p, panel(tg, eye, w, h, lift=0.003), two_sided=True, closed=False)
+            add(p, panel(tg, nominal_eye, w, h, lift=0.003), two_sided=True, closed=False)
             if p.get("back_x") is not None and float(p["back_x"]) > tg[0]:
                 # housing behind the screen, tilted with it, reaching back to the dash face (x = back_x)
-                n = G.normalize(eye - tg)
+                n = G.normalize(nominal_eye - tg)
                 wa = G.normalize(np.cross([0.0, 0.0, 1.0], n))
                 depth = (float(p["back_x"]) - tg[0]) / max(-n[0], 0.2)
                 add(p, box(tg - n * depth / 2, [depth, w, h], np.column_stack([n, wa, np.cross(n, wa)])),
@@ -118,7 +139,7 @@ def parts(body: dict, targets: dict, eye) -> list[dict]:
             sz = p["size"]
             add(p, box(c, sz))
             if p.get("glass"):
-                add(p, panel(tg, eye, 0.85 * sz[1], 0.75 * sz[2], lift=0.004), color=p["glass"], alpha=1.0,
+                add(p, panel(tg, nominal_eye, 0.85 * sz[1], 0.75 * sz[2], lift=0.004), color=p["glass"], alpha=1.0,
                     two_sided=True, closed=False)
             if p.get("arm_to") is not None:
                 add(p, cylinder(c, p["arm_to"], 0.012))

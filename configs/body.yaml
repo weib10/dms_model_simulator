@@ -14,6 +14,9 @@
 #   panel:    screen at a gaze target (configs/cabin.yaml targets) facing the eye point, size [w, h]; back_x: a
 #             housing behind it reaching back to that x (the dash face).
 #   housing:  box at a gaze target (mirror), size, optional offset; glass: mirror face colour; arm_to: held from.
+# follows: driver -- the part is written for the nominal driver and moves with the driver's eye point (a driver
+# variant sits further back / higher; the seat belt moves the same way). follows: seat -- moves with the eye point's
+# fore / aft and lateral part only (the seat slides; sitting height is the driver's). Default: fixed to the car.
 # Every part has a colour (#rrggbb or a name below).
 
 toward: [0.0, -0.36, -0.10]
@@ -75,10 +78,10 @@ parts:
   - {name: mirror_rearview, type: housing, color: dash, target: rearview_mirror, size: [0.04, 0.26, 0.07],
      offset: [0.03, 0.0, 0.0], glass: mirror, arm_to: [0.45, -0.35, 0.37]}
   # ---- seats ----
-  - {name: seat_driver, type: box, color: seat, center: [-0.05, 0.0, -0.72], size: [0.52, 0.52, 0.14]}
-  - {name: seatback_driver, type: box, color: seat, center: [-0.33, 0.0, -0.30], size: [0.13, 0.52, 0.78], pitch_deg: 12}
+  - {name: seat_driver, type: box, follows: seat, color: seat, center: [-0.05, 0.0, -0.72], size: [0.52, 0.52, 0.14]}
+  - {name: seatback_driver, type: box, follows: seat, color: seat, center: [-0.33, 0.0, -0.30], size: [0.13, 0.52, 0.78], pitch_deg: 12}
   - {name: seat_passenger, type: box, color: seat, center: [-0.05, -0.72, -0.72], size: [0.52, 0.52, 0.14]}
   - {name: seatback_passenger, type: box, color: seat, center: [-0.33, -0.72, -0.30], size: [0.13, 0.52, 0.78], pitch_deg: 12}
   # ---- the driver's torso: the seat belt lies on it (the head comes from configs/cabin.yaml) ----
   # behind the belt everywhere (2 cm or more), top under the belt's shoulder turn (z -0.15)
-  - {name: torso, type: box, layer: driver, color: "#8d98aa", center: [-0.16, 0.0, -0.42], size: [0.22, 0.42, 0.46], pitch_deg: 10}
+  - {name: torso, type: box, layer: driver, follows: driver, color: "#8d98aa", center: [-0.16, 0.0, -0.42], size: [0.22, 0.42, 0.46], pitch_deg: 10}

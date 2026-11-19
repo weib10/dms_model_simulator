@@ -111,11 +111,20 @@ def test_a_scenario_cabin_override_reaches_the_body():
 
 
 def test_the_belt_lies_in_front_of_the_torso(setup):
-    """No camera loses any of the seat belt to the torso it lies on (or to the seat behind it)."""
-    cabin, cams = setup
-    occl = cabin.occluder_geometry("none", cabin.head_state(0, 0, 0))
-    pts = [np.asarray(a) + t * (np.asarray(b) - np.asarray(a))
-           for a, b in cabin.seatbelt_labelled_pieces() for t in np.linspace(0.02, 0.98, 25)]
-    for cam in cams:
-        names = {cabin.ray_blocked(cam.position, p, occl, cabin.occlusion_eps) for p in pts}
-        assert not names & {"torso", "seatback_driver", "seat_driver"}, cam.name
+    """No camera loses any of the shoulder strap (what the belt box's occlusion counts) to the torso it lies on or
+    to the seat behind it, for the nominal driver and the corners of the driver range of configs/variation.yaml: the
+    torso follows the driver like the belt, the seat its fore / aft position. (The belt going round the shoulder to
+    the B-pillar may disappear behind the torso, as it does in a car.)"""
+    import itertools
+    _, cams = setup
+    rng = load_yaml(CONFIG_DIR / "variation.yaml")["driver"]["eye_point_offset"]
+    for off in [(0.0, 0.0, 0.0)] + list(itertools.product(rng["x"], rng["y"], rng["z"])):
+        cfg = load_configs()["cabin"]
+        cfg["driver"]["eye_point_offset"] = list(off)
+        cabin = Cabin(cfg)
+        occl = cabin.occluder_geometry("none", cabin.head_state(0, 0, 0))
+        a, b = cabin.seatbelt_top, cabin.seatbelt_bottom
+        pts = [a + t * (b - a) for t in np.linspace(0.02, 0.98, 25)]
+        for cam in cams:
+            names = {cabin.ray_blocked(cam.position, p, occl, cabin.occlusion_eps) for p in pts}
+            assert not names & {"torso", "seatback_driver", "seat_driver"}, (cam.name, off)
