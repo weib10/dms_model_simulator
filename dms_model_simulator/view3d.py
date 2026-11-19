@@ -3,7 +3,10 @@
 Solid surfaces (configs/body.yaml: shell, dashboard, seats, a seated driver) plus what configs/cabin.yaml and
 configs/cameras.yaml put where: gaze targets with the zone tolerance cone as a ring, cameras with their field of
 view, steering wheel, seat belt and the head at rest. The body file is display only: nothing in the simulation
-reads it. No model output, no time axis.
+reads it. Every mesh says where it shows (`show`): "car" (the body file) or "both" (steering wheel, seat belt and
+the head). The head is drawn as the simulation has it: its landmark points, with the face outline, eyes, nose and
+mouth filled in as the 2D camera render draws them. The page switches between the car view and the simulator-only
+view. No model output, no time axis.
 
 The page is one HTML file: the scene is inlined as JSON and drawn with raw WebGL plus a 2D canvas for labels (no
 libraries, no network, no fetch), so it opens straight from disk. Same input -> byte-identical file.
@@ -23,15 +26,16 @@ FILE = "cabin3d.html"
 NEAR_M = 3.0            # targets further than this from the eye point are drawn as clipped direction rays
 RAY_M = 2.0             # length of such a ray
 FRUSTUM_M = 0.30        # depth of the drawn field-of-view pyramid
-HEAD_R_M = 0.09         # head sphere radius (same as the 2D cabin views)
 CAM_BODY_M = 0.035      # size of the little camera box
 WHEEL_TUBE_M = 0.016    # rim tube radius when the cabin gives none
 WHEEL_COLOR = "#24282e"
 HUB_COLOR = "#2f343b"
 BELT_COLOR = "#4f7f5a"
-HEAD_COLOR = "skin"     # body.yaml colour name (this default when the body file has none)
-SKIN_DEFAULT = "#c9ced6"
-EYE_COLOR = "#1f2937"
+FACE_COLOR = "#3c373c"   # the face in the 2D camera render's colours (viz.py face fill, eyes, nose / mouth)
+FACE_EYE_COLOR = "#f0f0f0"
+FACE_LINE_COLOR = "#aaaab4"
+FACE_LINE_M = 0.003      # nose / mouth line radius
+FACE_EYE_R_M = 0.008
 RING_N = 40             # points per zone-tolerance ring
 SEG = 16                # sides of a cylinder / tube
 DIGITS = 4
@@ -161,20 +165,21 @@ class _Meshes:
     def __init__(self, colors: dict):
         self.colors, self.groups = colors, {}
 
-    def add(self, tris, layer: str, color: str, alpha: float = 1.0, two_sided: bool = False):
+    def add(self, tris, layer: str, color: str, alpha: float = 1.0, two_sided: bool = False, show: str = "both"):
         col = self.colors.get(color, color)
-        self.groups.setdefault((layer, col, float(alpha), bool(two_sided)), []).extend(tris)
+        self.groups.setdefault((layer, col, float(alpha), bool(two_sided), show), []).extend(tris)
 
     def out(self) -> list:
-        return [{"layer": layer, "color": _rgb(col), "alpha": alpha, "two_sided": two,
+        return [{"layer": layer, "color": _rgb(col), "alpha": alpha, "two_sided": two, "show": show,
                  "pos": _r(np.array(tris).reshape(-1))}
-                for (layer, col, alpha, two), tris in self.groups.items() if tris]
+                for (layer, col, alpha, two, show), tris in self.groups.items() if tris]
 
 
 def body_meshes(body: dict, cabin: Cabin, M: _Meshes) -> None:
-    """configs/body.yaml parts as triangles."""
+    """configs/body.yaml parts as triangles (shown in the car view only: the simulation never reads them)."""
     toward = np.asarray(body.get("toward", [0.0, 0.0, 0.0]), float)
     eye = cabin.eye_point
+    M = _CarOnly(M.add)
     for p in body.get("parts", []):
         t, layer, color = p["type"], p.get("layer", "body"), p.get("color", "trim")
         alpha = float(p.get("alpha", 1.0))
@@ -209,10 +214,47 @@ def body_meshes(body: dict, cabin: Cabin, M: _Meshes) -> None:
             raise ValueError(f"body part {p.get('name')!r}: unknown type {t!r} (quad | box | cylinder | panel | housing)")
 
 
+class _CarOnly:
+    """_Meshes.add with show="car"."""
+    def __init__(self, add):
+        self._add = add
+
+    def add(self, tris, layer, color, alpha=1.0, two_sided=False):
+        self._add(tris, layer, color, alpha, two_sided, show="car")
+
+
+def _face_forward(cabin: Cabin, head) -> np.ndarray:
+    """Unit vector out of the face: face_outline centre -> nose tip (+X when either is missing)."""
+    lm = head.landmarks
+    ring = [np.asarray(lm[k], float) for k in cabin.face_outline if k in lm]
+    if "nose_tip" not in lm or not ring:
+        return np.array([1.0, 0.0, 0.0])
+    return G.normalize(np.asarray(lm["nose_tip"], float) - np.mean(ring, axis=0))
+
+
+def face_meshes(cabin: Cabin, head, M: _Meshes) -> None:
+    """The face the simulation projects into a camera, as the 2D render draws it: the face_outline landmarks as a
+    filled outline, the eye centres, nose bridge -> tip and the mouth corners through its centre."""
+    lm = head.landmarks
+    ring = [np.asarray(lm[k], float) for k in cabin.face_outline if k in lm]
+    if len(ring) >= 3:
+        c = np.mean(ring, axis=0)
+        M.add([(c, ring[i], ring[(i + 1) % len(ring)]) for i in range(len(ring))], "driver", FACE_COLOR,
+              two_sided=True)
+    fwd = _face_forward(cabin, head)
+    for k in ("left_eye_center", "right_eye_center"):
+        if k in lm:
+            M.add(sphere(np.asarray(lm[k], float) + 0.006 * fwd, FACE_EYE_R_M, 6, 10), "driver", FACE_EYE_COLOR)
+    for line in (("nose_bridge", "nose_tip"), ("mouth_left", "mouth_center", "mouth_right")):
+        if all(k in lm for k in line):
+            M.add(tube([np.asarray(lm[k], float) + 0.004 * fwd for k in line], FACE_LINE_M), "driver",
+                  FACE_LINE_COLOR)
+
+
 def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None) -> dict:
     """Everything the page draws, as plain lists (vehicle frame, metres)."""
     body = load_yaml(BODY) if body is None else body
-    M = _Meshes({HEAD_COLOR: SKIN_DEFAULT, **body.get("colors", {})})
+    M = _Meshes(body.get("colors", {}))
     body_meshes(body, cabin, M)
     eye, tol = cabin.eye_point, cabin.zone_tol
     head = cabin.head_state(0.0, 0.0, 0.0)
@@ -230,12 +272,7 @@ def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None) -> dict
         elif oc["type"] == "cylinder":
             M.add(cylinder(oc["a_world"], oc["b_world"], float(oc["radius"])), "body", WHEEL_COLOR)
     hc = cabin.nominal_head_center()
-    M.add(sphere(hc, HEAD_R_M), "driver", HEAD_COLOR)
-    if "nose_tip" in head.landmarks:
-        M.add(sphere(head.landmarks["nose_tip"], 0.018, 6, 10), "driver", HEAD_COLOR)
-    for k in ("left_eye_center", "right_eye_center"):
-        if k in head.landmarks:
-            M.add(sphere(head.landmarks[k] + np.array([0.004, 0.0, 0.0]), 0.009, 6, 10), "driver", EYE_COLOR)
+    face_meshes(cabin, head, M)
     for a, b in cabin.seatbelt_labelled_pieces():
         M.add(quad(cabin.seatbelt_quad(a, b), None), "belt", BELT_COLOR, two_sided=True)
 
@@ -261,7 +298,8 @@ def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None) -> dict
     centre_y = 0.5 * (t["left_mirror"][1] + t["right_mirror"][1]) if {"left_mirror", "right_mirror"} <= set(t) else -0.36
     return {
         "meshes": M.out(), "targets": targets, "cameras": cams, "zone_tol_deg": tol,
-        "eye_point": _r(eye), "head": {"c": _r(hc), "r": HEAD_R_M},
+        "eye_point": _r(eye), "head": {"c": _r(hc), "fwd": _r(_face_forward(cabin, head))},
+        "landmarks": [{"name": k, "p": _r(v)} for k, v in sorted(head.landmarks.items())],
         "passenger_eye": _r(eye + np.array([0.0, 2 * (centre_y - eye[1]), 0.0])),
     }
 

@@ -86,6 +86,28 @@ def test_meshes_are_triangles_with_outward_or_inward_faces(setup):
     del M
 
 
+def test_car_view_and_simulator_view_split_the_meshes(setup):
+    cabin, _, sc = setup
+    assert {m["show"] for m in sc["meshes"]} == {"car", "both"}
+    # every body.yaml part is car-only: the simulator view draws nothing the simulation does not read
+    body = load_yaml(view3d.BODY)
+    M = view3d._Meshes(body["colors"])
+    view3d.body_meshes(body, cabin, M)
+    assert M.out() and {m["show"] for m in M.out()} == {"car"}
+    assert {m["layer"] for m in sc["meshes"] if m["show"] == "both"} == {"body", "driver", "belt"}  # wheel, head, belt
+    # the head is the simulation's own: every landmark is listed, and the face fan touches every outline landmark
+    head = cabin.head_state(0.0, 0.0, 0.0)
+    assert {q["name"] for q in sc["landmarks"]} == set(head.landmarks)
+    for q in sc["landmarks"]:
+        np.testing.assert_allclose(q["p"], head.landmarks[q["name"]], atol=1e-4)
+    face = [m for m in sc["meshes"] if m["color"] == view3d._rgb(view3d.FACE_COLOR)]
+    pts = _tris(face[0]["pos"]).reshape(-1, 3)
+    for k in cabin.face_outline:
+        assert np.min(np.linalg.norm(pts - head.landmarks[k], axis=1)) < 1e-3, k
+    html = view3d.page(sc)
+    assert 'id="w_sim"' in html and "draw=sim" in html
+
+
 def test_body_parts_follow_the_targets(setup):
     cabin, _, sc = setup
     body = load_yaml(view3d.BODY)

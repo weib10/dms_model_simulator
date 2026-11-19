@@ -152,9 +152,12 @@ puts what `configs/cabin.yaml` and `configs/cameras.yaml` define inside a generi
 (`configs/body.yaml`: shell, dashboard, seats, a seated driver; display only, the simulation never reads it). Two
 modes, one at a time: *where the driver looks* (gaze targets, each with its zone tolerance as a ring) and *where
 the cameras are* (camera bodies, the chosen camera's field of view, "look through this camera"). Views: facing the
-driver, back seat, passenger seat, the driver's eyes, top, left side cut away. Drag to turn, scroll or pinch to
-zoom, shift-drag to move; hover or tap a point for its coordinates. A link can open a state:
-`cabin3d.html#mode=cams&cam=dash_right&view=through`. `--cabin` / `--cameras` / `--body` take other YAML files;
+driver, back seat, passenger seat, the driver's eyes, top, left side cut away. The head is what the simulation has:
+its landmark points, with the face outline, eyes, nose and mouth filled in as the 2D camera render draws them. A
+*Draw* switch picks the car (for orientation) or *simulator only* (no body file, and looking through a camera on the
+2D render's dark background, so it shows what that render shows). Drag to turn,
+scroll or pinch to zoom, shift-drag to move; hover or tap a point for its coordinates. A link can open a state:
+`cabin3d.html#mode=cams&cam=dash_right&view=through&draw=sim`. `--cabin` / `--cameras` / `--body` take other YAML files;
 `--camera` limits the cameras. Camera views are pinhole (no lens distortion); far targets (the road) are drawn as
 directions. Layout only, no scenario.
 
