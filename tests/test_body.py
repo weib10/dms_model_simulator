@@ -73,7 +73,7 @@ def test_cached_ray_test_matches_the_plain_one(setup):
     cabin, cams = setup
     o, rng = cabin.body_occluder, np.random.default_rng(0)
     for cam in cams:
-        pre = G.triangles_from(cam.position, o["tris"], o["two_sided"])
+        pre = G.triangles_from(cam.position, o["tris"], o["two_sided"], o["piece"])
         for _ in range(300):
             p = rng.uniform([-0.5, -0.8, -0.8], [0.7, 0.45, 0.4])
             a = G.ray_hit_triangles(cam.position, p, o["tris"], 0.003)
@@ -131,8 +131,10 @@ def test_the_belt_lies_in_front_of_the_torso(setup):
 
 
 def _cabin_with(adjust: dict) -> Cabin:
+    """The default cabin with body.yaml's adjust block deep-merged with `adjust` (lists of what moves kept)."""
+    from dms_model_simulator.config import deep_merge
     cfg = load_configs()["cabin"]
-    cfg["body"]["adjust"] = adjust
+    cfg["body"]["adjust"] = deep_merge(cfg["body"]["adjust"], adjust)
     return Cabin(cfg)
 
 
@@ -173,7 +175,7 @@ def test_moving_the_wheel_moves_everything_on_it_in_the_simulation_and_on_the_pa
 
 def test_tilting_the_wheel_turns_its_plane_about_the_centre(setup):
     cabin, _ = setup
-    tilted = _cabin_with({"steering_wheel": {"move": [0, 0, 0], "tilt_deg": 10.0, "hands": []}})
+    tilted = _cabin_with({"steering_wheel": {"move": [0, 0, 0], "tilt_deg": 10.0}})
     get = lambda c, n: next(o for o in c.occluders if o["name"] == n)
     a, b = get(cabin, "steering_wheel"), get(tilted, "steering_wheel")
     assert a["center"] == b["center"]
@@ -200,3 +202,29 @@ def test_a_camera_inside_a_part_is_an_error():
         Simulation("mirror_check", "center_stack", seed=0, cfgs=cfg)
     with pytest.raises(ValueError, match="unknown part"):
         _cabin_with({"seat": {"move": [0, 0, 0]}})
+
+
+def test_inside_test_takes_each_piece_on_its_own(setup):
+    """A mirror is a housing box and an arm cylinder that starts at the box centre, under one part name: a point
+    inside both is still inside (a count over the whole part would give 2 crossings, i.e. outside)."""
+    cabin, _ = setup
+    from dms_model_simulator import body as B
+    c = np.asarray(cabin.targets["rearview_mirror"]) + np.array([0.03, 0.0, 0.0])     # housing centre (body.yaml offset)
+    assert B.part_containing(cabin.body_occluder, c) == "mirror_rearview"
+    assert B.part_containing(cabin.body_occluder, c + np.array([0.0, 0.0, -0.2])) is None
+
+
+def test_clear_errors_for_a_body_that_does_not_fit_the_cabin():
+    cfg = load_configs()["cabin"]
+    cfg["targets"].pop("rearview_mirror")
+    with pytest.raises(ValueError, match="gaze target 'rearview_mirror'"):
+        Cabin(cfg)
+    cfg = load_configs()["cabin"]
+    cfg["occluders"] = [o for o in cfg["occluders"] if o["name"] != "steering_wheel"]
+    cfg["body"]["adjust"]["steering_wheel"]["tilt_deg"] = 5.0
+    with pytest.raises(ValueError, match="no pivot"):
+        Cabin(cfg)
+    cfg = load_configs()["cabin"]
+    cfg["body"]["adjust"]["steering_wheel"].update(move=[0.01, 0, 0], occluders=["steering_wheel", "no_such_part"])
+    with pytest.raises(ValueError, match="no_such_part"):
+        Cabin(cfg)

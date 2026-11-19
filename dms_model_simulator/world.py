@@ -98,8 +98,10 @@ class Cabin:
         # moves of the (already mirrored) wheel occluders and hands are mirrored too.
         self.drive = D.check(cfg.get("drive", "left"))
         self.body = cfg.get("body") or {}
-        wheel = next((o for o in self.occluders if o.get("name") == "steering_wheel" and "center" in o), None)
-        self.body_pivots = {"steering_wheel": list(wheel["center"]) if wheel else [0.0, 0.0, 0.0]}
+        sw = (self.body.get("adjust") or {}).get("steering_wheel") or {}
+        rim = sw.get("pivot_occluder", "steering_wheel")
+        wheel = next((o for o in self.occluders if o.get("name") == rim and "center" in o), None)
+        self.body_pivots = {"steering_wheel": list(wheel["center"])} if wheel else {}
         self.body_adjust = B.adjusters(D.adjust_for(self.body, self.drive), self.body_pivots)
         if "steering_wheel" in self.body_adjust:
             self._move_wheel(*self.body_adjust["steering_wheel"])
@@ -113,12 +115,16 @@ class Cabin:
                                    for k in ("a", "b")}} for so in cfg.get("self_occluders", [])]
 
     def _move_wheel(self, pts, dirs) -> None:
-        """Move what rides on the steering wheel: the steering_wheel* occluders, the hand states listed in body.yaml
-        adjust.steering_wheel.hands (positions and their hand / forearm occluders)."""
-        hands = set(((self.body.get("adjust") or {}).get("steering_wheel") or {}).get("hands") or [])
+        """Move what rides on the steering wheel, as body.yaml adjust.steering_wheel lists it: the occluders named in
+        `occluders` and the hand states in `hands` (positions and their hand / forearm occluders)."""
+        sw = (self.body.get("adjust") or {}).get("steering_wheel") or {}
+        names, hands = set(sw.get("occluders") or []), set(sw.get("hands") or [])
+        missing = names - {o.get("name") for o in self.occluders}
+        if missing:
+            raise ValueError(f"body adjust.steering_wheel.occluders: {sorted(missing)} not in configs/cabin.yaml occluders")
         moved = []
         for o in self.occluders:
-            if str(o.get("name", "")).startswith("steering_wheel") or o.get("active_when_hand") in hands:
+            if o.get("name") in names or o.get("active_when_hand") in hands:
                 o = dict(o)
                 for k in ("center", "a", "b"):
                     if k in o and not isinstance(o[k], str):
@@ -289,7 +295,7 @@ class Cabin:
                 key = np.asarray(cam_pos, float).tobytes()
                 cache = o.setdefault("_from", {})       # the body does not move: precompute once per camera
                 if key not in cache:
-                    cache[key] = G.triangles_from(cam_pos, o["tris"], o["two_sided"])
+                    cache[key] = G.triangles_from(cam_pos, o["tris"], o["two_sided"], o.get("piece"))
                 i = G.ray_hit_triangles_from(cam_pos, point, cache[key], eps)
                 if i >= 0:
                     return str(o["part"][i])

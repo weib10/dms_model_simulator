@@ -12,7 +12,10 @@ adjust:
   steering_wheel:
     move: [0.0, 0.0, 0.0]
     tilt_deg: 0.0          # about the wheel centre, > 0 tips the top towards the driver
-    hands: [wheel, wheel_cross_l, wheel_cross_c, wheel_cross_r]   # hand states on the rim: they move with it
+    pivot_occluder: steering_wheel      # the rim (configs/cabin.yaml occluders): its center is the tilt pivot
+    occluders: [steering_wheel, steering_wheel_hub, steering_wheel_spoke_left, steering_wheel_spoke_right,
+                steering_wheel_spoke_bottom]                  # configs/cabin.yaml occluders that move with it
+    hands: [wheel, wheel_cross_l, wheel_cross_c, wheel_cross_r]   # hand states on the rim (and their forearms)
   dashboard: {move: [0.0, 0.0, 0.0]}
 
 # Generic left-hand-drive sedan body. The simulation uses it: every part hides from a camera whatever is behind it
@@ -38,6 +41,13 @@ adjust:
 # Every part has a colour (#rrggbb or a name below).
 
 toward: [0.0, -0.36, -0.10]
+
+geometry:                         # how panels and housings are built (metres unless noted)
+  screen_lift: 0.003              # a screen sits this far in front of its gaze target
+  glass_lift: 0.004               # a mirror glass this far in front of its target
+  glass_of_housing: [0.85, 0.75]  # mirror glass width / height as a share of the housing's
+  mirror_arm_radius: 0.012
+  screen_housing_min_slope: 0.2   # floor of the screen normal's -x part when sizing the housing behind it
 
 colors:
   trim: "#8a919c"

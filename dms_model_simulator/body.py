@@ -100,13 +100,17 @@ def adjusters(body: dict, pivots: dict) -> dict:
     for group, a in (body.get("adjust") or {}).items():
         if group not in GROUPS:
             raise ValueError(f"body adjust: unknown part {group!r} (one of {', '.join(GROUPS)})")
-        unknown = set(a or {}) - ({"move", "tilt_deg", "hands"} if group == "steering_wheel" else {"move"})
+        unknown = set(a or {}) - ({"move", "tilt_deg", "hands", "occluders", "pivot_occluder"}
+                                  if group == "steering_wheel" else {"move"})
         if unknown:
             raise ValueError(f"body adjust.{group}: unknown keys {sorted(unknown)}")
         move = np.asarray((a or {}).get("move", [0.0, 0.0, 0.0]), float)
         tilt = float((a or {}).get("tilt_deg", 0.0))
         if not move.any() and tilt == 0.0:
             continue
+        if tilt != 0.0 and group not in pivots:
+            raise ValueError(f"body adjust.{group}.tilt_deg: no pivot (the cabin has no {group} rim occluder with a "
+                             f"center to tilt about)")
         R = rot_y(tilt)
         c = np.asarray(pivots.get(group, [0.0, 0.0, 0.0]), float)
 
@@ -132,7 +136,17 @@ def parts(body: dict, targets: dict, eye, adjust: dict | None = None) -> list[di
     toward = np.asarray(body.get("toward", [0.0, 0.0, 0.0]), float)
     eye = np.asarray(eye, float)
     nominal_eye = np.zeros(3)
+    g = body.get("geometry") or {}
+    screen_lift, glass_lift = float(g.get("screen_lift", 0.003)), float(g.get("glass_lift", 0.004))
+    glass_w, glass_h = (float(v) for v in g.get("glass_of_housing", [0.85, 0.75]))
+    arm_r, min_slope = float(g.get("mirror_arm_radius", 0.012)), float(g.get("screen_housing_min_slope", 0.2))
     out = []
+
+    def target(p):
+        if p["target"] not in targets:
+            raise ValueError(f"body part {p['name']!r} sits at gaze target {p['target']!r}, which the cabin config "
+                             f"(configs/cabin.yaml targets) does not have")
+        return np.asarray(targets[p["target"]], float)
 
     def add(p, tris, color=None, alpha=None, two_sided=False, closed=True):
         if adjust and p.get("group") in adjust and tris:
@@ -161,64 +175,65 @@ def parts(body: dict, targets: dict, eye, adjust: dict | None = None) -> list[di
             add(p, cylinder(p["a"], p["b"], float(p["radius"])))
         elif t == "panel":
             w, h = p["size"]
-            tg = np.asarray(targets[p["target"]], float)
-            add(p, panel(tg, nominal_eye, w, h, lift=0.003), two_sided=True, closed=False)
+            tg = target(p)
+            add(p, panel(tg, nominal_eye, w, h, lift=screen_lift), two_sided=True, closed=False)
             if p.get("back_x") is not None and float(p["back_x"]) > tg[0]:
                 # housing behind the screen, tilted with it, reaching back to the dash face (x = back_x)
                 n = G.normalize(nominal_eye - tg)
                 wa = G.normalize(np.cross([0.0, 0.0, 1.0], n))
-                depth = (float(p["back_x"]) - tg[0]) / max(-n[0], 0.2)
+                depth = (float(p["back_x"]) - tg[0]) / max(-n[0], min_slope)
                 add(p, box(tg - n * depth / 2, [depth, w, h], np.column_stack([n, wa, np.cross(n, wa)])),
                     color=body.get("housing_color", "dash"), alpha=1.0)
         elif t == "housing":
-            tg = np.asarray(targets[p["target"]], float)
+            tg = target(p)
             c = tg + np.asarray(p.get("offset", [0.0, 0.0, 0.0]), float)
             sz = p["size"]
             add(p, box(c, sz))
             if p.get("glass"):
-                add(p, panel(tg, nominal_eye, 0.85 * sz[1], 0.75 * sz[2], lift=0.004), color=p["glass"], alpha=1.0,
-                    two_sided=True, closed=False)
+                add(p, panel(tg, nominal_eye, glass_w * sz[1], glass_h * sz[2], lift=glass_lift), color=p["glass"],
+                    alpha=1.0, two_sided=True, closed=False)
             if p.get("arm_to") is not None:
-                add(p, cylinder(c, p["arm_to"], 0.012))
+                add(p, cylinder(c, p["arm_to"], arm_r))
         else:
             raise ValueError(f"body part {p.get('name')!r}: unknown type {t!r} (quad | box | cylinder | panel | housing)")
     return out
 
 
 def occluder(body: dict, targets: dict, eye, adjust: dict | None = None) -> dict | None:
-    """All parts as one "mesh" occluder: tris (N x 3 x 3), the part name of each triangle and two_sided: true
-    for open surfaces (quads, panels), which a ray may meet from either side; a closed part is entered through a
-    triangle facing the camera. None: no parts."""
+    """All parts as one "mesh" occluder: tris (N x 3 x 3), the part name of each triangle, two_sided: true
+    for open surfaces (quads, panels), which a ray may meet from either side (a closed part is entered through a
+    triangle facing the camera), and piece: the index of the solid or surface each triangle belongs to (one part
+    can be several overlapping pieces, e.g. a mirror's housing and its arm). None: no parts."""
     ps = [p for p in parts(body, targets, eye, adjust) if p["tris"]]
     if not ps:
         return None
     tris = np.array([t for p in ps for t in p["tris"]], float)
     names = np.array([p["name"] for p in ps for _ in p["tris"]])
     two = np.array([p["two_sided"] or not p["closed"] for p in ps for _ in p["tris"]], bool)
-    return {"name": "car_body", "type": "mesh", "tris": tris, "part": names, "two_sided": two}
+    piece = np.array([i for i, p in enumerate(ps) for _ in p["tris"]], int)
+    return {"name": "car_body", "type": "mesh", "tris": tris, "part": names, "two_sided": two, "piece": piece}
 
 
 def part_containing(occ: dict | None, point) -> str | None:
-    """Name of the closed part (box, cylinder) the point lies inside, else None: a ray from the point crosses that
-    part's surface an odd number of times. The ray test of the simulation assumes a camera is outside every part."""
+    """Name of the closed part (box, cylinder) the point lies inside, else None. Each closed piece is tested on its
+    own (a part can be overlapping pieces): a ray from the point crosses the piece's surface an odd number of times.
+    Three rays, majority wins, so a ray through a shared edge (counted on both triangles) cannot flip the answer.
+    The ray test of the simulation assumes a camera is outside every part."""
     if occ is None:
         return None
     o = np.asarray(point, float)
-    d = np.array([0.31, 0.17, 9.0])                    # any direction that meets no edge head-on
     closed = ~occ["two_sided"]
-    for name in dict.fromkeys(occ["part"][closed]):
-        tris = occ["tris"][closed & (occ["part"] == name)]
-        v0 = tris[:, 0]
-        e1, e2 = tris[:, 1] - v0, tris[:, 2] - v0
-        h = np.cross(d, e2)
-        a = np.einsum("ij,ij->i", e1, h)
-        ok = np.abs(a) > 1e-15
-        f = np.where(ok, 1.0 / np.where(ok, a, 1.0), 0.0)
-        s = o - v0
-        u = f * np.einsum("ij,ij->i", s, h)
-        q = np.cross(s, e1)
-        v = f * (q @ d)
-        t = f * np.einsum("ij,ij->i", e2, q)
-        if int(np.count_nonzero(ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 0))) % 2:
-            return str(name)
+    for k in np.unique(occ["piece"][closed]):
+        sel = closed & (occ["piece"] == k)
+        tris = occ["tris"][sel]
+        votes = 0
+        for d in INSIDE_RAYS:
+            hit, t = G.ray_triangles(o, d, tris)
+            votes += int(np.count_nonzero(hit & (t > 0))) % 2
+        if votes >= 2:
+            return str(occ["part"][sel][0])
     return None
+
+
+# the inside test's ray directions: unrelated to the axes and to each other, so no two meet the same edge
+INSIDE_RAYS = (np.array([0.31, 0.17, 9.0]), np.array([-7.3, 2.9, 0.53]), np.array([0.61, -8.1, -1.7]))

@@ -314,8 +314,10 @@ def test_view3d_drive(tmp_path):
         return p[np.lexsort(p.T[::-1])]
     np.testing.assert_array_equal(body_points(rc), body_points(lc, flip=True))
     hl, hr = view3d.page(sl), view3d.page(sr)
-    assert hl == view3d.page(sl) and "Generic left-hand-drive sedan." in hl and "orbitL" not in hl
-    assert "Generic right-hand-drive sedan" in hr and "Right side, cut away" in hr and "orbitL" in hr
+    assert hl == view3d.page(sl) and '"drive"' not in hl
+    assert '"drive":"right"' in hr          # the page reads it and mirrors its wording and view presets itself
+    t = view3d.TEMPLATE.read_text(encoding="utf-8")
+    assert 'const RHD = S.drive === "right"' in t and "Right side, cut away" in t
     cli.main(["view3d", "--drive", "right", "--out", str(tmp_path)])
     assert [p.name for p in tmp_path.iterdir()] == [view3d.FILE_RHD]
 
@@ -346,9 +348,8 @@ def test_body_adjust_mirrors():
     right-hand drive: the wheel occluders, the hand on the wheel and the body triangles."""
     from dms_model_simulator.world import Cabin
     cfg = load_configs()["cabin"]
-    cfg["body"]["adjust"] = {"steering_wheel": {"move": [-0.03, 0.02, 0.01], "tilt_deg": 6.0,
-                                                "hands": ["wheel", "wheel_cross_l", "wheel_cross_c", "wheel_cross_r"]},
-                             "dashboard": {"move": [0.01, -0.02, -0.03]}}
+    cfg["body"]["adjust"]["steering_wheel"].update(move=[-0.03, 0.02, 0.01], tilt_deg=6.0)
+    cfg["body"]["adjust"]["dashboard"]["move"] = [0.01, -0.02, -0.03]
     lc, rc = Cabin(cfg), Cabin(D.mirror_cabin(cfg))
     assert rc.drive == "right" and "steering_wheel" in rc.body_adjust
     get = lambda c, n: next(o for o in c.occluders if o["name"] == n)

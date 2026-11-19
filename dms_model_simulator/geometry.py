@@ -200,15 +200,12 @@ def ray_hits_disc(o, p, center, normal, radius: float, eps: float = 0.0) -> bool
     return float(np.linalg.norm(o + t * u - c)) < radius
 
 
-def ray_hit_triangles(o, p, tris, eps: float = 0.0) -> int:
-    """Index of the triangle (tris: N x 3 x 3) the ray o->p meets first, more than eps short of p (a point on a
-    surface is not hidden by it), or -1. Moller-Trumbore, vectorised over the triangles."""
-    o, p, u, L = _ray(o, p)
-    if L <= eps:
-        return -1
+def ray_triangles(o, d, tris) -> tuple[np.ndarray, np.ndarray]:
+    """Moller-Trumbore for the ray o + t d against every triangle (tris: N x 3 x 3), vectorised: (inside, t) with
+    inside[i] = the ray's line crosses triangle i, t[i] = where (in units of d)."""
+    o, d = np.asarray(o, float), np.asarray(d, float)
     v0 = tris[:, 0]
     e1, e2 = tris[:, 1] - v0, tris[:, 2] - v0
-    d = p - o
     h = np.cross(d, e2)
     a = np.einsum("ij,ij->i", e1, h)
     ok = np.abs(a) > 1e-15
@@ -217,17 +214,28 @@ def ray_hit_triangles(o, p, tris, eps: float = 0.0) -> int:
     uu = f * np.einsum("ij,ij->i", s, h)
     q = np.cross(s, e1)
     vv = f * (q @ d)
-    t = f * np.einsum("ij,ij->i", e2, q)                    # along d: 0 at o, 1 at p
-    m = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1) & (t > 1e-9) & (t < 1.0 - eps / L)
+    return ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1), f * np.einsum("ij,ij->i", e2, q)
+
+
+def ray_hit_triangles(o, p, tris, eps: float = 0.0) -> int:
+    """Index of the triangle (tris: N x 3 x 3) the ray o->p meets first, more than eps short of p (a point on a
+    surface is not hidden by it), or -1."""
+    o, p, u, L = _ray(o, p)
+    if L <= eps:
+        return -1
+    inside, t = ray_triangles(o, p - o, tris)              # t: 0 at o, 1 at p
+    m = inside & (t > 1e-9) & (t < 1.0 - eps / L)
     if not m.any():
         return -1
     idx = np.flatnonzero(m)
     return int(idx[np.argmin(t[idx])])
 
 
-def triangles_from(o, tris, two_sided) -> dict:
+def triangles_from(o, tris, two_sided, group=None) -> dict:
     """Per-origin precomputation for ray_hit_triangles_from: the triangles (N x 3 x 3) a ray from o can enter
-    through (front side towards o, or two_sided), with the Moller-Trumbore terms that depend on o only."""
+    through (front side towards o, or two_sided), with the Moller-Trumbore terms that depend on o only. group: an
+    integer per triangle (the part it belongs to); a ray then tests only the triangles of the groups whose bounding
+    box it crosses."""
     o = np.asarray(o, float)
     v0 = tris[:, 0]
     e1, e2 = tris[:, 1] - v0, tris[:, 2] - v0
@@ -237,8 +245,15 @@ def triangles_from(o, tris, two_sided) -> dict:
     q = np.cross(s, e1)
     # Moller-Trumbore with direction d: a = e1.(d x e2) = d.(e2 x e1), u*a = s.(d x e2) = d.(e2 x s), v*a = q.d,
     # t*a = e2.q -- three rows per triangle, so a ray costs one matrix-vector product
-    M = np.concatenate([np.cross(e2, e1), np.cross(e2, s), q])
-    return {"idx": sel, "M": M, "e2q": np.einsum("ij,ij->i", e2, q)}
+    M = np.stack([np.cross(e2, e1), np.cross(e2, s), q], axis=1)          # N x 3 x 3
+    g = np.zeros(len(tris), int) if group is None else np.asarray(group, int)
+    gs = g[sel]
+    groups = np.unique(gs)
+    pts = tris[sel]
+    lo = np.array([pts[gs == k].reshape(-1, 3).min(0) for k in groups]).reshape(-1, 3)
+    hi = np.array([pts[gs == k].reshape(-1, 3).max(0) for k in groups]).reshape(-1, 3)
+    pos = np.searchsorted(groups, gs)                    # each selected triangle's row in lo / hi
+    return {"idx": sel, "M": M, "e2q": np.einsum("ij,ij->i", e2, q), "lo": lo, "hi": hi, "pos": pos}
 
 
 def ray_hit_triangles_from(o, p, pre: dict, eps: float = 0.0) -> int:
@@ -248,15 +263,29 @@ def ray_hit_triangles_from(o, p, pre: dict, eps: float = 0.0) -> int:
     o, p, _, L = _ray(o, p)
     if L <= eps or not len(pre["idx"]):
         return -1
-    a, ua, va = (pre["M"] @ (p - o)).reshape(3, -1)
+    d = p - o
+    # slab test: which groups' bounding boxes the segment o -> p crosses
+    with np.errstate(divide="ignore", invalid="ignore"):
+        inv = 1.0 / d
+        t1, t2 = (pre["lo"] - o) * inv, (pre["hi"] - o) * inv
+    t1 = np.where(np.isnan(t1), -np.inf, t1)
+    t2 = np.where(np.isnan(t2), np.inf, t2)
+    near, far = np.minimum(t1, t2).max(1), np.maximum(t1, t2).min(1)
+    crossed = (near <= far) & (far >= 0.0) & (near <= 1.0)
+    if not crossed.any():
+        return -1
+    k = np.flatnonzero(crossed[pre["pos"]])
+    if not len(k):
+        return -1
+    a, ua, va = (pre["M"][k] @ d).T
     ok = np.abs(a) > 1e-15
     f = np.where(ok, 1.0 / np.where(ok, a, 1.0), 0.0)
-    uu, vv, t = f * ua, f * va, f * pre["e2q"]
+    uu, vv, t = f * ua, f * va, f * pre["e2q"][k]
     m = ok & (uu >= 0) & (vv >= 0) & (uu + vv <= 1) & (t > 1e-9) & (t < 1.0 - eps / L)
     if not m.any():
         return -1
-    k = np.flatnonzero(m)
-    return int(pre["idx"][k[np.argmin(t[k])]])
+    j = np.flatnonzero(m)
+    return int(pre["idx"][k[j[np.argmin(t[j])]]])
 
 
 def slerp(a: np.ndarray, b: np.ndarray, t: float) -> np.ndarray:
