@@ -180,6 +180,68 @@ def test_mirror_is_an_involution():
         assert_same(json.loads(json.dumps(f(f(cfg)))), json.loads(json.dumps(cfg)), f.__name__)
 
 
+# ---- the car body: built as configs/body.yaml says, then mirrored ----------------------------------------------
+def _flip_y(a):
+    a = np.array(a, float)
+    a[..., 1] *= -1.0
+    return a
+
+
+def _body_rays(occ, cam_pos, step: int = 7):
+    """Part names (or None) the body gives for rays from cam_pos to points 2 cm behind every step-th triangle's
+    centre, and those points."""
+    from dms_model_simulator.world import Cabin
+    pts = []
+    for t in occ["tris"][::step]:
+        c = t.mean(0)
+        d = c - cam_pos
+        pts.append(c + 0.02 * d / np.linalg.norm(d))
+    return [Cabin.ray_blocked(cam_pos, p, [occ]) for p in pts], pts
+
+
+@pytest.mark.parametrize("variant", [None, 3])
+def test_body_occluder_mirrors(variant):
+    """The body of a right-hand-drive cabin is the left-hand-drive body mirrored triangle by triangle (front sides
+    still the front), with the same part names; a driver variant moves torso and seat the mirrored way. A ray to a
+    mirrored point meets the part of the same name."""
+    from dms_model_simulator.cli import _cameras
+    assert "drive" not in load_configs()["cabin"] and D.mirror_cabin(load_configs()["cabin"])["drive"] == "right"
+    lc = Simulation("mirror_check", "dash_right", fps=FPS, variant=variant).cabin
+    rc = Simulation("mirror_check", "dash_right", fps=FPS, variant=variant, drive="right").cabin
+    assert (lc.drive, rc.drive) == ("left", "right")
+    if variant is not None:
+        assert np.any(lc.eye_point != 0)                 # the variant moves the torso and seat: checked too
+    lo, ro = lc.body_occluder, rc.body_occluder
+    assert list(ro["part"]) == list(lo["part"]) and list(ro["two_sided"]) == list(lo["two_sided"])
+    m = _flip_y(lo["tris"])
+    np.testing.assert_array_equal(ro["tris"][:, 0], m[:, 0])
+    np.testing.assert_array_equal(ro["tris"][:, 1], m[:, 2])         # two vertices swap: the front stays the front
+    np.testing.assert_array_equal(ro["tris"][:, 2], m[:, 1])
+    _, lcams = _cameras(load_configs(), None)
+    _, rcams = _cameras(load_configs(), None, "right")
+    hits = 0
+    for cl, cr in zip(lcams, rcams):
+        assert cl.name == cr.name
+        names_l, pts = _body_rays(lo, cl.position)
+        names_r = [type(rc).ray_blocked(cr.position, _flip_y(p), [ro]) for p in pts]
+        assert names_r == names_l, cl.name
+        hits += sum(n is not None for n in names_l)
+    assert hits > 0
+
+
+def test_body_parts_mirror():
+    """body_parts (what dms-sim view3d draws) is the same mirrored geometry as the occluder."""
+    from dms_model_simulator.cli import _cameras
+    (lc, _), (rc, _) = _cameras(load_configs(), None), _cameras(load_configs(), None, "right")
+    lp = D.body_parts(lc.body, lc.targets, lc.eye_point, lc.drive)
+    rp = D.body_parts(rc.body, rc.targets, rc.eye_point, rc.drive)
+    assert [p["name"] for p in rp] == [p["name"] for p in lp]
+    for a, b in zip(lp, rp):
+        assert {k: v for k, v in a.items() if k != "tris"} == {k: v for k, v in b.items() if k != "tris"}
+        if len(a["tris"]):
+            np.testing.assert_array_equal(np.array(b["tris"]), _flip_y(a["tris"])[:, [0, 2, 1]])
+
+
 # ---- wiring: export, catalog, command line -------------------------------------------------------------
 def test_export_scenario_drive(tmp_path):
     from dms_model_simulator.export import export_scenario
@@ -233,6 +295,29 @@ def test_cli_drive(tmp_path):
     assert (tmp_path / "cabin_rhd.png").exists()
     with pytest.raises(SystemExit):
         cli.main(["run", "--scenario", "mirror_check", "--drive", "rhd", "--out", str(tmp_path)])
+
+
+def test_view3d_drive(tmp_path):
+    """dms-sim view3d --drive right: the mirrored cabin, body and cameras on a page saying right-hand drive; the
+    left-hand-drive page is as before (no drive key, template as written)."""
+    from dms_model_simulator import cli, view3d
+    (lc, lcams), (rc, rcams) = cli._cameras(load_configs(), None), cli._cameras(load_configs(), None, "right")
+    sl, sr = view3d.scene(lc, lcams), view3d.scene(rc, rcams)
+    assert "drive" not in sl and sr["drive"] == "right"
+    assert [c["p"] for c in sr["cameras"]] == [view3d._r(_flip_y(c["p"])) for c in sl["cameras"]]
+
+    def body_points(cabin, flip=False):
+        M = view3d._Meshes({})
+        view3d.body_meshes(cabin.body, cabin, M)
+        p = np.concatenate([np.array(t, float).reshape(-1, 3) for t in M.groups.values()])
+        p = np.round(_flip_y(p) if flip else p, 9)
+        return p[np.lexsort(p.T[::-1])]
+    np.testing.assert_array_equal(body_points(rc), body_points(lc, flip=True))
+    hl, hr = view3d.page(sl), view3d.page(sr)
+    assert hl == view3d.page(sl) and "Generic left-hand-drive sedan." in hl and "orbitL" not in hl
+    assert "Generic right-hand-drive sedan" in hr and "Right side, cut away" in hr and "orbitL" in hr
+    cli.main(["view3d", "--drive", "right", "--out", str(tmp_path)])
+    assert [p.name for p in tmp_path.iterdir()] == [view3d.FILE_RHD]
 
 
 @pytest.mark.parametrize("text, expected", [

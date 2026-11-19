@@ -301,7 +301,7 @@ def cmd_cabin(a):
 def cmd_view3d(a):
     from . import view3d
     cfgs = load_configs(cabin=a.cabin, cameras=a.cameras, body=a.body)
-    cabin, cams = _cameras(cfgs, a.camera)
+    cabin, cams = _cameras(cfgs, a.camera, a.drive)
     src = tuple(Path(x).name if x else d for x, d in ((a.cabin, "configs/cabin.yaml"), (a.cameras, "configs/cameras.yaml"),
                                                        (a.body, "configs/body.yaml")))
     print(f"wrote {view3d.write(a.out, cabin, cams, sources=src)}")
@@ -682,6 +682,7 @@ def main(argv=None):
     v3.add_argument("--cabin", default=None, help="cabin YAML (default configs/cabin.yaml)")
     v3.add_argument("--cameras", default=None, help="camera presets YAML (default configs/cameras.yaml)")
     v3.add_argument("--body", default=None, help="car body YAML (default configs/body.yaml)")
+    _drive_arg(v3)
     v3.set_defaults(fn=cmd_view3d)
     m = sub.add_parser("compare", help="run one scenario over all cameras and print a metrics table")
     m.add_argument("--scenario", required=True)

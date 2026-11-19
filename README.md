@@ -218,8 +218,8 @@ A scenario may carry a `cabin:` block (driver position / size) and a `camera:` b
 
 ### Right-hand drive
 
-The configs describe a left-hand-drive car. `--drive right` (on `run`, `render`, `demo`, `cabin`, `compare`,
-`batch`, `export` and `catalog expand`) plays the same scenario in a right-hand-drive car: the
+The configs describe a left-hand-drive car. `--drive right` (on `run`, `render`, `demo`, `cabin`, `view3d`,
+`compare`, `batch`, `export` and `catalog expand`) plays the same scenario in a right-hand-drive car: the
 whole world is mirrored left to right, after every scenario / variant override is merged (`dms_model_simulator/drive.py`).
 
 - **Scripts are written once, for left-hand drive.** Looking at the passenger still looks at the passenger (now on
@@ -232,7 +232,11 @@ whole world is mirrored left to right, after every scenario / variant override i
   ("left and right", "about"), left / right as a verb or adverb ("left in the mouth", "right next to"), and names
   that are not gaze targets (`dash_right`, `chest_left`). The entry files themselves stay left-hand drive.
 - **Mirrored:** gaze targets, hand positions, the seat belt (now from the right shoulder to the left hip), the
-  steering wheel and other occluders, camera positions and aims, mounting errors, the driver's seat offset.
+  steering wheel and other occluders, camera positions and aims, mounting errors, the driver's seat offset, and
+  the car body: it is built from `configs/body.yaml` as written (for left-hand drive) and the finished geometry is
+  mirrored, so the torso and driver's seat follow the mirrored eye point and every part keeps its name (a camera
+  blocked by `a_pillar_left` in left-hand drive is blocked by the part of that name, now on the right).
+  `dms-sim view3d --drive right` writes `cabin3d_rhd.html` with that mirrored cabin, body and cameras.
 - **Names:** gaze targets that come in left / right pairs swap (`left_mirror` <-> `right_mirror`, `road_left` <->
   `road_right`), so the output zones say which side physically. Camera presets, hand states and occluders keep
   their names as IDs: `dash_right` is the dash camera on the passenger side of the wheel (left of it in

@@ -8,6 +8,10 @@ looks at the passenger, now on the left; the driver-side mirror is now the right
 What mirrors (y -> -y for points and directions; yaw and roll change sign, pitch stays):
 - cabin: gaze targets, fixed hand positions, head-frame hand / phone / cigarette / held-object offsets and
   directions, seat belt, occluders, the driver's eye-point offset;
+- car body (configs/body.yaml): not its config keys but the built geometry. The cabin config is marked `drive:
+  right`; Cabin builds the body from the left-hand-drive targets and eye point and mirrors the triangles
+  (body_occluder, body_parts), so whatever body.yaml says (parts following the driver or the seat included) comes
+  out mirrored and keeps its part names;
 - cameras: positions, aim offsets, fixed {yaw, pitch} orientations, mounting errors;
 - scenario: scripted head poses, the rest head pose.
 
@@ -66,8 +70,14 @@ def _point_or_keep(v):
 
 
 def mirror_cabin(cfg: dict) -> dict:
-    """configs/cabin.yaml (or a partial `cabin:` block) mirrored; keys that are absent stay absent."""
+    """configs/cabin.yaml mirrored; keys that are absent stay absent. The car body (`body`) is kept as written and
+    the result is marked `drive: right` (removed again by a second mirror): Cabin mirrors the body once it is
+    built (body_occluder)."""
     out = copy.deepcopy(cfg)
+    if out.get("drive", "left") == "left":
+        out["drive"] = "right"
+    else:
+        out.pop("drive")
     if "targets" in out:
         out["targets"] = {mirror_target_name(k): mirror_point(v) for k, v in out["targets"].items()}
     drv = out.get("driver") or {}
@@ -98,6 +108,42 @@ def mirror_cabin(cfg: dict) -> dict:
             if kk in oc:
                 oc[kk] = _point_or_keep(oc[kk])
     return out
+
+
+def _lhd_inputs(targets: dict, eye):
+    """The gaze targets (names and points) and eye point of a mirrored cabin as the left-hand-drive configs have
+    them: what configs/body.yaml is written against."""
+    import numpy as np
+    return ({mirror_target_name(k): np.array(mirror_point(v)) for k, v in targets.items()},
+            np.array(mirror_point(eye)))
+
+
+def _mirror_tris(tris):
+    """Triangles (N x 3 x 3) mirrored y -> -y; two vertices swap so the front side stays the front side."""
+    import numpy as np
+    t = np.array(tris, float)[:, [0, 2, 1]]
+    t[..., 1] *= -1.0
+    return t
+
+
+def body_parts(body: dict, targets: dict, eye, drive: str = "left") -> list[dict]:
+    """body.parts for a cabin of this drive side (targets and eye point as the Cabin has them): in right-hand
+    drive the left-hand-drive parts mirrored, names kept."""
+    from . import body as B
+    if check(drive) == "left":
+        return B.parts(body, targets, eye)
+    return [dict(p, tris=list(_mirror_tris(p["tris"])) if len(p["tris"]) else p["tris"])
+            for p in B.parts(body, *_lhd_inputs(targets, eye))]
+
+
+def body_occluder(body: dict, targets: dict, eye, drive: str = "left") -> dict | None:
+    """body.occluder for a cabin of this drive side: in right-hand drive the left-hand-drive mesh mirrored (the
+    part name and two-sidedness of each triangle kept)."""
+    from . import body as B
+    if check(drive) == "left":
+        return B.occluder(body, targets, eye)
+    occ = B.occluder(body, *_lhd_inputs(targets, eye))
+    return None if occ is None else dict(occ, tris=_mirror_tris(occ["tris"]))
 
 
 def mirror_camera_spec(spec: dict) -> dict:

@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 from . import geometry as G
-from . import body as B
+from . import body as B  # noqa: F401
+from . import drive as D
 
 
 @dataclass
@@ -90,9 +91,11 @@ class Cabin:
         for k, h in self.held_objects.items():
             if not h["length"] > 2 * h["radius"] > 0:
                 raise ValueError(f"held_objects.{k}: length must exceed its diameter (2 x radius > 0)")
-        # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on
+        # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on;
+        # `drive: right` (a mirrored config, drive.mirror_cabin): the body is built as written and mirrored
+        self.drive = D.check(cfg.get("drive", "left"))
         self.body = cfg.get("body") or {}
-        self.body_occluder = B.occluder(self.body, self.targets, self.eye_point)
+        self.body_occluder = D.body_occluder(self.body, self.targets, self.eye_point, self.drive)
         oc_cfg = cfg.get("occlusion", {})
         self.occlusion_eps = float(oc_cfg.get("surface_eps", 0.0))
         self.torus_segments = int(oc_cfg.get("torus_segments", 36))
