@@ -1,18 +1,20 @@
-# Generic left-hand-drive sedan body, for the 3D layout page only (dms-sim view3d). Nothing here enters the
-# simulation: model output and truth never read this file. Kept to what a target or camera sits on, plus floor,
-# walls and seats for orientation. Round PLACEHOLDER numbers that fit configs/cabin.yaml (side mirrors symmetric
-# about a centreline 0.36 m right of the driver) and configs/cameras.yaml (every camera on a surface below).
-# Vehicle frame: X forward, Y left, Z up, metres, origin = driver eye point.
+# Generic left-hand-drive sedan body. The simulation uses it: every part hides from a camera whatever is behind it
+# (world.Cabin builds one occluder from all parts, named per part in occluded_by), and dms-sim view3d draws the
+# same parts. Kept to what a target or camera sits on, plus floor, walls, seats and the driver's torso (the seat
+# belt lies on it). No glass: it hides nothing. Round PLACEHOLDER numbers that fit configs/cabin.yaml (side mirrors
+# symmetric about a centreline 0.36 m right of the driver) and configs/cameras.yaml (every camera at least 5 mm
+# clear of every part, tests/test_body.py). Vehicle frame: X forward, Y left, Z up, metres, origin = driver eye
+# point. Loaded into the cabin config as "body" (config.load_configs; a scenario's cabin: override can change it).
 #
 # Part types
-#   quad:     4 corners. Seen from inside only (they face `toward`), so a view from outside looks in through
-#             walls and roof.
+#   quad:     4 corners, facing `toward` (the cabin). Drawn from inside only, so a view from outside looks in
+#             through walls and roof; a ray from a camera in the cabin meets the side facing it.
 #   box:      center, size [x, y, z], optional pitch_deg (about Y: > 0 tips the top backwards).
 #   cylinder: a -> b, radius.
 #   panel:    screen at a gaze target (configs/cabin.yaml targets) facing the eye point, size [w, h]; back_x: a
 #             housing behind it reaching back to that x (the dash face).
 #   housing:  box at a gaze target (mirror), size, optional offset; glass: mirror face colour; arm_to: held from.
-# Every part has a colour (#rrggbb or a name below; optional alpha 0..1).
+# Every part has a colour (#rrggbb or a name below).
 
 toward: [0.0, -0.36, -0.10]
 
@@ -22,44 +24,49 @@ colors:
   floor: "#6b717a"
   headliner: "#e3e5e8"
   seat: "#525a66"
-  glass: "#9fc3dc"
   screen: "#0f1720"
   mirror: "#c9d6e2"
 
 parts:
-  # ---- shell: floor, roof, windshield, A-pillars, side walls (door below the beltline z -0.15, glass above) ----
+  # ---- shell: floor, roof, A-pillars, side walls (door below the beltline z -0.15; no glass above it) ----
   - {name: floor, type: quad, color: floor,
      points: [[-1.00, 0.50, -0.95], [1.06, 0.50, -0.95], [1.06, -1.22, -0.95], [-1.00, -1.22, -0.95]]}
+  # roof at z 0.45: the overhead console camera (z 0.42) hangs 3 cm under it
   - {name: roof, type: quad, color: headliner,
-     points: [[-1.00, 0.50, 0.43], [0.38, 0.50, 0.43], [0.38, -1.22, 0.43], [-1.00, -1.22, 0.43]]}
-  - {name: windshield, type: quad, color: glass, alpha: 0.18,
-     points: [[1.05, 0.50, -0.12], [0.38, 0.50, 0.43], [0.38, -1.22, 0.43], [1.05, -1.22, -0.12]]}
+     points: [[-1.00, 0.50, 0.45], [0.36, 0.50, 0.45], [0.36, -1.22, 0.45], [-1.00, -1.22, 0.45]]}
   - {name: a_pillar_left, type: quad, color: trim,
-     points: [[1.06, 0.49, -0.15], [0.96, 0.49, -0.15], [0.32, 0.49, 0.43], [0.42, 0.49, 0.43]]}
+     points: [[1.06, 0.49, -0.15], [0.96, 0.49, -0.15], [0.30, 0.49, 0.45], [0.40, 0.49, 0.45]]}
   - {name: a_pillar_right, type: quad, color: trim,
-     points: [[1.06, -1.21, -0.15], [0.96, -1.21, -0.15], [0.32, -1.21, 0.43], [0.42, -1.21, 0.43]]}
+     points: [[1.06, -1.21, -0.15], [0.96, -1.21, -0.15], [0.30, -1.21, 0.45], [0.40, -1.21, 0.45]]}
   - {name: door_left, type: quad, color: trim,
      points: [[-1.00, 0.50, -0.95], [1.06, 0.50, -0.95], [1.06, 0.50, -0.15], [-1.00, 0.50, -0.15]]}
   - {name: door_right, type: quad, color: trim,
      points: [[-1.00, -1.22, -0.95], [1.06, -1.22, -0.95], [1.06, -1.22, -0.15], [-1.00, -1.22, -0.15]]}
-  - {name: window_left, type: quad, color: glass, alpha: 0.16,
-     points: [[0.98, 0.50, -0.15], [-1.00, 0.50, -0.15], [-1.00, 0.50, 0.43], [0.38, 0.50, 0.43]]}
-  - {name: window_right, type: quad, color: glass, alpha: 0.16,
-     points: [[0.98, -1.22, -0.15], [-1.00, -1.22, -0.15], [-1.00, -1.22, 0.43], [0.38, -1.22, 0.43]]}
-  # ---- dashboard: top (rear edge x 0.60, z -0.10), its underside over the cluster, face at x 0.74 ----
+  # ---- dashboard: top (rear edge x 0.60), its underside over the cluster, face at x 0.74. The driver's part (the
+  # cluster hood, y > -0.20) is 2 cm higher than the rest: dash_right (z -0.10) stands 2 cm above the right part ----
   - {name: dash_top, type: quad, color: dash,
-     points: [[1.05, 0.50, -0.12], [0.60, 0.50, -0.10], [0.60, -1.22, -0.10], [1.05, -1.22, -0.12]]}
+     points: [[1.05, 0.50, -0.12], [0.60, 0.50, -0.10], [0.60, -0.20, -0.10], [1.05, -0.20, -0.12]]}
+  - {name: dash_top_right, type: quad, color: dash,
+     points: [[1.05, -0.20, -0.14], [0.60, -0.20, -0.12], [0.60, -1.22, -0.12], [1.05, -1.22, -0.14]]}
+  - {name: dash_step, type: quad, color: dash,
+     points: [[1.05, -0.20, -0.12], [0.60, -0.20, -0.10], [0.60, -0.20, -0.12], [1.05, -0.20, -0.14]]}
   - {name: dash_underside, type: quad, color: dash,
-     points: [[0.60, 0.50, -0.10], [0.74, 0.50, -0.12], [0.74, -1.22, -0.12], [0.60, -1.22, -0.10]]}
+     points: [[0.60, 0.50, -0.10], [0.74, 0.50, -0.12], [0.74, -0.20, -0.12], [0.60, -0.20, -0.10]]}
+  - {name: dash_underside_right, type: quad, color: dash,
+     points: [[0.60, -0.20, -0.12], [0.74, -0.20, -0.14], [0.74, -1.22, -0.14], [0.60, -1.22, -0.12]]}
+  - {name: dash_step_under, type: quad, color: dash,
+     points: [[0.60, -0.20, -0.10], [0.74, -0.20, -0.12], [0.74, -0.20, -0.14], [0.60, -0.20, -0.12]]}
   - {name: dash_face, type: quad, color: dash,
      points: [[0.74, 0.50, -0.12], [0.74, 0.50, -0.50], [0.74, -1.22, -0.50], [0.74, -1.22, -0.12]]}
   - {name: footwell, type: quad, color: floor,
      points: [[1.06, 0.50, -0.95], [0.74, 0.50, -0.50], [0.74, -1.22, -0.50], [1.06, -1.22, -0.95]]}
-  - {name: center_stack_bezel, type: box, color: dash, center: [0.70, -0.45, -0.18], size: [0.08, 0.26, 0.12]}
+  # x 0.67..0.74: 2 cm in front of the centre-stack camera (x 0.65)
+  - {name: center_stack_bezel, type: box, color: dash, center: [0.705, -0.45, -0.18], size: [0.07, 0.26, 0.12]}
   - {name: cluster, type: panel, color: screen, target: cluster, size: [0.30, 0.12], back_x: 0.74}
   - {name: center_display, type: panel, color: screen, target: center_display, size: [0.26, 0.16], back_x: 0.74}
   - {name: steering_column, type: cylinder, color: dash, a: [0.44, 0.0, -0.23], b: [0.74, 0.0, -0.37], radius: 0.04}
-  - {name: column_shroud, type: box, color: dash, center: [0.68, 0.0, -0.175], size: [0.12, 0.10, 0.06]}
+  # x 0.62..0.69, top z -0.16: the cluster camera (x 0.715, z -0.148) sits ahead of it and sees over it
+  - {name: column_shroud, type: box, color: dash, center: [0.655, 0.0, -0.19], size: [0.07, 0.10, 0.06]}
   # ---- mirrors (at the gaze targets) ----
   - {name: mirror_left, type: housing, color: dash, target: left_mirror, size: [0.08, 0.20, 0.13],
      offset: [0.04, 0.0, 0.0], glass: mirror, arm_to: [0.90, 0.50, -0.12]}
@@ -72,5 +79,6 @@ parts:
   - {name: seatback_driver, type: box, color: seat, center: [-0.33, 0.0, -0.30], size: [0.13, 0.52, 0.78], pitch_deg: 12}
   - {name: seat_passenger, type: box, color: seat, center: [-0.05, -0.72, -0.72], size: [0.52, 0.52, 0.14]}
   - {name: seatback_passenger, type: box, color: seat, center: [-0.33, -0.72, -0.30], size: [0.13, 0.52, 0.78], pitch_deg: 12}
-  # ---- the driver's torso, only so the seat belt lies on something (the head comes from configs/cabin.yaml) ----
-  - {name: torso, type: box, layer: driver, color: "#8d98aa", center: [-0.14, 0.0, -0.40], size: [0.22, 0.42, 0.50], pitch_deg: 10}
+  # ---- the driver's torso: the seat belt lies on it (the head comes from configs/cabin.yaml) ----
+  # behind the belt everywhere (2 cm or more), top under the belt's shoulder turn (z -0.15)
+  - {name: torso, type: box, layer: driver, color: "#8d98aa", center: [-0.16, 0.0, -0.42], size: [0.22, 0.42, 0.46], pitch_deg: 10}

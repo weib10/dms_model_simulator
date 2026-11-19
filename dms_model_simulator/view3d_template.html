@@ -41,7 +41,6 @@
   .legend { display: grid; grid-template-columns: 22px 1fr; gap: 6px 8px; align-items: center; font-size: 13px; color: var(--muted); }
   .sw { width: 18px; height: 18px; display: inline-block; }
   label.opt { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 4px 0; cursor: pointer; }
-  .note { color: var(--muted); font-size: 12.5px; margin: 8px 0 0; }
   .foot { color: var(--muted); font-size: 12px; margin-top: 18px; border-top: 1px solid var(--border); padding-top: 10px; }
   .foot p { margin: 0 0 6px; }
   #tip { position: absolute; pointer-events: none; background: rgba(15,23,42,.92); color: #fff; font-size: 12px;
@@ -64,12 +63,6 @@
       <button id="m_targets" type="button" aria-pressed="true">Where the driver looks</button>
       <button id="m_cams" type="button" aria-pressed="false">Where the cameras are</button>
     </div>
-    <h2>Draw</h2>
-    <div class="seg" role="group" aria-label="What to draw">
-      <button id="w_car" type="button" aria-pressed="true">Car, for orientation</button>
-      <button id="w_sim" type="button" aria-pressed="false">Simulator only</button>
-    </div>
-    <p class="note" id="w_note"></p>
     <h2>View</h2>
     <div class="chips" id="views"></div>
     <div id="p_targets">
@@ -90,6 +83,7 @@
     <label class="opt"><input type="checkbox" id="o_labels" checked> Names</label>
     <div class="foot">
       <p>Origin = driver eye point. X forward, Y left, Z up, metres. Hover or tap a point for its coordinates.</p>
+      <p>Everything drawn is what the simulation uses: the car body, wheel, hand and belt hide what is behind them from a camera; the head is its landmark points.</p>
       <p>Camera views here are pinhole: a lens with distortion (dash_right) bends its real image slightly near the edges.</p>
       <p id="src"></p>
     </div>
@@ -119,15 +113,7 @@ const coord = p => "(" + p.map(fmt).join(", ") + ")";
 // ---- view state ----
 // orbit: eye on a sphere around a pivot; look: eye fixed, the view turns (yaw / pitch, or a camera's own axes)
 let V = {}, mode = "targets", selCam = S.cameras.length ? S.cameras[0].name : null, activeView = "front";
-const opt = { driver: true, labels: true, world: "car" };
-const WORLD_NOTE = {
-  car: "The car body, seats and the driver's torso are drawn only to show where things are. The simulation never " +
-       "reads them: they hide nothing and change no result.",
-  sim: "Only what the simulation computes: the head's landmark points (the face is drawn between them), gaze " +
-       "targets, cameras, steering wheel, the hand resting on it (a ball, as the simulation has it) and seat belt. " +
-       "Look through a camera to see the simulator's camera image.",
-};
-const CAM_BG = [28 / 255, 28 / 255, 34 / 255];   // the 2D camera render's background (viz.py CAM_BG)
+const opt = { driver: true, labels: true };
 const CABIN_MID = [0.05, -0.36, -0.30];
 function orbit(pivot, az, el, D) { V = { mode: "orbit", tgt: pivot.slice(), az: az * RAD, el: el * RAD, D, vfov: 55 * RAD }; }
 function look(eye, yaw, pitch, hfov) { V = { mode: "look", eye: eye.slice(), yaw: yaw * RAD, pitch: pitch * RAD, hfov: hfov * RAD }; }
@@ -195,7 +181,7 @@ function initGL() {
   gl.linkProgram(prog); gl.useProgram(prog);
   loc = { p: gl.getAttribLocation(prog, "aP"), n: gl.getAttribLocation(prog, "aN"), M: gl.getUniformLocation(prog, "uM"),
           eye: gl.getUniformLocation(prog, "uEye"), C: gl.getUniformLocation(prog, "uC"), two: gl.getUniformLocation(prog, "uTwo") };
-  meshes = S.meshes.map(m => ({ ...upload(m.pos), layer: m.layer, show: m.show, color: m.color, alpha: m.alpha, two: m.two_sided }));
+  meshes = S.meshes.map(m => ({ ...upload(m.pos), layer: m.layer, color: m.color, alpha: m.alpha, two: m.two_sided }));
   for (const c of S.cameras) camMeshes[c.name] = upload(c.mesh);
   frustumBuf = { bp: gl.createBuffer(), bn: gl.createBuffer(), count: 0 };
   gl.enable(gl.DEPTH_TEST); gl.frontFace(gl.CCW); gl.cullFace(gl.BACK);
@@ -231,15 +217,11 @@ function matrix() {                             // projection * view, column-maj
 const showDriver = () => opt.driver && !(V.mode === "look" && len(sub(B.eye, S.head.c)) < 0.3);
 function render3d() {
   gl.viewport(0, 0, glc.width, glc.height);
-  const dark = opt.world === "sim" && V.cam, bg = dark ? CAM_BG : [0.933, 0.949, 0.965];
-  // on the dark camera background the near-black wheel is lifted towards grey so it stays visible
-  const col = m => dark && m.layer === "body" ? m.color.map(x => x + (0.62 - x) * 0.45) : m.color;
-  gl.clearColor(bg[0], bg[1], bg[2], 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+  gl.clearColor(0.933, 0.949, 0.965, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
   gl.uniformMatrix4fv(loc.M, false, matrix()); gl.uniform3f(loc.eye, B.eye[0], B.eye[1], B.eye[2]);
-  const vis = m => (m.show === "both" || m.show === opt.world) &&
-    (m.layer === "body" || ((m.layer === "driver" || m.layer === "belt") && showDriver()));
+  const vis = m => m.layer === "body" || ((m.layer === "driver" || m.layer === "belt") && showDriver());
   gl.depthMask(true); gl.disable(gl.BLEND);
-  for (const m of meshes) if (m.alpha >= 1 && vis(m)) drawMesh(m, col(m), 1, m.two);
+  for (const m of meshes) if (m.alpha >= 1 && vis(m)) drawMesh(m, m.color, 1, m.two);
   if (mode === "cams") for (const c of S.cameras) {      // camera bodies only where cameras are the subject
     if (c.name === V.camView) continue;
     drawMesh(camMeshes[c.name], c.name === selCam ? [0.86, 0.15, 0.15] : [0.2, 0.25, 0.33], 1, false);
@@ -247,7 +229,7 @@ function render3d() {
   gl.depthMask(false); gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
   const tr = meshes.filter(m => m.alpha < 1 && vis(m)).map(m => [len(sub(m.centroid, B.eye)), m]);
   tr.sort((a, b) => b[0] - a[0]);
-  for (const [, m] of tr) drawMesh(m, col(m), m.alpha, m.two);
+  for (const [, m] of tr) drawMesh(m, m.color, m.alpha, m.two);
   const sc = S.cameras.find(c => c.name === selCam);
   if (mode === "cams" && sc && sc.name !== V.camView) { setFrustum(sc); drawMesh(frustumBuf, [0.86, 0.15, 0.15], 0.13, true); }
   gl.depthMask(true);
@@ -341,8 +323,7 @@ function render2d() {
   if (opt.labels) labels(items);
   if (frameRect) {
     ctx.strokeStyle = "#dc2626"; ctx.lineWidth = 2; ctx.strokeRect(...frameRect);
-    ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = opt.world === "sim" ? "#fca5a5" : "#b91c1c";
-    ctx.textBaseline = "bottom"; ctx.textAlign = "left";
+    ctx.font = "600 12px system-ui, sans-serif"; ctx.fillStyle = "#b91c1c"; ctx.textBaseline = "bottom"; ctx.textAlign = "left";
     ctx.fillText(V.camView + " image (facing the driver: the driver's left is on the image's right)", frameRect[0] + 4, frameRect[1] - 4);
   }
 }
@@ -474,21 +455,12 @@ for (const c of S.cameras) {
   b.onclick = () => { selectCam(c.name); draw(); };
   camBtns[c.name] = b; $("cams").appendChild(b);
 }
-function setWorld(w) {
-  opt.world = w;
-  $("w_car").setAttribute("aria-pressed", String(w === "car")); $("w_sim").setAttribute("aria-pressed", String(w === "sim"));
-  $("w_note").textContent = WORLD_NOTE[w];
-  draw();
-}
-$("w_car").onclick = () => setWorld("car");
-$("w_sim").onclick = () => setWorld("sim");
 $("o_driver").onchange = e => { opt.driver = e.target.checked; draw(); };
 $("o_labels").onchange = e => { opt.labels = e.target.checked; draw(); };
 
-// a link can open a given state: #mode=cams&cam=dash_right&view=through&draw=sim  (view: a VIEWS key, or "through")
+// a link can open a given state: #mode=cams&cam=dash_right&view=through  (view: a VIEWS key, or "through")
 function fromHash() {
   const h = new URLSearchParams(location.hash.slice(1));
-  setWorld(h.get("draw") === "sim" ? "sim" : "car");
   if (h.get("cam") && S.cameras.some(c => c.name === h.get("cam"))) selCam = h.get("cam");
   selectCam(selCam);
   setMode(h.get("mode") === "cams" ? "cams" : "targets");

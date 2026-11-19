@@ -86,15 +86,17 @@ def test_meshes_are_triangles_with_outward_or_inward_faces(setup):
     del M
 
 
-def test_car_view_and_simulator_view_split_the_meshes(setup):
+def test_page_draws_what_the_simulation_uses(setup):
     cabin, _, sc = setup
-    assert {m["show"] for m in sc["meshes"]} == {"car", "both"}
-    # every body.yaml part is car-only: the simulator view draws nothing the simulation does not read
-    body = load_yaml(view3d.BODY)
-    M = view3d._Meshes(body["colors"])
-    view3d.body_meshes(body, cabin, M)
-    assert M.out() and {m["show"] for m in M.out()} == {"car"}
-    assert {m["layer"] for m in sc["meshes"] if m["show"] == "both"} == {"body", "driver", "belt"}  # wheel, head, belt
+    assert all("show" not in m for m in sc["meshes"])
+    # the body on the page is the body the simulation hides things with (the cabin's own)
+    tris = np.concatenate([_tris(m["pos"]) for m in sc["meshes"]]).reshape(-1, 3)
+    for t in cabin.body_occluder["tris"][::7]:
+        assert np.min(np.linalg.norm(tris - t[0], axis=1)) < 1e-3
+    # the resting hand (configs/behavior.yaml hand) is drawn: the sphere of hand_on_wheel
+    hand = next(o for o in cabin.occluder_geometry("wheel", cabin.head_state(0, 0, 0)) if o["name"] == "hand_on_wheel")
+    hm = [m for m in sc["meshes"] if m["color"] == view3d._rgb(view3d.HAND_COLOR)]
+    np.testing.assert_allclose(_tris(hm[0]["pos"]).reshape(-1, 3).mean(0), hand["center_world"], atol=2e-3)
     # the head is the simulation's own: every landmark is listed, and the face fan touches every outline landmark
     head = cabin.head_state(0.0, 0.0, 0.0)
     assert {q["name"] for q in sc["landmarks"]} == set(head.landmarks)
@@ -104,8 +106,7 @@ def test_car_view_and_simulator_view_split_the_meshes(setup):
     pts = _tris(face[0]["pos"]).reshape(-1, 3)
     for k in cabin.face_outline:
         assert np.min(np.linalg.norm(pts - head.landmarks[k], axis=1)) < 1e-3, k
-    html = view3d.page(sc)
-    assert 'id="w_sim"' in html and "draw=sim" in html
+    assert 'id="w_sim"' not in view3d.page(sc)
 
 
 def test_body_parts_follow_the_targets(setup):

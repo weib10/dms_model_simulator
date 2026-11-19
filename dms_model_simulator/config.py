@@ -38,9 +38,14 @@ def unknown_paths(over, base, path: str = "") -> list[str]:
     return out
 
 
-def load_configs(cabin=None, cameras=None, behavior=None, emulator=None) -> dict:
+def load_configs(cabin=None, cameras=None, behavior=None, emulator=None, body=None) -> dict:
+    """The four config files; the car body (configs/body.yaml, or `body`) goes into the cabin config as "body"
+    unless the cabin file has its own."""
+    cab = load_yaml(cabin or CONFIG_DIR / "cabin.yaml")
+    if body is not None or "body" not in cab:
+        cab["body"] = load_yaml(body or CONFIG_DIR / "body.yaml")
     return {
-        "cabin": load_yaml(cabin or CONFIG_DIR / "cabin.yaml"),
+        "cabin": cab,
         "cameras": load_yaml(cameras or CONFIG_DIR / "cameras.yaml"),
         "behavior": load_yaml(behavior or CONFIG_DIR / "behavior.yaml"),
         "emulator": load_yaml(emulator or CONFIG_DIR / "emulator.yaml"),

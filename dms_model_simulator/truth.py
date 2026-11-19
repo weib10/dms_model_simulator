@@ -126,6 +126,12 @@ def _seatbelt_occlusion(cabin: Cabin, cam: Camera, occl: list[dict]) -> float:
 
 def _bounding_sphere(o: dict) -> tuple[np.ndarray, float]:
     t = o["type"]
+    if t == "mesh":
+        if "_bs" not in o:                     # cached on the cabin's occluder: the body does not move
+            pts = o["tris"].reshape(-1, 3)
+            lo, hi = pts.min(0), pts.max(0)
+            o["_bs"] = (0.5 * (lo + hi), 0.5 * float(np.linalg.norm(hi - lo)))
+        return o["_bs"]
     if t == "torus":
         c = o["polyline"].mean(0)
         return c, float(np.linalg.norm(o["polyline"] - c, axis=1).max()) + o["tube_radius"]

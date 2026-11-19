@@ -20,11 +20,14 @@ cameras:
   steering_column:
     position: [0.67, 0.00, -0.136]
     hfov_deg: 55.0
-  # Top of the cluster, also through the upper wheel gap.
+  # Top of the cluster, also through the upper wheel gap (x 0.73 -> 0.715 on 2026-11-19: it sat in the column
+  # shroud of configs/body.yaml; now 2.5 cm off the dash face).
   cluster:
-    position: [0.73, 0.00, -0.148]
+    position: [0.715, 0.00, -0.148]
+  # Under the rear-view mirror housing (the mirror itself is the gaze target at [0.40, -0.35, 0.15]; the camera
+  # sat inside it, behind the glass, until the simulation used configs/body.yaml, 2026-11-19).
   rearview_mirror:
-    position: [0.40, -0.35, 0.15]
+    position: [0.40, -0.35, 0.09]
     hfov_deg: 70.0
   # On the inner trim of the left A-pillar, a little above the eye (was [0.45, 0.62, 0.08], which sat outside the
   # door trim, about where the side window is; moved 2026-11-19 so it sits on the pillar).

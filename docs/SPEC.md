@@ -24,8 +24,9 @@ an exact copy of one particular model.
 ## Geometry and behaviour rules
 - Camera presets aim at the nominal eye point (`look_at_offset`), so camera-frame head pose and gaze read 0/0 for
   the nominal pose looking into the lens. Angles are axis based.
-- Detection `occlusion` counts external occluders only (wheel, hands, held objects). Turning away sets
-  `landmarks_visible` and `self_occluded_fraction`.
+- Detection `occlusion` counts external occluders only (wheel, hands, held objects, the car body of
+  `configs/body.yaml`, named per part such as `dash_top`). Turning away sets `landmarks_visible` and
+  `self_occluded_fraction`.
 - Saccades interpolate direction with a peak speed cap; eye-in-head angles are clamped to `eye_in_head_limit_deg`.
 - Blink / closure / yawn `rate_per_min` are true event rates. Frame k is the instant k / fps; a frame belongs to a
   segment when start <= k / fps < end; a run has ceil(duration * fps) frames.

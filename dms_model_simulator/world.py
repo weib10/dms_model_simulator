@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 from . import geometry as G
+from . import body as B
 
 
 @dataclass
@@ -89,6 +90,9 @@ class Cabin:
         for k, h in self.held_objects.items():
             if not h["length"] > 2 * h["radius"] > 0:
                 raise ValueError(f"held_objects.{k}: length must exceed its diameter (2 x radius > 0)")
+        # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on
+        self.body = cfg.get("body") or {}
+        self.body_occluder = B.occluder(self.body, self.targets, self.eye_point)
         oc_cfg = cfg.get("occlusion", {})
         self.occlusion_eps = float(oc_cfg.get("surface_eps", 0.0))
         self.torus_segments = int(oc_cfg.get("torus_segments", 36))
@@ -235,6 +239,8 @@ class Cabin:
             else:
                 raise ValueError(f"unknown occluder type {oc['type']!r} (torus | sphere | disc | cylinder)")
             out.append(o)
+        if self.body_occluder is not None:          # last: a hand or the wheel in front of the body is named first
+            out.append(self.body_occluder)
         return out
 
     def self_occluder_geometry(self, head: HeadState) -> list[dict]:
@@ -247,10 +253,19 @@ class Cabin:
     @staticmethod
     def ray_blocked(cam_pos: np.ndarray, point: np.ndarray, occluders: list[dict], eps: float = 0.0) -> str | None:
         """Name of the first occluder the ray camera -> point meets strictly before the point (more than eps short
-        of it), else None. A point inside a sphere is hidden by it; a point on an occluder surface is not."""
+        of it), else None. A point inside a sphere is hidden by it; a point on an occluder surface is not. A mesh
+        (the car body) names the part it meets first."""
         for o in occluders:
             t = o["type"]
-            if t == "torus":
+            if t == "mesh":
+                key = np.asarray(cam_pos, float).tobytes()
+                cache = o.setdefault("_from", {})       # the body does not move: precompute once per camera
+                if key not in cache:
+                    cache[key] = G.triangles_from(cam_pos, o["tris"], o["two_sided"])
+                i = G.ray_hit_triangles_from(cam_pos, point, cache[key], eps)
+                if i >= 0:
+                    return str(o["part"][i])
+            elif t == "torus":
                 if G.ray_hits_polyline(cam_pos, point, o["polyline"], o["tube_radius"], eps):
                     return o["name"]
             elif t == "sphere":

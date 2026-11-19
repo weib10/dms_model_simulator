@@ -148,16 +148,16 @@ moment's title is the segment's optional `caption:` key, else a description such
 One camera only; `--scale` sets the size (0.5 = 960x720).
 
 **3D layout** (`dms-sim view3d`): `cabin3d.html`, one file that opens straight from disk (no network, WebGL). It
-puts what `configs/cabin.yaml` and `configs/cameras.yaml` define inside a generic car interior
-(`configs/body.yaml`: shell, dashboard, seats, a seated driver; display only, the simulation never reads it). Two
+draws what the simulation uses: `configs/cabin.yaml`, `configs/cameras.yaml` and the car body
+(`configs/body.yaml`: shell, dashboard, column, mirrors, seats, the driver's torso). The body is part of the
+simulation: every part hides from a camera whatever is behind it, and `occluded_by` names the part. Two
 modes, one at a time: *where the driver looks* (gaze targets, each with its zone tolerance as a ring) and *where
 the cameras are* (camera bodies, the chosen camera's field of view, "look through this camera"). Views: facing the
 driver, back seat, passenger seat, the driver's eyes, top, left side cut away. The head is what the simulation has:
-its landmark points, with the face outline, eyes, nose and mouth filled in as the 2D camera render draws them. A
-*Draw* switch picks the car (for orientation) or *simulator only* (no body file, and looking through a camera on the
-2D render's dark background, so it shows what that render shows). Drag to turn,
+its landmark points, with the face outline, eyes, nose and mouth filled in as the 2D camera render draws them;
+the hand rests on the wheel as the ball the simulation has. Drag to turn,
 scroll or pinch to zoom, shift-drag to move; hover or tap a point for its coordinates. A link can open a state:
-`cabin3d.html#mode=cams&cam=dash_right&view=through&draw=sim`. `--cabin` / `--cameras` / `--body` take other YAML files;
+`cabin3d.html#mode=cams&cam=dash_right&view=through`. `--cabin` / `--cameras` / `--body` take other YAML files;
 `--camera` limits the cameras. Camera views are pinhole (no lens distortion); far targets (the road) are drawn as
 directions. Layout only, no scenario.
 
