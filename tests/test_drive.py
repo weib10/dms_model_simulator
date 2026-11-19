@@ -210,7 +210,7 @@ def test_body_occluder_mirrors(variant):
     rc = Simulation("mirror_check", "dash_right", fps=FPS, variant=variant, drive="right").cabin
     assert (lc.drive, rc.drive) == ("left", "right")
     if variant is not None:
-        assert np.any(lc.eye_point != 0)                 # the variant moves the torso and seat: checked too
+        assert lc.eye_point[1] != 0          # sideways too: torso and seat must follow the mirrored eye point
     lo, ro = lc.body_occluder, rc.body_occluder
     assert list(ro["part"]) == list(lo["part"]) and list(ro["two_sided"]) == list(lo["two_sided"])
     m = _flip_y(lo["tris"])
