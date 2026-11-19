@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import numpy as np
 from . import geometry as G
-from . import body as B
+from . import body as B  # noqa: F401
+from . import drive as D
 
 
 @dataclass
@@ -92,13 +93,17 @@ class Cabin:
                 raise ValueError(f"held_objects.{k}: length must exceed its diameter (2 x radius > 0)")
         # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on.
         # Its adjust block moves the steering wheel (the steering_wheel* occluders above, the hands on the wheel and
-        # their forearms, the column parts of the body) and the dashboard; zero = as written.
+        # their forearms, the column parts of the body) and the dashboard; zero = as written. `drive: right` (a
+        # mirrored config, drive.mirror_cabin): the body is built as written, adjusted and mirrored, and the adjust
+        # moves of the (already mirrored) wheel occluders and hands are mirrored too.
+        self.drive = D.check(cfg.get("drive", "left"))
         self.body = cfg.get("body") or {}
         wheel = next((o for o in self.occluders if o.get("name") == "steering_wheel" and "center" in o), None)
-        self.body_adjust = B.adjusters(self.body, {"steering_wheel": wheel["center"] if wheel else [0.0, 0.0, 0.0]})
+        self.body_pivots = {"steering_wheel": list(wheel["center"]) if wheel else [0.0, 0.0, 0.0]}
+        self.body_adjust = B.adjusters(D.adjust_for(self.body, self.drive), self.body_pivots)
         if "steering_wheel" in self.body_adjust:
             self._move_wheel(*self.body_adjust["steering_wheel"])
-        self.body_occluder = B.occluder(self.body, self.targets, self.eye_point, self.body_adjust)
+        self.body_occluder = D.body_occluder(self.body, self.targets, self.eye_point, self.drive, self.body_pivots)
         oc_cfg = cfg.get("occlusion", {})
         self.occlusion_eps = float(oc_cfg.get("surface_eps", 0.0))
         self.torus_segments = int(oc_cfg.get("torus_segments", 36))

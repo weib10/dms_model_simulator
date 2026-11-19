@@ -147,6 +147,7 @@ def card(sim, row: dict | None = None) -> dict:
     summary, params, profile)."""
     row = row or {}
     fps = float(sim.behavior.fps)
+    side = {"drive": sim.drive} if getattr(sim, "drive", "left") != "left" else {}   # right-hand drive only
     return {
         "row_id": row.get("row_id"), "entry": row.get("entry"), "title": row.get("title", ""),
         "summary": row.get("summary", ""), "params": row.get("params", {}), "level": row.get("level"),
@@ -154,7 +155,7 @@ def card(sim, row: dict | None = None) -> dict:
         "scenario": sim.scenario["name"], "description": sim.scenario.get("description", ""),
         "camera": sim.camera.name, "fps": fps, "frames": len(sim.records),
         "duration_s": round(len(sim.records) / fps, 3), "seed": sim.seed, "emulator_seed": sim.emulator_seed,
-        "timeline": timeline(sim), "errors": injected_errors(sim.records),
+        "timeline": timeline(sim), "errors": injected_errors(sim.records), **side,
     }
 
 
@@ -181,6 +182,8 @@ def markdown(c: dict) -> str:
         L.append(f"- 版本指紋：`{c['fingerprint_id']}`（程式、設定、條目的雜湊；同一個指紋 + 同一個 row id = 同一個測試，見 manifest.json）")
     if c.get("profile"):
         L.append(f"- 誤差等級：`{c['profile']}`")
+    if c.get("drive") == "right":
+        L.append("- 右駕：整個車廂、相機與劇本左右鏡像（乘客在左、駕駛側後照鏡是 right_mirror；相機沿用左駕的名稱）")
     L += [f"- 相機：`{c['camera']}`，{fps:g} fps，{c['frames']} 幀（{c['duration_s']:g} s）",
           f"- 種子：行為 {c['seed']}、模型誤差 "
           + ("（由行為種子推出）" if c["emulator_seed"] is None else str(c["emulator_seed"])), ""]

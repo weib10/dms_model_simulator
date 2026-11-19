@@ -8,6 +8,10 @@ output, no time axis.
 
 The page is one HTML file: the scene is inlined as JSON and drawn with raw WebGL plus a 2D canvas for labels (no
 libraries, no network, no fetch), so it opens straight from disk. Same input -> byte-identical file.
+
+Right-hand drive (a Cabin built from a mirrored config, drive.py): the body is the mirrored one the simulation
+uses, the scene says drive: right, and the page template's left-hand-drive wording and view presets are mirrored
+when the page is written (RHD_PAGE_EDITS); a left-hand-drive page is unchanged.
 """
 from __future__ import annotations
 import json
@@ -16,7 +20,7 @@ import numpy as np
 from . import geometry as G
 from .body import SEG, box, cylinder, quad, rot_y  # noqa: F401  (rot_y: re-exported for the tests)
 from .body import frame as _frame
-from .body import parts as body_parts
+from .drive import body_parts
 from .camera import Camera
 from .config import CONFIG_DIR, load_yaml
 from .world import Cabin
@@ -24,6 +28,19 @@ from .world import Cabin
 TEMPLATE = Path(__file__).with_name("view3d_template.html")
 BODY = CONFIG_DIR / "body.yaml"
 FILE = "cabin3d.html"
+FILE_RHD = "cabin3d_rhd.html"
+# right-hand drive: the template is written for left-hand drive; these (old, new) edits, each found exactly once,
+# change its wording and mirror its view presets (pivot y, orbit azimuth and look yaw change sign; points that come
+# from the scene, such as the eye point, are mirrored already)
+RHD_PAGE_EDITS = (
+    ("Generic left-hand-drive sedan.", "Generic right-hand-drive sedan (the left-hand-drive one mirrored)."),
+    ('["side", "Left side, cut away",', '["side", "Right side, cut away",'),
+    ("const VIEWS = [",
+     "{ const orbitL = orbit, lookL = look;      // right-hand drive: the presets below mirrored\n"
+     "  orbit = (p, az, el, D) => orbitL([p[0], -p[1], p[2]], -az, el, D);\n"
+     "  look = (e, yaw, pitch, hfov) => lookL(e, -yaw, pitch, hfov); }\n"
+     "const VIEWS = ["),
+)
 NEAR_M = 3.0            # targets further than this from the eye point are drawn as clipped direction rays
 RAY_M = 2.0             # length of such a ray
 FRUSTUM_M = 0.30        # depth of the drawn field-of-view pyramid
@@ -53,8 +70,9 @@ def _rgb(c: str) -> list[float]:
 
 
 def body_meshes(body: dict, cabin: Cabin, M: _Meshes) -> None:
-    """configs/body.yaml parts (body.parts) as page meshes."""
-    for p in body_parts(body, cabin.targets, cabin.eye_point, cabin.body_adjust):
+    """configs/body.yaml parts (body.parts; adjusted, and mirrored in right-hand drive, as the simulation has
+    them) as page meshes."""
+    for p in body_parts(body, cabin.targets, cabin.eye_point, cabin.drive, cabin.body_pivots):
         M.add(p["tris"], p["layer"], p["color"], p["alpha"], p["two_sided"])
 
 
@@ -193,12 +211,15 @@ def scene(cabin: Cabin, cameras: list[Camera], body: dict | None = None, hand: s
     # the passenger sits mirrored about the car's centreline (midway between the side mirrors, else 0.36 m right)
     t = cabin.targets
     centre_y = 0.5 * (t["left_mirror"][1] + t["right_mirror"][1]) if {"left_mirror", "right_mirror"} <= set(t) else -0.36
-    return {
+    out = {
         "meshes": M.out(), "targets": targets, "cameras": cams, "zone_tol_deg": tol,
         "eye_point": _r(eye), "head": {"c": _r(hc), "fwd": _r(_face_forward(cabin, head))},
         "landmarks": [{"name": k, "p": _r(v)} for k, v in sorted(head.landmarks.items())],
         "passenger_eye": _r(eye + np.array([0.0, 2 * (centre_y - eye[1]), 0.0])),
     }
+    if cabin.drive != "left":               # a left-hand-drive scene stays as before
+        out["drive"] = cabin.drive
+    return out
 
 
 def page(scene_data: dict, sources: tuple[str, ...] = ("configs/cabin.yaml", "configs/cameras.yaml",
@@ -206,14 +227,19 @@ def page(scene_data: dict, sources: tuple[str, ...] = ("configs/cabin.yaml", "co
     """The HTML document. `sources`: names of the config files, printed in the page footer."""
     blob = json.dumps({"scene": scene_data, "sources": list(sources)}, sort_keys=True, separators=(",", ":"))
     html = TEMPLATE.read_text(encoding="utf-8")
+    if scene_data.get("drive") == "right":
+        for old, new in RHD_PAGE_EDITS:
+            if html.count(old) != 1:
+                raise ValueError(f"view3d template: {old!r} found {html.count(old)} times, expected once")
+            html = html.replace(old, new)
     return html.replace("/*{{DATA}}*/null", blob.replace("</", "<\\/"))
 
 
 def write(out_dir, cabin: Cabin, cameras: list[Camera],
           sources: tuple[str, ...] = ("configs/cabin.yaml", "configs/cameras.yaml", "configs/body.yaml")) -> Path:
-    """Write FILE into out_dir. Returns its path."""
+    """Write FILE (right-hand drive: FILE_RHD) into out_dir. Returns its path."""
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
-    p = out / FILE
+    p = out / (FILE if cabin.drive == "left" else FILE_RHD)
     p.write_text(page(scene(cabin, cameras), sources), encoding="utf-8", newline="\n")
     return p
