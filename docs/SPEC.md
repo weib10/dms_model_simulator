@@ -4,8 +4,7 @@
 Simulate the frame-by-frame output of a DMS object-detection model (plus head pose, gaze and openness) for a
 scripted driver, with realistic and tunable model errors, so that post-processing (alert logic) can be tuned
 against it. Alert logic and alert thresholds are out of scope: the simulator writes model outputs, ground truth and
-a behaviour card. An exam (`docs/EXAM.md`) grades what a post-processing reports against the truth; what should
-raise an alert stays with whoever owns the post-processing. Not a goal: photoreal images, training data, or
+a behaviour card; what should raise an alert stays with whoever owns the post-processing. Not a goal: photoreal images, training data, or
 an exact copy of one particular model.
 
 ## Decisions
@@ -16,7 +15,7 @@ an exact copy of one particular model.
 | other outputs | head pose (face frame) with score; gaze as two directions, `face` (where the head points) and `eye` (the eye gaze), each with yaw / pitch, unit vector, `valid`, score, vehicle-frame angles and zone; eye openness per eye and mouth openness (0..1). |
 | ground truth | exact geometry; the emulator never changes it. Truth and model output share `frame_id`. |
 | behaviour labels | derived from the script (`events.py`, `configs/behavior.yaml` `events`), never from the model, and without duration thresholds: they say what the driver does, not what an alert should decide. |
-| observability | per frame and evidence channel, whether a detector that misses nothing could report it (`observable`); the `exact` profile outputs exactly that. Exams count a truth frame only when its evidence is observable. |
+| observability | per frame and evidence channel, whether a detector that misses nothing could report it (`observable`); the `exact` profile outputs exactly that. |
 | behaviour card | per run: segment timeline (time and frame ranges, what the driver does) and the injected model errors as frame runs per kind and class (`behavior_card.py`). |
 | tunability | every geometric, behavioural, error-model and binary-layout number lives in YAML. |
 | determinism | same seed = identical output and the same behaviour on every camera; behaviour and model noise use independent random streams. |
@@ -98,7 +97,7 @@ error: they move most of it from the slow part into the bias and the fast jitter
 correlation time) and add outliers at levels 2 and 3.
 
 ## Frame rate of the error model
-The emulator's numbers given in frames are meant at `reference_fps` (`configs/emulator.yaml`, 20; catalog, exams
+The emulator's numbers given in frames are meant at `reference_fps` (`configs/emulator.yaml`, 20; catalog
 and gallery run at 20 fps). A run at another fps converts them so the behaviour per second stays the same
 (`emulator.at_fps`, applied when `Simulation` builds the emulator, after overrides and profiles): every
 `temporal_rho` and `fast_rho` becomes rho ** (reference_fps / fps), every run length (`mean_frames`,

@@ -64,7 +64,6 @@ TEXT = {
             ("1 條目", "一條寫「駕駛做什麼」的劇本大綱，帶可調的參數（講電話幾秒、頭轉幾度）。", "catalog/entries/"),
             ("2 展開", "排成一列一列具體的劇本：每個難度或參數值 × 相機 × 模型誤差設定各一列。", "dms-sim catalog expand"),
             ("3 模擬", "照劇本演一次，記下真值（駕駛實際做了什麼）和模型輸出（真值加上漏框、抖動等誤差）。", "dms-sim catalog run"),
-            ("4 考卷", "挑一批列當題目。後處理讀模型輸出、交答案卷，評分只拿答案卷跟真值比。", "dms-sim exam build / grade"),
         ),
         "legend": (
             ("gaze zone", "視線落在哪一區。藍線是真值，灰點是模型估的。"),
@@ -161,9 +160,6 @@ TEXT = {
             ("3 Simulate", "Each script is played once, recording the truth (what the driver really did) and the "
                            "model output (the truth plus errors such as missed boxes and jitter).",
              "dms-sim catalog run"),
-            ("4 Exam", "A set of rows becomes the questions. A post-processing program reads the model output and "
-                       "hands in an answer sheet; grading compares only the answer sheet with the truth.",
-             "dms-sim exam build / grade"),
         ),
         "legend": (
             ("gaze zone", "Where the gaze falls. The blue line is the truth, the grey dots the model's estimate."),

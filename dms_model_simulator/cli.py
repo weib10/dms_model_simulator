@@ -508,32 +508,6 @@ def cmd_catalog(a):
             print(f"wrote {p} (open it in a browser)")
 
 
-def cmd_exam(a):
-    """Post-processing exams (exams/, see docs/EXAM.md): list / build / oracle / grade."""
-    from . import exam as E
-    try:
-        if a.action == "list":
-            for name in E.list_exams():
-                ex = E.load_exam(name)
-                print(f"{name:<12} {len(ex['entries']):>3} entries  {ex.get('title', '')}")
-        elif a.action == "build":
-            meta = E.build(a.exam, a.out, jobs=a.jobs, cameras=a.camera, layout=a.layout,
-                           include_face=a.include_face, labels=a.labels, seed=a.seed, force=a.force,
-                           log=lambda *_: None, **_picture_kwargs(a))
-            print(f"exam {meta['exam']} ({meta['fingerprint_id']}): {meta['rows_total']} rows, "
-                  f"{meta['frames_total']} frames -> {a.out}/questions (model output), {a.out}/key (truth; "
-                  f"to read: key/answer_key.md{_picture_note(a)})")
-        elif a.action == "oracle":
-            print(f"wrote {E.oracle_answers(a.exam_dir, a.out)} (the truth as an answer sheet)")
-        elif a.action == "grade":
-            rep = E.grade(a.exam_dir, a.answers, a.grading)
-            path = E.write_report(rep, a.out)
-            print(f"graded {rep['rows_answered']} of {rep['rows_total']} rows, {len(rep['signals'])} signals -> "
-                  f"{path} (details in report.json)")
-    except (E.ExamError, E.C.CatalogError) as e:
-        raise SystemExit(f"dms-sim exam: {e}")
-
-
 def _face_args(parser):
     """--include-face / --no-face: the optional face OD box, for the pipeline JSONL and dms.bin alike."""
     g = parser.add_mutually_exclusive_group()
@@ -594,7 +568,7 @@ def _label_args(parser):
 
 
 def _picture_args(parser):
-    """Optional pictures per catalog / exam row (catalog._row_pictures)."""
+    """Optional pictures per catalog row (catalog._row_pictures)."""
     parser.add_argument("--timeline", action="store_true",
                         help="also write timeline.png per row: truth behaviour, eye openness and injected model errors "
                              "over time")
@@ -616,7 +590,7 @@ def _picture_note(a) -> str:
 
 
 def _pipeline_args(parser):
-    """How catalog / exam rows write the pipeline JSONL: face box and label mode (None = configs/export.yaml)."""
+    """How catalog rows write the pipeline JSONL: face box and label mode (None = configs/export.yaml)."""
     from .schema import LABEL_MODES
     _face_args(parser)
     parser.add_argument("--labels", choices=LABEL_MODES, default=None,
@@ -790,33 +764,6 @@ def main(argv=None):
     q.add_argument("run_a"); q.add_argument("run_b")
     q.add_argument("--tol", type=float, default=1e-9, help="largest allowed number difference (default 1e-9)")
     cg.set_defaults(fn=cmd_catalog)
-    xg = sub.add_parser("exam", help="post-processing exams: build the questions, grade an answer sheet "
-                                     "(see docs/EXAM.md)")
-    xs = xg.add_subparsers(dest="action", required=True)
-    xs.add_parser("list", help="exams in exams/")
-    q = xs.add_parser("build", help="simulate an exam: questions/ (model output) + key/ (truth, behaviour cards)")
-    q.add_argument("exam", help="exam name (exams/<name>.yaml) or a YAML path")
-    q.add_argument("--out", required=True, help="exam directory, e.g. runs/A (keep it short on Windows)")
-    q.add_argument("--jobs", type=int, default=1, help="parallel processes")
-    q.add_argument("--camera", nargs="+", default=None, help="camera(s) instead of the exam's (configs/cameras.yaml)")
-    q.add_argument("--layout", default=None,
-                   help="also write each row as frame_yaml (questions/<row>/labels) with this layout's class ids "
-                        "and thresholds")
-    _picture_args(q)
-    _pipeline_args(q)
-    q.add_argument("--seed", type=int, default=None,
-                   help="seed of the parameter draws of an exam with `mode: random` (a private seed = a held-out exam)")
-    q.add_argument("--force", action="store_true", help="replace an exam already in --out")
-    q = xs.add_parser("oracle", help="write the truth as an answer sheet (full marks: checks the installation, "
-                                     "shows the format)")
-    q.add_argument("exam_dir", help="the --out directory of `exam build`")
-    q.add_argument("--out", required=True, help="answers directory")
-    q = xs.add_parser("grade", help="grade an answer sheet against the truth -> report.md + report.json")
-    q.add_argument("exam_dir", help="the --out directory of `exam build`")
-    q.add_argument("answers", help="answers directory (answer.yaml + <row_id>.jsonl)")
-    q.add_argument("--out", required=True, help="report directory")
-    q.add_argument("--grading", default=None, help="grader settings (default exams/grading.yaml)")
-    xg.set_defaults(fn=cmd_exam)
     a = p.parse_args(argv)
     a.fn(a)
 

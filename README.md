@@ -13,8 +13,6 @@ driver in a car cabin. The output includes the errors a real model makes:
 hysteresis) and see how it copes with realistic model errors.
 
 - The simulator contains no alert logic and no alert thresholds.
-- **Exams** grade a post-processing program: you hand in what it reported per frame, the grader compares it with
-  what the driver did ([Exams](#exams), [`docs/EXAM.md`](docs/EXAM.md)).
 - Each run comes with a **behaviour card**: what the driver did when, and which model errors were injected where.
   Compare your alerts with it.
 - It does not try to match one particular model: error levels are tunable and graded (see [Error profiles](#error-profiles)).
@@ -25,7 +23,6 @@ hysteresis) and see how it copes with realistic model errors.
 - [Quick start](#quick-start)
 - [What it produces](#what-it-produces)
 - [Checking a post-processing program](#checking-a-post-processing-program)
-- [Exams](#exams)
 - [Scenarios](#scenarios)
 - [Model errors](#model-errors)
 - [Outputs](#outputs)
@@ -178,31 +175,6 @@ directions. Layout only, no scenario.
    where the model output was degraded on purpose. An alert that drops during a burst of missed face boxes is a
    different finding from one that never fires.
 
-## Exams
-
-An exam is a frozen set of catalog rows plus a grader. You write an adapter that turns your program's output into
-an answer sheet (named signals, each tied to one behaviour label, 0 / 1 per frame); the grader reports how each
-signal follows the truth. It has no thresholds of its own: delays are measured, and what should raise an alert
-comes from the exam's design or from a rule you declare.
-
-```bash
-dms-sim exam build A-v1 --out runs/A --jobs 4       # questions/ (model output) + key/ (truth)
-python examples/naive_reader.py runs/A answers      # an example adapter: replace it with yours
-dms-sim exam grade runs/A answers --out report      # report.md + report.json
-```
-
-- The answers are in `runs/A/key/answer_key.md`: per row, when the driver does what. The report ends with every
-  miss and false response, each with its row and time, to look up there.
-- `dms-sim exam oracle runs/A --out DIR` writes the truth as an answer sheet: grading it must give full marks, which
-  checks an installation.
-- Truth frames no detector could see (a phone in the lap, a mouth behind a hand) do not count against a signal.
-- `--camera`, `--layout`, `--labels mapped` and `--include-face` build the same exam for your camera and classes.
-- `--timeline` and `--gif` add a picture of every row to the answer side; `answer_key.md` then shows them.
-- `examples/naive_reader.py` reads one frame at a time and raises no alerts: a format example and a baseline, not a
-  reference post-processing.
-
-The answer-sheet format and every measure of the report are in [`docs/EXAM.md`](docs/EXAM.md).
-
 ## Scenarios
 
 ### Scenario files
@@ -337,7 +309,7 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   timestamp / frame index / size / object count are written as 0.
 - **frame_yaml**: `<stem>.frames/labels/<frame>.yaml` with `detections` (class_id, confidence, left, top, width,
   height, class_name) and `timestamp_msec`. `--image render` adds the camera view per frame.
-- **Pictures of a catalog or exam row** (`catalog run` / `exam build` with `--timeline`, `--gif`; off by default):
+- **Pictures of a catalog row** (`catalog run` with `--timeline`, `--gif`; off by default):
   `timeline.png` (truth gaze zone, eye openness, truth behaviour labels and injected model errors over time) and
   `preview.gif` (the camera view, truth boxes green, model boxes red). They are drawn from the row's own
   simulation, change no other file and are left out of `catalog verify`. A GIF of a 5-minute row is about 20 MB.
@@ -352,7 +324,7 @@ All files share `frame_id`; `timestamp_ms` = frame / fps. The field contract is 
   The command writes two pages by default: `RUN/index.html` (Chinese) and `RUN/index.en.html` (English);
   `--lang zh|en` writes only one. Each links to the other at the same place (`#...`). The English page uses the
   entries' `title_en` / `summary_en` and the behaviours' `name_en` (the Chinese where they are missing) and builds
-  the script lines from each row's `card.json` keys; `card.md`, `card.json`, `INDEX.md` and exams stay Chinese.
+  the script lines from each row's `card.json` keys; `card.md`, `card.json` and `INDEX.md` stay Chinese.
   Standards (`catalog/standards.yaml`) get a page each, reached from the bar on top: their requirements in three
   groups (scenarios in the catalog relate to it / no scenario yet / out of the simulator's reach). Entries with a
   `standards` field carry the standard's code as a small mark; the mark means related, not compliant. The public

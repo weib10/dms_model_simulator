@@ -53,7 +53,7 @@ profiles:
   alldet:                      # every box of the ground truth is reported, also in hard views (strong head yaw,
     emulator_overrides:        # occlusion, small boxes): the output holds exactly what the truth marks `observable`
       perfect_detection: true
-  exact:                       # logic exams: ideal + pose0 + alldet. Still left: box corner noise. What the output
+  exact:                       # logic tests: ideal + pose0 + alldet. Still left: box corner noise. What the output
     compose: "ideal+pose0+alldet"   # lacks is what no detector could see (truth `observable`)
   low_conf:                    # object scores just above typical output thresholds: with a per-class conf_threshold
     emulator_overrides:        # in the layout and the default conf noise, some frames fall below and drop out

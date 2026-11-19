@@ -1,7 +1,7 @@
 # 情境目錄（scenario catalog）
 
 把「要模擬什麼駕駛行為」寫成有定義的條目，挑出要的條目自動展開成大量具體劇本，每一列匯出模型輸出、真值和一張行為卡。
-拿去測後處理的人，用行為卡對照後處理的告警；目錄本身不判對錯。要有成績單，用考卷（`dms-sim exam`，見 [docs/EXAM.md](../docs/EXAM.md)）。
+拿去測後處理的人，用行為卡對照後處理的告警；目錄本身不判對錯。
 
 - 全部條目一覽：[INDEX.md](INDEX.md)（`dms-sim catalog index` 產生）
 - 審閱表：[REVIEW.md](REVIEW.md)、[REVIEW.en.md](REVIEW.en.md)、`REVIEW.csv`、`REVIEW.en.csv`（`dms-sim catalog review` 產生，不手改）。
@@ -98,7 +98,6 @@ dms-sim catalog expand NEG-DRW-SNEEZE --param close_s=0.55 --out runs/p1   # 直
 英文版 `index.en.html` 跟中文版同樣的內容；右上角互相連結，連到對方的同一個位置。英文頁的劇本表由 `card.json` 的 `timeline[].keys`
 產生（跟中文句子同一套規則，`behavior_card.seg_text`），條目或行為缺英文時顯示中文。
 它不存資料，只讀 manifest、每列的 `card.json` 和圖；重跑之後重產一次。沒有 JavaScript 時三層依序全部顯示。
-考卷的答案側也是一個 run：`dms-sim catalog gallery runs/A/key`。
 
 全目錄各出一張的做法（一個難度、一個模型雜訊 seed；長時間的 NAT 只出時間軸圖）。444 列、`--jobs 4` 約 17 分鐘、3 GB
 （JSONL 約 2 GB、GIF 約 340 MB，其餘是每幀一個的小檔）：
@@ -158,7 +157,7 @@ fps: 20                                        # 選填，預設 20
 
 英文欄位：`title_en`、`summary_en` 跟中文寫在同一個條目檔；行為的英文名是 `behaviors.yaml` 每個行為的 `name_en`。
 `validate` 把它們當必填：每條要有 `title_en`，有 `summary` 就要有 `summary_en`（沒有就不能有），每個行為要有 `name_en`。改中文時英文一起改。
-類別與行為家族的英文在 `catalog.py` 的 `CATEGORIES_EN`、`FAMILIES_EN`。只有總覽頁英文版用；`INDEX.md`、行為卡、考卷不出英文版。
+類別與行為家族的英文在 `catalog.py` 的 `CATEGORIES_EN`、`FAMILIES_EN`。只有總覽頁英文版用；`INDEX.md`、行為卡不出英文版。
 
 短名與難度表（`validate` 檢查，上限在 `catalog.py` 的 `SHORT_MAX`、`BRIEF_MAX`，單位是字元）：
 
