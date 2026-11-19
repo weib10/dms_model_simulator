@@ -89,7 +89,7 @@
 | #052 | `POS-PHN-BASIC-CALL` | 基本款：看著路講電話 6 / 5 / 2 s，再放下 | V08 | basic, phone, call | 三段 | ready |
 | #053 | `POS-PHN-HELD-UP` | 手機拿在胸前（打字、看訊息）：看手機 6 s、2.5 s × 3 次、1.5 s × 6 次，或拿著但看路 | V09, V03 | phone, held_up, glance | 三段 | ready |
 | #054 | `POS-PHN-LAP-THEN-CALL` | 低頭看大腿上的手機 4 s、抬頭 1 s、再看 2 s，然後接電話（通話時看乘客 1.5 s） | V09, V03, V08, N07 | phone, call, look_down |  | ready |
-| #055 | `POS-PHN-WINDSHIELD` | 手機舉在擋風玻璃前（Euro NCAP advanced） | V09 | phone, ncap |  | planned：camera_ahead_of_the_phone |
+| #055 | `POS-PHN-WINDSHIELD` | 手機舉在擋風玻璃前（Euro NCAP advanced） | V09 | phone, ncap |  | planned：phone_held_up_position |
 | #063 | `POS-SMK-BASIC` | 基本款：菸含在嘴上、雙手在方向盤 6 / 5 / 2 s，再拿掉 | V10 | basic, smoking | 三段 | ready |
 | #064 | `POS-SMK-CIG-IN-LAP` | 兩口之間：菸夾在手上、手放在大腿（10 / 6 / 3 s） | V10 | smoking | 三段 | ready |
 | #065 | `POS-SMK-MOUTH-HAND` | 抽菸：手到嘴抽、菸含嘴手回方向盤、菸拿在手上（看一眼左鏡）、再抽一次 | V10, N02 | smoking, existing | 三段 | ready |

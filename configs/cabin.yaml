@@ -267,7 +267,7 @@ occluders:
     type: cylinder
     active_when_hand: wheel_cross_r
     a: [0.48, -0.14, -0.09]
-    b: [0.25, -0.10, -0.35]      # elbow kept 7 cm off the dash_right lens
+    b: [0.25, -0.10, -0.35]
     radius: 0.035
   - name: hand_chest_left        # right hand on the left chest, in front of the seatbelt strap
     type: sphere

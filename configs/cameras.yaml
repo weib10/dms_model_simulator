@@ -37,12 +37,14 @@ cameras:
   overhead_console:
     position: [0.15, -0.30, 0.42]
     hfov_deg: 80.0
-  # Dash mount right of the steering wheel, looking back at a 3/4 view of the driver, wheel out of view;
-  # wide lens with mild barrel distortion.
+  # On top of the dash, at its rear edge right of the steering wheel, looking back at a 3/4 view of the driver,
+  # wheel rim only at the image edge, clear of the face; wide lens with mild barrel distortion. Was [0.43, -0.20, -0.13] with {yaw: 172.4, pitch: 3.5},
+  # which floated in the air 17 cm behind the dash; moved 2026-11-19 and re-aimed so the head stays at the same
+  # image spot (the face is about 29% smaller: 0.78 m away instead of 0.56 m).
   dash_right:
     width: 1920
     height: 1080
     hfov_deg: 80.0
     distortion: [-0.10, 0.0]          # mild barrel
-    position: [0.43, -0.20, -0.13]
-    orientation: {yaw: 172.4, pitch: 3.5}   # optical axis: backwards, slightly towards the driver, slightly up
+    position: [0.62, -0.34, -0.10]
+    orientation: {yaw: 167.7, pitch: -1.9}  # optical axis: backwards, towards the driver, slightly down

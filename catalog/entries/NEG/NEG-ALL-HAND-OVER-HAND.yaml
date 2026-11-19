@@ -9,8 +9,8 @@ brief_en: {small: "0.2 s sweep (face fully hidden 0.1 s) ×2", medium: "0.4 s sw
 summary: "對照：漏框、臉不見（不是閉眼、不是分心）。路口左轉：視線在左前路面（仍在路上），右手從左到右掃過方向盤上緣，
   手在正中間時 steering_column 整張臉被擋（偵測不到臉、眼、嘴），在左側時擋一部分，在右側時不擋。每次掃過 = 左 + 中 + 右：
   small 0.05 + 0.1 + 0.05 s、medium 0.1 + 0.2 + 0.1 s、large 0.15 + 0.4 + 0.15 s，共 2 / 4 / 6 次，中間手回方向盤 0.6 s。
-  dash_right 看不到這隻手（對照用）。"
-summary_en: "Reference: missed box, face not visible (not eye closure, not distraction). Left turn at an intersection: the gaze is on the road ahead to the left (still on road), and the right hand sweeps from left to right across the top of the wheel; with the hand in the middle the whole face is blocked on steering_column (no face, eyes or mouth detected), on the left it blocks part of the face, and on the right it blocks nothing. Each sweep = left + middle + right: small 0.05 + 0.1 + 0.05 s, medium 0.1 + 0.2 + 0.1 s, large 0.15 + 0.4 + 0.15 s, 2 / 4 / 6 times in total, with the hand back on the wheel for 0.6 s in between. dash_right cannot see this hand (as a control)."
+  dash_right 上臉不受影響（對照用），但手掃到右側時會入鏡；掃過左側、中間時手臂擋住 1/4 到一半的肩帶，模擬模型在那幾幀約一半報不出安全帶框。"
+summary_en: "Reference: missed box, face not visible (not eye closure, not distraction). Left turn at an intersection: the gaze is on the road ahead to the left (still on road), and the right hand sweeps from left to right across the top of the wheel; with the hand in the middle the whole face is blocked on steering_column (no face, eyes or mouth detected), on the left it blocks part of the face, and on the right it blocks nothing. Each sweep = left + middle + right: small 0.05 + 0.1 + 0.05 s, medium 0.1 + 0.2 + 0.1 s, large 0.15 + 0.4 + 0.15 s, 2 / 4 / 6 times in total, with the hand back on the wheel for 0.6 s in between. On dash_right the face is not affected (as a control), but the hand comes into view on the right; on the left and in the middle the arm hides a quarter to half of the shoulder strap, and the simulated model misses the seat-belt box in about half of those frames."
 status: ready
 source: written
 tags: [occlusion, hand_over_hand]

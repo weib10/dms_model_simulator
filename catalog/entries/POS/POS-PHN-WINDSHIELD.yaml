@@ -4,12 +4,12 @@ title: "手機舉在擋風玻璃前（Euro NCAP advanced）"
 title_en: "Phone held up in front of the windscreen (Euro NCAP advanced)"
 short: "手機舉在擋風玻璃前"
 short_en: "Phone held up at the windscreen"
-brief: {all: "還沒寫：dash_right 在手機後面，拍不到這個位置"}
-brief_en: {all: "Not written yet: dash_right sits behind that spot, so it cannot see the phone"}
-summary: "dash_right 在儀表板（x = 0.43）往後看，比它更前面的東西在鏡頭後方，這台相機拍不到；要換相機位置才寫得出來。"
-summary_en: "dash_right sits on the dashboard (x = 0.43) looking backwards; anything further forward than it is behind the lens, so this camera cannot see it; writing this entry needs a different camera position."
+brief: {all: "還沒寫：手機舉起的位置還沒定"}
+brief_en: {all: "Not written yet: where the phone is held up is not set"}
+summary: "還沒寫：要先定手機舉在擋風玻璃前的位置。dash_right 在儀表板上緣往後看：手機比它更前面就在鏡頭後方、拍不到；舉在它和駕駛之間才拍得到，但可能擋住臉。"
+summary_en: "Not written yet: the spot where the phone is held up in front of the windscreen has to be set first. dash_right sits on top of the dashboard looking backwards: a phone further forward than it is behind the lens and out of view; held between it and the driver it is in view but may hide the face."
 status: planned
-needs: [camera_ahead_of_the_phone]
+needs: [phone_held_up_position]
 source: written
 tags: [phone, ncap]
 behaviors: [V09]
