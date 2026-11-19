@@ -12,7 +12,11 @@ from .simulate import FORMATS, Simulation
 from .world import Cabin
 
 
-def _cameras(cfgs, names):
+def _cameras(cfgs, names, drive: str = "left"):
+    """(cabin, cameras) of the configs; drive right = mirrored as a right-hand-drive Simulation sees them."""
+    if drive == "right":
+        from . import drive as D
+        cfgs = {**cfgs, "cabin": D.mirror_cabin(cfgs["cabin"]), "cameras": D.mirror_cameras(cfgs["cameras"])}
     cabin = Cabin(cfgs["cabin"])
     allc = list(cfgs["cameras"]["cameras"].keys())
     names = allc if names in (None, ["all"]) else names
@@ -25,7 +29,7 @@ def cmd_run(a):
     rows = {}
     for cam in cams:
         sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=load_configs(), emulator_seed=a.emulator_seed, fps=a.fps,
-                         variant=a.variant, emulator_overrides=_profile_overrides(a))
+                         variant=a.variant, emulator_overrides=_profile_overrides(a), drive=a.drive)
         sim.run()
         paths = sim.write(a.out, fmt=a.format, include_face=a.include_face, dms_layout=a.layout, labels=a.labels)
         m = sim.summarize()
@@ -83,7 +87,7 @@ def _render_grid(a, viz, cams):
     sims = []
     for cam in cams:
         sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=load_configs(), fps=a.fps, variant=a.variant,
-                         emulator_overrides=_profile_overrides(a)); sim.run()
+                         emulator_overrides=_profile_overrides(a), drive=a.drive); sim.run()
         sims.append(sim)
     out = Path(a.out) / f"{sims[0].scenario['name']}__grid"; out.mkdir(parents=True, exist_ok=True)
     n = min(len(s.records) for s in sims)
@@ -112,9 +116,9 @@ def cmd_render(a):
     if len(cams) > 1:
         return _render_grid(a, viz, cams)
     cam = cams[0]
-    _, all_cams = _cameras(cfgs, None)
+    _, all_cams = _cameras(cfgs, None, a.drive)
     sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=cfgs, fps=a.fps, variant=a.variant,
-                     emulator_overrides=_profile_overrides(a))
+                     emulator_overrides=_profile_overrides(a), drive=a.drive)
     sim.run()
     cam, cabin = sim.camera, sim.cabin                  # with the scenario's / variant's driver and mount
     all_cams = [cam if c.name == cam.name else c for c in all_cams]
@@ -185,13 +189,15 @@ def cmd_demo(a):
     _, cams = _cameras(cfgs, a.cameras)
     out = Path(a.out); data = out / "data"; data.mkdir(parents=True, exist_ok=True)
     scenario = load_scenario(a.scenario)
-    name = scenario["name"] if a.variant is None else f"{scenario['name']}_v{a.variant}"   # as Simulation names it
+    from .drive import NAME_SUFFIX
+    name = (scenario["name"] if a.variant is None else f"{scenario['name']}_v{a.variant}") \
+        + NAME_SUFFIX[a.drive]                                                              # as Simulation names it
     metrics, stems, gif_frames = {}, {}, {}
     fps = None
     t_start = time.perf_counter()
     for cam in cams:
         sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=load_configs(), emulator_seed=a.emulator_seed,
-                         fps=a.fps, variant=a.variant, emulator_overrides=_profile_overrides(a)); sim.run()
+                         fps=a.fps, variant=a.variant, emulator_overrides=_profile_overrides(a), drive=a.drive); sim.run()
         sim.write(data, fmt="all", include_face=a.include_face, dms_layout=a.layout, labels=a.labels)
         stem = stems[cam.name] = f"{name}__{cam.name}"
         write_card(sim, data / f"{stem}__card")
@@ -264,7 +270,7 @@ def cmd_export(a):
     try:
         sim, st, truth = X.export_scenario(a.scenario, a.camera, a.format, a.out, a.seed, a.fps, a.config,
                                            image=a.image, variant=a.variant,
-                                           emulator_overrides=_profile_overrides(a), full=True)
+                                           emulator_overrides=_profile_overrides(a), full=True, drive=a.drive)
         card = write_card(sim, Path(a.out) / f"{sim.scenario['name']}__{sim.camera.name}__card",
                           row={"profile": a.profile})
     except (X.ExportError, *_EXPORT_INPUT_ERRORS) as e:
@@ -284,11 +290,12 @@ def cmd_export(a):
 def cmd_cabin(a):
     from . import viz
     cfgs = load_configs()
-    cabin, cams = _cameras(cfgs, None)
+    cabin, cams = _cameras(cfgs, None, a.drive)
     fig = viz.plot_cabin(cabin, cams)
     Path(a.out).mkdir(parents=True, exist_ok=True)
-    fig.savefig(Path(a.out) / "cabin.png", dpi=110)
-    print(f"wrote {a.out}/cabin.png")
+    name = "cabin.png" if a.drive == "left" else "cabin_rhd.png"
+    fig.savefig(Path(a.out) / name, dpi=110)
+    print(f"wrote {a.out}/{name}")
 
 
 def cmd_view3d(a):
@@ -305,7 +312,8 @@ def cmd_compare(a):
     _, cams = _cameras(cfgs, None)
     rows = {}
     for cam in cams:
-        sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=load_configs(), variant=a.variant); sim.run()
+        sim = Simulation(a.scenario, cam.name, seed=a.seed, cfgs=load_configs(), variant=a.variant,
+                         drive=a.drive); sim.run()
         rows[cam.name] = sim.summarize()
         name = sim.scenario["name"]                       # with the variant suffix
     cols = ["face_detection_rate", "mean_face_width_px", "mean_eye_width_px", "mean_abs_head_yaw_rel_camera_deg",
@@ -382,7 +390,8 @@ def cmd_batch(a):
     for sc in scenarios:
         for var in variants:
             for cam in cams:
-                sim = Simulation(sc, cam, seed=a.seed, cfgs=load_configs(), fps=a.fps, variant=var); sim.run()
+                sim = Simulation(sc, cam, seed=a.seed, cfgs=load_configs(), fps=a.fps, variant=var,
+                                 drive=a.drive); sim.run()
                 sim.write(data := out / "data", fmt=a.format, labels=a.labels, dms_layout=a.layout)
                 m = sim.summarize()
                 drv = sim.cfgs["cabin"]["driver"]
@@ -475,7 +484,7 @@ def cmd_catalog(a):
             raise SystemExit(f"--param {', '.join(unused)}: no selected entry has this parameter")
         man = C.expand(sel, a.out, a.mode, a.n, a.seed, cameras=a.camera, variants=a.variants,
                        emulator_seeds=a.emulator_seeds, profile_names=a.profile, max_rows=a.max_rows,
-                       levels=a.level, overrides=overrides)
+                       levels=a.level, overrides=overrides, drive=a.drive)
         print(f"wrote {a.out}/manifest.json: {len(man['rows'])} rows from {len(man['entries'])} entries"
               + (f" (planned, skipped: {', '.join(man['skipped_planned'])})" if man["skipped_planned"] else ""))
     elif a.action == "verify":
@@ -554,6 +563,13 @@ def _variant_arg(parser):
                              "height, head size, mount position and aim error); default: nominal. Output names get _vN")
 
 
+def _drive_arg(parser):
+    from .drive import DRIVES
+    parser.add_argument("--drive", choices=DRIVES, default="left",
+                        help="left-hand drive (default: the configs as written) or right: right-hand drive, the cabin, "
+                             "cameras and scenario mirrored left to right (camera names kept; output names get _rhd)")
+
+
 def _fps_arg(parser):
     parser.add_argument("--fps", type=float, default=None,
                         help="frame rate, overrides configs/behavior.yaml fps (default 30) and the scenario")
@@ -622,6 +638,7 @@ def main(argv=None):
     _label_args(r)
     _fps_arg(r)
     _variant_arg(r)
+    _drive_arg(r)
     r.set_defaults(fn=cmd_run)
     v = sub.add_parser("render", help="render the camera view (and cabin layout) as PNG frames + GIF")
     v.add_argument("--scenario", required=True)
@@ -635,6 +652,7 @@ def main(argv=None):
     _fps_arg(v)
     _variant_arg(v)
     _profile_arg(v)
+    _drive_arg(v)
     v.add_argument("--no-cabin", dest="cabin", action="store_false", help="camera view only")
     v.add_argument("--story", action="store_true",
                    help="instead of the engineering view: a presentation view (large top-down picture with plain "
@@ -651,10 +669,12 @@ def main(argv=None):
     _label_args(d)
     _fps_arg(d)
     _variant_arg(d)
+    _drive_arg(d)
     _view_args(d)
     d.add_argument("--scale", type=float, default=0.4, help="GIF: camera view scale")
     d.add_argument("--grid-cols", type=int, default=None, help="columns of the all-camera grid GIF"); d.set_defaults(fn=cmd_demo)
-    c = sub.add_parser("cabin", help="plot the cabin with all camera presets"); c.add_argument("--out", default="out"); c.set_defaults(fn=cmd_cabin)
+    c = sub.add_parser("cabin", help="plot the cabin with all camera presets"); c.add_argument("--out", default="out")
+    _drive_arg(c); c.set_defaults(fn=cmd_cabin)
     v3 = sub.add_parser("view3d", help="cabin layout in a generic car interior (gaze targets, cameras) as one HTML "
                                        "page with a 3D view; opens from disk, no network")
     v3.add_argument("--out", default="out/view3d", help="folder for cabin3d.html")
@@ -666,7 +686,7 @@ def main(argv=None):
     m = sub.add_parser("compare", help="run one scenario over all cameras and print a metrics table")
     m.add_argument("--scenario", required=True)
     m.add_argument("--out", default=None, help="also write compare__<scenario>.md / .json here (default: print only)"); m.add_argument("--seed", type=int, default=0)
-    _variant_arg(m); m.set_defaults(fn=cmd_compare)
+    _variant_arg(m); _drive_arg(m); m.set_defaults(fn=cmd_compare)
     ib = sub.add_parser("inspect-bin", help="print a dms.bin file as text")
     ib.add_argument("path"); ib.add_argument("--layout", default=None, help="layout YAML (default configs/binlog.yaml)")
     ib.add_argument("--head", type=int, default=None, help="print only the first N frames"); ib.set_defaults(fn=cmd_inspect_bin)
@@ -693,6 +713,7 @@ def main(argv=None):
     bt.add_argument("--layout", default=None, help="dms.bin layout YAML (default configs/binlog.yaml)")
     _label_args(bt)
     _fps_arg(bt)
+    _drive_arg(bt)
     bt.set_defaults(fn=cmd_batch)
     ex = sub.add_parser("export", help="simulate and write the model output (dms.bin / per-frame YAML directory) + "
                                        "pipeline / truth / full JSONL + behaviour card")
@@ -706,6 +727,7 @@ def main(argv=None):
     ex.add_argument("--json", action="store_true", help="print the written paths as one JSON object")
     _variant_arg(ex)
     _profile_arg(ex)
+    _drive_arg(ex)
     ex.set_defaults(fn=cmd_export)
     cg = sub.add_parser("catalog", help="scenario catalog: list / show / validate / index / review / expand / run / "
                                         "gallery "
@@ -743,6 +765,7 @@ def main(argv=None):
                    help="difficulty levels of entries with `levels` parameters (default: all three, one row each)")
     q.add_argument("--param", action="append", default=[], metavar="NAME=VALUE",
                    help="fix a parameter in every selected entry that has it (value parsed as YAML); repeatable")
+    _drive_arg(q)
     q = cs.add_parser("run", help="export every manifest row (frame_yaml + JSONL + behaviour card)")
     q.add_argument("run_dir"); q.add_argument("select", nargs="*", default=None,
                                          help="only these rows: entry ids, categories, families or prefixes (as for list)")

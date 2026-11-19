@@ -102,6 +102,7 @@ python -m pytest -q tests                                                       
 | `--profile` | error profile (see [Error profiles](#error-profiles)) |
 | `--fps` | default 30; the `export` / `catalog` default is 20 |
 | `--variant N` | driver and camera-mount variant from `configs/variation.yaml` |
+| `--drive right` | right-hand drive: cabin, cameras and script mirrored (see [Right-hand drive](#right-hand-drive)) |
 | `--layout` | binary / class layout, default `configs/binlog.yaml` |
 | `--labels sim\|mapped` | pipeline JSONL labels: simulator classes, or the classes of the layout's `class_map` |
 | `--include-face` / `--no-face` | include or leave out the face box |
@@ -214,6 +215,34 @@ Camera presets (`configs/cameras.yaml`): `steering_column`, `cluster`, `rearview
 
 A scenario may carry a `cabin:` block (driver position / size) and a `camera:` block (mount error);
 `--variant N` draws them from `configs/variation.yaml`.
+
+### Right-hand drive
+
+The configs describe a left-hand-drive car. `--drive right` (on `run`, `render`, `demo`, `cabin`, `compare`,
+`batch`, `export` and `catalog expand`) plays the same scenario in a right-hand-drive car: the
+whole world is mirrored left to right, after every scenario / variant override is merged (`dms_model_simulator/drive.py`).
+
+- **Scripts are written once, for left-hand drive.** Looking at the passenger still looks at the passenger (now on
+  the left); `left_mirror` in a script, the driver-side mirror, becomes `right_mirror`, still on the driver's side.
+  A scripted `head_pose` changes the sign of yaw and roll, so catalog text such as "head turned right 60°" reads
+  "left" in right-hand drive.
+- **Mirrored:** gaze targets, hand positions, the seat belt (now from the right shoulder to the left hip), the
+  steering wheel and other occluders, camera positions and aims, mounting errors, the driver's seat offset.
+- **Names:** gaze targets that come in left / right pairs swap (`left_mirror` <-> `right_mirror`, `road_left` <->
+  `road_right`), so the output zones say which side physically. Camera presets, hand states and occluders keep
+  their names as IDs: `dash_right` is the dash camera on the passenger side of the wheel (left of it in
+  right-hand drive), `chest_left` the hand across the chest at the shoulder strap.
+- **Not mirrored:** the face (`left_eye` is still the driver's left eye) and the model-error settings.
+- **The working hand mirrors too.** A phone call is at the left ear, a rubbed eye is the left one: the hand next to
+  the centre console. A right-handed driver who keeps the right hand for the phone in a right-hand-drive car is
+  not modelled.
+- Output names get `_rhd` (`mirror_check_rhd__dash_right.jsonl`, catalog row ids `<entry>__<level>__<hash>_rhd__...`);
+  `__camera.json`, the behaviour card, and the catalog manifest's rows and fingerprint say
+  `drive: right`. Left-hand-drive output is unchanged and has no `drive` key.
+
+The truth of a right-hand-drive run is exactly the left-hand-drive truth mirrored: pixels u -> width − u, yaw and
+roll negated, left and right eye swapped (`tests/test_drive.py` checks this frame by frame). The model noise is
+drawn anew, not mirrored.
 
 ## Model errors
 
@@ -351,7 +380,8 @@ stream, and an entry's random parameters do not depend on which other entries ar
 version, git commit (and whether code, configs or catalog have uncommitted changes), numpy version, and a hash of
 every config file, of `catalog/profiles.yaml` / `behaviors.yaml` and of each selected entry. Every behaviour card
 prints its short id. A row id already encodes the entry, level, parameters, behaviour seed, scenario content,
-camera, variant, model-error seed and profile; the fingerprint adds code and configs.
+camera, variant, model-error seed and profile (and `_rhd` for right-hand drive); the fingerprint adds code and
+configs, and `drive: right` for right-hand drive.
 
 **Same machine:** identical inputs give byte-identical files. **Across operating systems:** text files are always
 written with LF, but the maths libraries may differ in the last digit of a float (measured Windows vs Linux:

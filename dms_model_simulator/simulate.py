@@ -25,14 +25,19 @@ def rng_streams(seed: int, emulator_seed: int | None = None) -> tuple[np.random.
 
 class Simulation:
     def __init__(self, scenario, camera_name: str, seed: int = 0, cfgs: dict | None = None, emulator_overrides: dict | None = None,
-                 emulator_seed: int | None = None, fps: float | None = None, variant: int | dict | None = None):
+                 emulator_seed: int | None = None, fps: float | None = None, variant: int | dict | None = None,
+                 drive: str = "left"):
         """fps: frame rate override (beats configs/behavior.yaml and the scenario's behavior.fps); None = config.
         The scenario's optional `cabin:` block is merged into configs/cabin.yaml and its `camera:` block into the
         simulated camera's preset (e.g. driver.eye_point_offset, driver.head_scale, mount_offset,
         mount_rotation_deg). variant: driver / camera-mount variant drawn from configs/variation.yaml (an int N, see
         variation.sample_variant, or an already sampled dict), applied on top of those; its number is appended to
-        the scenario name ("<name>_v<N>") so output files of different variants do not collide."""
+        the scenario name ("<name>_v<N>") so output files of different variants do not collide.
+        drive: "left" (the configs as written) or "right": right-hand drive, the cabin, cameras and scenario mirrored
+        after every override is merged (see drive.py); "_rhd" is appended to the scenario name."""
         from .config import deep_merge
+        from . import drive as D
+        self.drive = D.check(drive)
         self.cfgs = dict(cfgs) if cfgs else load_configs()       # shallow copy: overrides below do not leak
         if emulator_overrides:
             self.cfgs["emulator"] = deep_merge(self.cfgs["emulator"], emulator_overrides)
@@ -59,6 +64,12 @@ class Simulation:
         for ov in cam_ov:
             cams = deep_merge(cams, {"cameras": {camera_name: ov or {}}})
         self.cfgs["cameras"] = cams
+        if self.drive == "right":           # mirror once, after the scenario / variant blocks are merged
+            self.cfgs["cabin"] = D.mirror_cabin(self.cfgs["cabin"])
+            self.cfgs["cameras"] = D.mirror_cameras(self.cfgs["cameras"])
+            self.cfgs["behavior"] = D.mirror_behavior(self.cfgs["behavior"])
+            self.scenario = {**D.mirror_scenario(self.scenario),
+                             "name": self.scenario["name"] + D.NAME_SUFFIX["right"]}
         self.cabin = Cabin(self.cfgs["cabin"])
         self.camera = Camera.from_config(camera_name, self.cfgs["cameras"], self.cabin.reference_head_center)
         self.seed, self.emulator_seed = seed, emulator_seed
@@ -162,6 +173,8 @@ class Simulation:
             desc["driver"] = {"eye_point_offset": list(drv["eye_point_offset"]), "head_scale": self.cabin.head_scale}
             if self.variant:
                 desc["variant"] = self.variant
+            if self.drive != "left":        # left-hand-drive files stay as before
+                desc["drive"] = self.drive
             json.dump(desc, fh, indent=2)
         return paths
 

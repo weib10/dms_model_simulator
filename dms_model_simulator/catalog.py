@@ -821,11 +821,16 @@ def _row_hash(*parts) -> str:
 def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, seed: int = 0,
            profiles: dict | None = None, cameras: list[str] | None = None,
            variants: int | None = None, emulator_seeds: int | None = None, profile_names: list[str] | None = None,
-           max_rows: int = 2000, levels: list[str] | None = None, overrides: dict | None = None) -> dict:
+           max_rows: int = 2000, levels: list[str] | None = None, overrides: dict | None = None,
+           drive: str = "left") -> dict:
     """Write <out>/scenarios/<scn>.yaml and <out>/manifest.json; returns the manifest. One manifest row per
     concrete scenario (x level) x camera x (nominal + variants) x behaviour seed x emulator seed x profile.
     Command-line overrides (cameras, variants, emulator_seeds, profile_names) beat each entry's `variation`;
-    levels picks the difficulty levels (default all three) and overrides fixes parameters (see expand_params)."""
+    levels picks the difficulty levels (default all three) and overrides fixes parameters (see expand_params).
+    drive: left | right; right-hand drive plays every row mirrored (drive.py): the rows get `drive: right` and
+    "_rhd" after the scenario part of the row id, and the fingerprint records it."""
+    from . import drive as D
+    D.check(drive)
     profiles = profiles if profiles is not None else load_profiles()
     cam_names = set(load_configs()["cameras"]["cameras"])
     for c in cameras or []:
@@ -852,7 +857,7 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
             raise CatalogError(f"more than {max_rows} rows; narrow the selection or raise --max-rows")
         plan.append((e, var, axes, psets))
     from .repro import fingerprint, fingerprint_id
-    fp = fingerprint([e for e, *_ in plan])
+    fp = fingerprint([e for e, *_ in plan], drive=drive)
     fp_id = fingerprint_id(fp)
     out = Path(out_dir)
     (out / "scenarios").mkdir(parents=True, exist_ok=True)
@@ -867,10 +872,10 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
                 scn = sc["name"] = f"{e['id']}__{lv + '__' if lv else ''}{_row_hash(e['id'], params, bseed, body)}"
                 spath = save_scenario(sc, out / "scenarios" / f"{scn}.yaml")
                 for cam, v, es, pr in itertools.product(cams, vlist, eseeds, profs):
-                    rid = f"{scn}__{cam}__v{'n' if v is None else v}__e{es}__{pr}"
+                    rid = f"{scn}{D.NAME_SUFFIX[drive]}__{cam}__v{'n' if v is None else v}__e{es}__{pr}"
                     rows.append({"row_id": rid, "entry": e["id"], "category": category(e), "family": family(e),
                                  "params": params, "level": lv, "scenario": str(spath.resolve()), "camera": cam,
-                                 "variant": v,
+                                 "variant": v, **({"drive": drive} if drive != "left" else {}),
                                  "seed": int(bseed), "emulator_seed": int(es), "profile": pr,
                                  "emulator_overrides": resolve_profile(pr, profiles), "fps": fps,
                                  "title": e.get("title", ""), "summary": e.get("summary", ""),
@@ -1094,7 +1099,8 @@ def _run_row(r: dict, run_dir: str, layout: dict | None = None, pipeline: dict |
     sim, st, truth = export_scenario(r["scenario"], r["camera"], "frame_yaml", d, seed=r["seed"], fps=r["fps"],
                                      config=config, include_face=True, variant=r["variant"],
                                      emulator_overrides=r["emulator_overrides"], emulator_seed=r["emulator_seed"],
-                                     full=True, pipeline_face=pipeline.get("include_face"))
+                                     full=True, pipeline_face=pipeline.get("include_face"),
+                                     drive=r.get("drive", "left"))
     card = write_card(sim, d, row=r)
     box = road_box(sim.cabin, sim.behavior.cfg["events"]["on_road_targets"])
     info = {"row_id": r["row_id"], "frames_dir": str(st["path"]), "truth": str(truth), "frames": st["frames"],

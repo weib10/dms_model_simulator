@@ -40,14 +40,15 @@ def _git(*args) -> str | None:
     return r.stdout.strip() if r.returncode == 0 else None
 
 
-def fingerprint(entries: list[dict] | None = None) -> dict:
-    """What decides the output of a run: code version, configs, catalog files and the selected entries."""
+def fingerprint(entries: list[dict] | None = None, drive: str = "left") -> dict:
+    """What decides the output of a run: code version, configs, catalog files, the selected entries and, for
+    right-hand drive only (so left-hand-drive fingerprints stay as they were), the drive side."""
     from . import __version__
     from .catalog import CATALOG_DIR
     commit = _git("rev-parse", "HEAD")
     dirty = bool(_git("status", "--porcelain", "--untracked-files=no", "--", "dms_model_simulator", "configs",
                       "catalog")) if commit else None
-    return {
+    fp = {
         "package": __version__,
         "git_commit": commit,
         "git_dirty": dirty,                    # uncommitted changes to code / configs / catalog
@@ -59,11 +60,22 @@ def fingerprint(entries: list[dict] | None = None) -> dict:
                     if (CATALOG_DIR / n).exists()},
         "entries": {e["id"]: text_sha(e["_path"]) for e in entries or [] if e.get("_path")},
     }
+    if drive != "left":
+        fp["drive"] = drive
+    return fp
+
+
+def _decisive(fp: dict) -> dict:
+    """The keys of a fingerprint that change the output; drive only when it is not the default left."""
+    out = {k: fp.get(k) for k in DECISIVE}
+    if fp.get("drive", "left") != "left":
+        out["drive"] = fp["drive"]
+    return out
 
 
 def fingerprint_id(fp: dict) -> str:
     """Short id of the decisive part of a fingerprint (printed on behaviour cards)."""
-    return _sha(json.dumps({k: fp.get(k) for k in DECISIVE}, sort_keys=True).encode())
+    return _sha(json.dumps(_decisive(fp), sort_keys=True).encode())
 
 
 def compare_fingerprints(a: dict | None, b: dict | None) -> tuple[list[str], list[str]]:
@@ -71,6 +83,8 @@ def compare_fingerprints(a: dict | None, b: dict | None) -> tuple[list[str], lis
     if not a or not b:
         return ["a run has no fingerprint (made before fingerprints were recorded)"], []
     diff, info = [], []
+    if a.get("drive", "left") != b.get("drive", "left"):
+        diff.append(f"drive: {a.get('drive', 'left')} vs {b.get('drive', 'left')}")
     for k in DECISIVE:
         x, y = a.get(k), b.get(k)
         if isinstance(x, dict) or isinstance(y, dict):

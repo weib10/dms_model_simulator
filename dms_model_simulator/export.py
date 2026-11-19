@@ -188,18 +188,19 @@ def sniff_format(path) -> str:
 def export_scenario(scenario, camera: str, fmt: str, out_dir, seed: int = 0, fps: float | None = None,
                     config: dict | str | Path | None = None, include_face: bool = True, image: str = "none",
                     variant: int | None = None, emulator_overrides: dict | None = None,
-                    emulator_seed: int | None = None, full: bool = False, pipeline_face: bool | None = None):
+                    emulator_seed: int | None = None, full: bool = False, pipeline_face: bool | None = None,
+                    drive: str = "left"):
     """Simulate and export one run: the export (<stem>.dms.bin | directory <stem>.frames) plus the pipeline /
     truth JSONL (Simulation.write, labels from `simulation.labels`; full=True also writes the full truth + pred
     JSONL with the emulator's error flags; pipeline_face: the face box in the pipeline JSONL, None = the label
     mode's default). image: none | render (frame_yaml only). variant: driver / camera-mount
     variant; emulator_overrides / emulator_seed: model-error config overrides and noise seed (Simulation).
-    Returns (sim, export stats, truth path)."""
+    drive: left | right (right-hand drive, see drive.py). Returns (sim, export stats, truth path)."""
     from .simulate import Simulation
     bc = load_config(config)
     sc = bc.get("simulation") or {}
     sim = Simulation(scenario, camera, seed=seed, fps=fps if fps is not None else sc.get("fps"), variant=variant,
-                     emulator_overrides=emulator_overrides, emulator_seed=emulator_seed)
+                     emulator_overrides=emulator_overrides, emulator_seed=emulator_seed, drive=drive)
     sim.run()
     out = Path(out_dir).resolve()
     labels = sc.get("labels", "sim")
