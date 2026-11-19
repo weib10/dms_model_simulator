@@ -855,7 +855,7 @@ def expand(entries: list[dict], out_dir, mode: str = "boundary", n: int = 5, see
         n_rows += len(psets) * len(var["seeds"]) * int(np.prod([len(x) for x in axes]))
         if n_rows > max_rows:
             raise CatalogError(f"more than {max_rows} rows; narrow the selection or raise --max-rows")
-        plan.append((e, var, axes, psets))
+        plan.append((e if drive == "left" else D.mirror_entry_text(e), var, axes, psets))
     from .repro import fingerprint, fingerprint_id
     fp = fingerprint([e for e, *_ in plan], drive=drive)
     fp_id = fingerprint_id(fp)

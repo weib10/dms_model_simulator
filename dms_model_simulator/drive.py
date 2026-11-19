@@ -156,3 +156,91 @@ def mirror_scenario(sc: dict) -> dict:
     if out.get("behavior"):
         out["behavior"] = mirror_behavior(out["behavior"])
     return out
+
+
+# ---- text: the catalog's words for a right-hand-drive run ----------------------------------------------------
+# Entry texts are written for left-hand drive. In a right-hand-drive run every direction word swaps, as the world
+# does: "head turned right 60°" is a turn to the left, "right hand" the left hand. Kept: 左右 ("left and right", or
+# "about"), English left / right as a verb or adverb (_EN_KEEP), and identifiers that are not gaze targets (camera
+# presets such as dash_right, hand states such as chest_left, parameter names such as left_s), which keep their
+# names in right-hand drive.
+_EN_KEEP = (r"left(?= (?:out|in the mouth|to the emulator)\b)", r"(?<=is )left(?=[;,.])",
+            r"right(?= (?:next to|on the mirror|at the start)\b)")
+_A = r"(?<![A-Za-z0-9_])"          # ASCII word edges: a Chinese character next to an English word is an edge too
+_Z = r"(?![A-Za-z0-9_])"
+_TEXT_RE = None
+
+
+def _text_re():
+    import re
+    global _TEXT_RE
+    if _TEXT_RE is None:
+        _TEXT_RE = re.compile("|".join([
+            rf"(?P<ident>{_A}[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+{_Z})",   # identifier: swapped only if a gaze target
+            rf"(?P<keep>左右|{_A}(?:" + "|".join(_EN_KEEP) + "))",
+            r"(?P<zh>[左右])",
+            rf"(?P<en>{_A}(?:left|right|Left|Right|LEFT|RIGHT){_Z})",
+        ]))
+    return _TEXT_RE
+
+
+_EN_SWAP = {"left": "right", "right": "left", "Left": "Right", "Right": "Left", "LEFT": "RIGHT", "RIGHT": "LEFT"}
+
+
+def mirror_text(text, targets=()):
+    """A left-hand-drive description as it reads in right-hand drive: 左 <-> 右, left <-> right, and gaze-target
+    names in `targets` swapped like the targets (left_mirror -> right_mirror). Non-strings are returned as they are."""
+    if not isinstance(text, str):
+        return text
+    targets = set(targets)
+
+    def rep(m):
+        if m.group("ident"):
+            w = m.group("ident")
+            return mirror_target_name(w) if w in targets else w
+        if m.group("keep"):
+            return m.group("keep")
+        if m.group("zh"):
+            return "右" if m.group("zh") == "左" else "左"
+        return _EN_SWAP[m.group("en")]
+    return _text_re().sub(rep, text)
+
+
+def target_names(*trees) -> set:
+    """Every gaze-target name in config / scenario / catalog-entry trees: keys of a `targets:` mapping and values of
+    `target:` (the names mirror_text may swap)."""
+    out = set()
+
+    def walk(x):
+        if isinstance(x, dict):
+            for k, v in x.items():
+                if k == "targets" and isinstance(v, dict):
+                    out.update(str(t) for t in v)
+                elif k == "target" and isinstance(v, str):
+                    out.add(v)
+                walk(v)
+        elif isinstance(x, list):
+            for v in x:
+                walk(v)
+    for t in trees:
+        walk(t)
+    return out
+
+
+ENTRY_TEXT_FIELDS = ("title", "title_en", "summary", "summary_en", "short", "short_en", "brief", "brief_en")
+
+
+def mirror_entry_text(entry: dict, cabin_cfg: dict | None = None) -> dict:
+    """A catalog entry with its texts (title, summary, short, brief; both languages) as they read in right-hand drive
+    (mirror_text). Gaze-target names: those of cabin_cfg (default configs/cabin.yaml) and of the entry itself."""
+    if cabin_cfg is None:
+        from .config import load_configs
+        cabin_cfg = load_configs()["cabin"]
+    targets = target_names(cabin_cfg, entry)
+    out = dict(entry)
+    for k in ENTRY_TEXT_FIELDS:
+        v = entry.get(k)
+        out[k] = {kk: mirror_text(vv, targets) for kk, vv in v.items()} if isinstance(v, dict) else mirror_text(v, targets)
+        if v is None:
+            out.pop(k)
+    return out

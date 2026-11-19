@@ -48,6 +48,7 @@ TEXT = {
     "zh": {
         "html_lang": "zh-Hant",
         "title": "DMS 模型輸出模擬器：情境總覽",
+        "rhd_suffix": "（右駕：整台車左右鏡像，說明裡的左右已對調）",
         "home": "情境總覽",
         "search_ph": "搜尋：編號、標題、id、行為編號",
         "search_aria": "搜尋情境",
@@ -138,6 +139,7 @@ TEXT = {
     "en": {
         "html_lang": "en",
         "title": "DMS model output simulator: scenario overview",
+        "rhd_suffix": " (right-hand drive: the car mirrored, left and right in the texts swapped)",
         "home": "Overview",
         "search_ph": "Search: number, title, id, behaviour code",
         "search_aria": "Search scenarios",
@@ -772,6 +774,10 @@ def gallery_html(run_dir, entries: list[dict] | None = None, title: str | None =
     run = Path(run_dir)
     man = C.load_manifest(run)
     catalog = entries if entries is not None else C.load_entries()
+    rhd = (man.get("fingerprint") or {}).get("drive") == "right"
+    if rhd:                     # a right-hand-drive run: the entries' directions as they read there (drive.py)
+        from .drive import mirror_entry_text
+        catalog = [mirror_entry_text(e) for e in catalog]
     standards = C.load_standards() if standards is None else standards
     known = {e["id"] for e in catalog}
     # rows of an entry the catalog no longer has still get a page (built from the manifest)
@@ -817,7 +823,7 @@ def gallery_html(run_dir, entries: list[dict] | None = None, title: str | None =
     flow = "".join(f'<div class="step"><b>{escape(a)}</b><p>{escape(b)}</p><code>{escape(cmd)}</code></div>'
                    for a, b, cmd in T["flow"])
     legend = "".join(f"<tr><td><b>{escape(a)}</b></td><td>{escape(b)}</td></tr>" for a, b in T["legend"])
-    title = title or T["title"]
+    title = title or (T["title"] + (T["rhd_suffix"] if rhd else ""))
     in_run = sum(bool(by_entry.get(e["id"])) for e in entries)
     n_star = sum(_starred(e, behaviors) for e in catalog)
     src = Counter(e.get("source", "written") for e in catalog)

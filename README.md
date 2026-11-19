@@ -224,8 +224,13 @@ whole world is mirrored left to right, after every scenario / variant override i
 
 - **Scripts are written once, for left-hand drive.** Looking at the passenger still looks at the passenger (now on
   the left); `left_mirror` in a script, the driver-side mirror, becomes `right_mirror`, still on the driver's side.
-  A scripted `head_pose` changes the sign of yaw and roll, so catalog text such as "head turned right 60°" reads
-  "left" in right-hand drive.
+  A scripted `head_pose` changes the sign of yaw and roll: "head turned right 60°" to the passenger is a turn to
+  the left.
+- **The catalog texts follow.** In a right-hand-drive run the entries' title, summary, short name and levels (both
+  languages) are shown with left and right swapped, as the world is: in the manifest rows, the behaviour cards
+  and `catalog gallery` (whose title then says right-hand drive). Kept as written: 左右
+  ("left and right", "about"), left / right as a verb or adverb ("left in the mouth", "right next to"), and names
+  that are not gaze targets (`dash_right`, `chest_left`). The entry files themselves stay left-hand drive.
 - **Mirrored:** gaze targets, hand positions, the seat belt (now from the right shoulder to the left hip), the
   steering wheel and other occluders, camera positions and aims, mounting errors, the driver's seat offset.
 - **Names:** gaze targets that come in left / right pairs swap (`left_mirror` <-> `right_mirror`, `road_left` <->

@@ -188,7 +188,8 @@ def test_export_scenario_drive(tmp_path):
 
 
 def _one_entry():
-    return {"id": "NEG-DIS-TEST", "number": 1, "title": "t", "status": "ready", "behaviors": ["N01"], "params": {},
+    return {"id": "NEG-DIS-TEST", "number": 1, "title": "邊講話邊看左鏡", "title_en": "Talking at the left mirror",
+            "summary": "看 left_mirror 0.8 s，dash_right 拍得到", "status": "ready", "behaviors": ["N01"], "params": {},
             "template": {"segments": [{"target": "road_ahead", "duration": 1.0},
                                       {"target": "left_mirror", "duration": 0.8},
                                       {"target": "road_ahead", "duration": 1.0}]},
@@ -210,6 +211,14 @@ def test_catalog_expand_and_run_drive(tmp_path):
     assert "right_mirror" in {t["gaze"]["eye"]["target"] for t in truth}   # the LHD script's left mirror, mirrored
     card = json.loads((Path(info["card"]).parent / "card.json").read_text(encoding="utf-8"))
     assert card["drive"] == "right"
+    # the entry's words as they read in right-hand drive: in the manifest row, the card and the gallery
+    assert rl["title"] == "邊講話邊看左鏡" and rr["title"] == "邊講話邊看右鏡" == card["title"]
+    assert rr["summary"] == "看 right_mirror 0.8 s，dash_right 拍得到"
+    from dms_model_simulator.gallery import gallery_html
+    zh = gallery_html(tmp_path / "r", entries=[_one_entry()], lang="zh")
+    en = gallery_html(tmp_path / "r", entries=[_one_entry()], lang="en")
+    assert "邊講話邊看右鏡" in zh and "邊講話邊看左鏡" not in zh and "（右駕" in zh
+    assert "Talking at the right mirror" in en and "right-hand drive" in en
     with pytest.raises(ValueError, match="drive"):
         C.expand([_one_entry()], tmp_path / "x", drive="rhd")
 
@@ -224,3 +233,24 @@ def test_cli_drive(tmp_path):
     assert (tmp_path / "cabin_rhd.png").exists()
     with pytest.raises(SystemExit):
         cli.main(["run", "--scenario", "mirror_check", "--drive", "rhd", "--out", str(tmp_path)])
+
+
+@pytest.mark.parametrize("text, expected", [
+    ("頭向右轉 60° 看乘客，右手揉右眼", "頭向左轉 60° 看乘客，左手揉左眼"),
+    ("路口左右張望：看左、右、左", "路口左右張望：看右、左、右"),          # 左右 ("left and right", "about") stays
+    ("Head turned right 60°; left-hand knuckles, Left mirror", "Head turned left 60°; right-hand knuckles, Right mirror"),
+    ("看left_mirror 與 road_left", "看right_mirror 與 road_right"),          # gaze targets swap, also next to Chinese
+    ("dash_right, chest_left, wheel_cross_l, left_s", "dash_right, chest_left, wheel_cross_l, left_s"),   # IDs kept
+    ("cigarette left in the mouth; left out; right next to it; right at the start; the look down is left;",
+     "cigarette left in the mouth; left out; right next to it; right at the start; the look down is left;"),
+    ("straight, bright, leftover", "straight, bright, leftover"),
+])
+def test_mirror_text(text, expected):
+    assert D.mirror_text(text, {"left_mirror", "right_mirror", "road_left", "road_right"}) == expected
+    assert D.mirror_text(D.mirror_text(text, {"left_mirror", "road_left"}), {"right_mirror", "road_right"}) == text
+
+
+def test_scenario_description_reads_right_hand_drive():
+    sc = dict(load_scenario("mirror_check"), description="Looks at left_mirror, then turns right")
+    sim = Simulation(sc, "dash_right", fps=FPS, drive="right")
+    assert sim.scenario["description"] == "Looks at right_mirror, then turns left"

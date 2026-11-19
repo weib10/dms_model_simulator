@@ -65,11 +65,14 @@ class Simulation:
             cams = deep_merge(cams, {"cameras": {camera_name: ov or {}}})
         self.cfgs["cameras"] = cams
         if self.drive == "right":           # mirror once, after the scenario / variant blocks are merged
+            names = D.target_names(self.cfgs["cabin"], self.scenario)     # the left-hand-drive names
             self.cfgs["cabin"] = D.mirror_cabin(self.cfgs["cabin"])
             self.cfgs["cameras"] = D.mirror_cameras(self.cfgs["cameras"])
             self.cfgs["behavior"] = D.mirror_behavior(self.cfgs["behavior"])
             self.scenario = {**D.mirror_scenario(self.scenario),
                              "name": self.scenario["name"] + D.NAME_SUFFIX["right"]}
+            if "description" in self.scenario:          # its directions as they read in right-hand drive
+                self.scenario["description"] = D.mirror_text(self.scenario["description"], names)
         self.cabin = Cabin(self.cfgs["cabin"])
         self.camera = Camera.from_config(camera_name, self.cfgs["cameras"], self.cabin.reference_head_center)
         self.seed, self.emulator_seed = seed, emulator_seed
