@@ -128,3 +128,75 @@ def test_the_belt_lies_in_front_of_the_torso(setup):
         for cam in cams:
             names = {cabin.ray_blocked(cam.position, p, occl, cabin.occlusion_eps) for p in pts}
             assert not names & {"torso", "seatback_driver", "seat_driver"}, (cam.name, off)
+
+
+def _cabin_with(adjust: dict) -> Cabin:
+    cfg = load_configs()["cabin"]
+    cfg["body"]["adjust"] = adjust
+    return Cabin(cfg)
+
+
+def test_zero_adjust_builds_the_parts_as_written(setup):
+    cabin, _ = setup
+    bare = load_configs()["cabin"]; bare["body"].pop("adjust")
+    zero = _cabin_with({"steering_wheel": {"move": [0, 0, 0], "tilt_deg": 0}, "dashboard": {"move": [0, 0, 0]}})
+    for c in (Cabin(bare), zero):
+        assert c.body_adjust == {}
+        np.testing.assert_array_equal(c.body_occluder["tris"], cabin.body_occluder["tris"])
+        assert c.occluders == cabin.occluders and c.hands == cabin.hands
+
+
+def test_moving_the_wheel_moves_everything_on_it_in_the_simulation_and_on_the_page(setup):
+    from dms_model_simulator import view3d
+    cabin, cams = setup
+    mv = np.array([0.03, 0.0, -0.02])
+    moved = _cabin_with({"steering_wheel": {"move": mv.tolist(), "tilt_deg": 0.0,
+                                            "hands": ["wheel", "wheel_cross_l", "wheel_cross_c", "wheel_cross_r"]},
+                         "dashboard": {"move": [0, 0, 0]}})
+    get = lambda c, n: next(o for o in c.occluders if o["name"] == n)
+    for n in ("steering_wheel", "steering_wheel_hub"):
+        np.testing.assert_allclose(np.subtract(get(moved, n)["center"], get(cabin, n)["center"]), mv)
+    np.testing.assert_allclose(np.subtract(get(moved, "steering_wheel_spoke_left")["a"],
+                                           get(cabin, "steering_wheel_spoke_left")["a"]), mv)
+    np.testing.assert_allclose(np.subtract(get(moved, "forearm_wheel_cross_l")["b"], get(cabin, "forearm_wheel_cross_l")["b"]), mv)
+    np.testing.assert_allclose(np.subtract(moved.hands["wheel"], cabin.hands["wheel"]), mv)
+    assert moved.hands["lap"] == cabin.hands["lap"]
+    sel = lambda c, n: c.body_occluder["tris"][c.body_occluder["part"] == n]
+    np.testing.assert_allclose(sel(moved, "steering_column") - sel(cabin, "steering_column"), np.broadcast_to(mv, sel(cabin, "steering_column").shape))
+    np.testing.assert_array_equal(sel(moved, "dash_top"), sel(cabin, "dash_top"))
+    # the page draws the same moved column
+    page = view3d.scene(moved, cams)
+    pts = np.concatenate([np.asarray(m["pos"]).reshape(-1, 3) for m in page["meshes"]])
+    for t in sel(moved, "steering_column")[::9]:
+        assert np.min(np.linalg.norm(pts - t[0], axis=1)) < 1e-3
+
+
+def test_tilting_the_wheel_turns_its_plane_about_the_centre(setup):
+    cabin, _ = setup
+    tilted = _cabin_with({"steering_wheel": {"move": [0, 0, 0], "tilt_deg": 10.0, "hands": []}})
+    get = lambda c, n: next(o for o in c.occluders if o["name"] == n)
+    a, b = get(cabin, "steering_wheel"), get(tilted, "steering_wheel")
+    assert a["center"] == b["center"]
+    ang = np.degrees(np.arccos(np.dot(G.normalize(a["normal"]), G.normalize(b["normal"]))))
+    # the top (forward of the centre, the wheel leans back) tips towards the driver: the wheel stands more upright
+    assert abs(ang - 10.0) < 1e-6 and b["normal"][2] < a["normal"][2]
+
+
+def test_moving_the_dashboard_moves_its_parts_only(setup):
+    cabin, _ = setup
+    mv = np.array([0.0, 0.0, -0.05])
+    moved = _cabin_with({"dashboard": {"move": mv.tolist()}})
+    sel = lambda c, n: c.body_occluder["tris"][c.body_occluder["part"] == n]
+    for n in ("dash_top", "dash_face", "center_stack_bezel"):
+        np.testing.assert_allclose(sel(moved, n) - sel(cabin, n), np.broadcast_to(mv, sel(cabin, n).shape))
+    np.testing.assert_array_equal(sel(moved, "column_shroud"), sel(cabin, "column_shroud"))
+    assert moved.occluders == cabin.occluders
+
+
+def test_a_camera_inside_a_part_is_an_error():
+    cfg = load_configs()
+    cfg["cabin"]["body"]["adjust"] = {"dashboard": {"move": [-0.02, 0.0, 0.0]}}     # the bezel over center_stack
+    with pytest.raises(ValueError, match="inside the car body part 'center_stack_bezel'"):
+        Simulation("mirror_check", "center_stack", seed=0, cfgs=cfg)
+    with pytest.raises(ValueError, match="unknown part"):
+        _cabin_with({"seat": {"move": [0, 0, 0]}})

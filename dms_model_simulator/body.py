@@ -89,20 +89,57 @@ def _moved(p: dict, d: np.ndarray) -> dict:
     return q
 
 
-def parts(body: dict, targets: dict, eye) -> list[dict]:
+GROUPS = ("steering_wheel", "dashboard")      # adjust blocks; only the steering wheel tilts
+
+
+def adjusters(body: dict, pivots: dict) -> dict:
+    """{group: (points_fn, directions_fn)} for every adjust block of body.yaml that is not zero: a rigid move, for the
+    steering wheel after a tilt about pivots["steering_wheel"] (the wheel centre). Zero blocks are left out, so a body
+    with no adjust, or all zeros, builds exactly as written."""
+    out = {}
+    for group, a in (body.get("adjust") or {}).items():
+        if group not in GROUPS:
+            raise ValueError(f"body adjust: unknown part {group!r} (one of {', '.join(GROUPS)})")
+        unknown = set(a or {}) - ({"move", "tilt_deg", "hands"} if group == "steering_wheel" else {"move"})
+        if unknown:
+            raise ValueError(f"body adjust.{group}: unknown keys {sorted(unknown)}")
+        move = np.asarray((a or {}).get("move", [0.0, 0.0, 0.0]), float)
+        tilt = float((a or {}).get("tilt_deg", 0.0))
+        if not move.any() and tilt == 0.0:
+            continue
+        R = rot_y(tilt)
+        c = np.asarray(pivots.get(group, [0.0, 0.0, 0.0]), float)
+
+        def pts(p, R=R, c=c, move=move):
+            p = np.asarray(p, float)
+            return (p - c) @ R.T + c + move
+
+        def dirs(v, R=R):
+            return np.asarray(v, float) @ R.T
+        out[group] = (pts, dirs)
+    return out
+
+
+def parts(body: dict, targets: dict, eye, adjust: dict | None = None) -> list[dict]:
     """Every configs/body.yaml part as {name, layer, color, alpha, two_sided, closed, tris}. closed: a solid whose
     triangles face outwards (box, cylinder); the rest are open surfaces (quads, panels). Several pieces of one part
     (a mirror's housing, glass and arm) come as several entries with the same name. Panels and housings sit at
     the gaze targets (`targets`, facing the nominal eye point, the origin), so they move with configs/cabin.yaml
     and not with the driver. A part with `follows: driver` (the torso) is written for the nominal driver and moves
     with the driver's eye point `eye` (driver variants; the seat belt moves the same way); `follows: seat` (the
-    driver's seat) moves with its fore / aft and lateral part only (sitting height is the driver, not the seat)."""
+    driver's seat) moves with its fore / aft and lateral part only (sitting height is the driver, not the seat).
+    adjust: adjusters(...) of the cabin; a part with `group:` moves with that group."""
     toward = np.asarray(body.get("toward", [0.0, 0.0, 0.0]), float)
     eye = np.asarray(eye, float)
     nominal_eye = np.zeros(3)
     out = []
 
     def add(p, tris, color=None, alpha=None, two_sided=False, closed=True):
+        if adjust and p.get("group") in adjust and tris:
+            f = adjust[p["group"]][0]
+            tris = [tuple(t) for t in f(np.asarray(tris, float).reshape(-1, 3)).reshape(-1, 3, 3)]
+        elif p.get("group") not in (None, *GROUPS):
+            raise ValueError(f"body part {p['name']!r}: unknown group {p['group']!r} (one of {', '.join(GROUPS)})")
         out.append({"name": p["name"], "layer": p.get("layer", "body"), "color": color or p.get("color", "trim"),
                     "alpha": float(p.get("alpha", 1.0) if alpha is None else alpha), "two_sided": two_sided,
                     "closed": closed, "tris": tris})
@@ -148,14 +185,40 @@ def parts(body: dict, targets: dict, eye) -> list[dict]:
     return out
 
 
-def occluder(body: dict, targets: dict, eye) -> dict | None:
+def occluder(body: dict, targets: dict, eye, adjust: dict | None = None) -> dict | None:
     """All parts as one "mesh" occluder: tris (N x 3 x 3), the part name of each triangle and two_sided: true
     for open surfaces (quads, panels), which a ray may meet from either side; a closed part is entered through a
     triangle facing the camera. None: no parts."""
-    ps = [p for p in parts(body, targets, eye) if p["tris"]]
+    ps = [p for p in parts(body, targets, eye, adjust) if p["tris"]]
     if not ps:
         return None
     tris = np.array([t for p in ps for t in p["tris"]], float)
     names = np.array([p["name"] for p in ps for _ in p["tris"]])
     two = np.array([p["two_sided"] or not p["closed"] for p in ps for _ in p["tris"]], bool)
     return {"name": "car_body", "type": "mesh", "tris": tris, "part": names, "two_sided": two}
+
+
+def part_containing(occ: dict | None, point) -> str | None:
+    """Name of the closed part (box, cylinder) the point lies inside, else None: a ray from the point crosses that
+    part's surface an odd number of times. The ray test of the simulation assumes a camera is outside every part."""
+    if occ is None:
+        return None
+    o = np.asarray(point, float)
+    d = np.array([0.31, 0.17, 9.0])                    # any direction that meets no edge head-on
+    closed = ~occ["two_sided"]
+    for name in dict.fromkeys(occ["part"][closed]):
+        tris = occ["tris"][closed & (occ["part"] == name)]
+        v0 = tris[:, 0]
+        e1, e2 = tris[:, 1] - v0, tris[:, 2] - v0
+        h = np.cross(d, e2)
+        a = np.einsum("ij,ij->i", e1, h)
+        ok = np.abs(a) > 1e-15
+        f = np.where(ok, 1.0 / np.where(ok, a, 1.0), 0.0)
+        s = o - v0
+        u = f * np.einsum("ij,ij->i", s, h)
+        q = np.cross(s, e1)
+        v = f * (q @ d)
+        t = f * np.einsum("ij,ij->i", e2, q)
+        if int(np.count_nonzero(ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 0))) % 2:
+            return str(name)
+    return None

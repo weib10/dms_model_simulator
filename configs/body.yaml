@@ -1,3 +1,20 @@
+# ---- Where to move a part -------------------------------------------------------------------------------------
+#   steering wheel   adjust.steering_wheel below (move / tilt): rim, hub and spokes (configs/cabin.yaml occluders
+#                    steering_wheel*), column, shroud, and the hand on it (hands.wheel, wheel_cross_*, forearms)
+#   dashboard        adjust.dashboard below (move): dash top / underside / face, centre-stack bezel
+#   mirrors          their gaze targets in configs/cabin.yaml (targets.left_mirror ...); the housings follow
+#   cluster, display their gaze targets in configs/cabin.yaml (targets.cluster, center_display); the screens follow
+#   driver's seat    driver.eye_point_offset in configs/cabin.yaml: the seat, torso and belt move with the driver
+#   cameras          configs/cameras.yaml; they stay put when a part moves (moving the dash can leave one floating, and
+#                    a camera inside a part is an error when the simulation starts)
+# 0 everywhere = the parts exactly as written below.
+adjust:
+  steering_wheel:
+    move: [0.0, 0.0, 0.0]
+    tilt_deg: 0.0          # about the wheel centre, > 0 tips the top towards the driver
+    hands: [wheel, wheel_cross_l, wheel_cross_c, wheel_cross_r]   # hand states on the rim: they move with it
+  dashboard: {move: [0.0, 0.0, 0.0]}
+
 # Generic left-hand-drive sedan body. The simulation uses it: every part hides from a camera whatever is behind it
 # (world.Cabin builds one occluder from all parts, named per part in occluded_by), and dms-sim view3d draws the
 # same parts. Kept to what a target or camera sits on, plus floor, walls, seats and the driver's torso (the seat
@@ -17,6 +34,7 @@
 # follows: driver -- the part is written for the nominal driver and moves with the driver's eye point (a driver
 # variant sits further back / higher; the seat belt moves the same way). follows: seat -- moves with the eye point's
 # fore / aft and lateral part only (the seat slides; sitting height is the driver's). Default: fixed to the car.
+# group: steering_wheel | dashboard -- the part moves with that adjust block above.
 # Every part has a colour (#rrggbb or a name below).
 
 toward: [0.0, -0.36, -0.10]
@@ -47,29 +65,29 @@ parts:
      points: [[-1.00, -1.22, -0.95], [1.06, -1.22, -0.95], [1.06, -1.22, -0.15], [-1.00, -1.22, -0.15]]}
   # ---- dashboard: top (rear edge x 0.60), its underside over the cluster, face at x 0.74. The driver's part (the
   # cluster hood, y > -0.20) is 2 cm higher than the rest: dash_right (z -0.10) stands 2 cm above the right part ----
-  - {name: dash_top, type: quad, color: dash,
+  - {name: dash_top, type: quad, group: dashboard, color: dash,
      points: [[1.05, 0.50, -0.12], [0.60, 0.50, -0.10], [0.60, -0.20, -0.10], [1.05, -0.20, -0.12]]}
-  - {name: dash_top_right, type: quad, color: dash,
+  - {name: dash_top_right, type: quad, group: dashboard, color: dash,
      points: [[1.05, -0.20, -0.14], [0.60, -0.20, -0.12], [0.60, -1.22, -0.12], [1.05, -1.22, -0.14]]}
-  - {name: dash_step, type: quad, color: dash,
+  - {name: dash_step, type: quad, group: dashboard, color: dash,
      points: [[1.05, -0.20, -0.12], [0.60, -0.20, -0.10], [0.60, -0.20, -0.12], [1.05, -0.20, -0.14]]}
-  - {name: dash_underside, type: quad, color: dash,
+  - {name: dash_underside, type: quad, group: dashboard, color: dash,
      points: [[0.60, 0.50, -0.10], [0.74, 0.50, -0.12], [0.74, -0.20, -0.12], [0.60, -0.20, -0.10]]}
-  - {name: dash_underside_right, type: quad, color: dash,
+  - {name: dash_underside_right, type: quad, group: dashboard, color: dash,
      points: [[0.60, -0.20, -0.12], [0.74, -0.20, -0.14], [0.74, -1.22, -0.14], [0.60, -1.22, -0.12]]}
-  - {name: dash_step_under, type: quad, color: dash,
+  - {name: dash_step_under, type: quad, group: dashboard, color: dash,
      points: [[0.60, -0.20, -0.10], [0.74, -0.20, -0.12], [0.74, -0.20, -0.14], [0.60, -0.20, -0.12]]}
-  - {name: dash_face, type: quad, color: dash,
+  - {name: dash_face, type: quad, group: dashboard, color: dash,
      points: [[0.74, 0.50, -0.12], [0.74, 0.50, -0.50], [0.74, -1.22, -0.50], [0.74, -1.22, -0.12]]}
   - {name: footwell, type: quad, color: floor,
      points: [[1.06, 0.50, -0.95], [0.74, 0.50, -0.50], [0.74, -1.22, -0.50], [1.06, -1.22, -0.95]]}
   # x 0.67..0.74: 2 cm in front of the centre-stack camera (x 0.65)
-  - {name: center_stack_bezel, type: box, color: dash, center: [0.705, -0.45, -0.18], size: [0.07, 0.26, 0.12]}
+  - {name: center_stack_bezel, type: box, group: dashboard, color: dash, center: [0.705, -0.45, -0.18], size: [0.07, 0.26, 0.12]}
   - {name: cluster, type: panel, color: screen, target: cluster, size: [0.30, 0.12], back_x: 0.74}
   - {name: center_display, type: panel, color: screen, target: center_display, size: [0.26, 0.16], back_x: 0.74}
-  - {name: steering_column, type: cylinder, color: dash, a: [0.44, 0.0, -0.23], b: [0.74, 0.0, -0.37], radius: 0.04}
+  - {name: steering_column, type: cylinder, group: steering_wheel, color: dash, a: [0.44, 0.0, -0.23], b: [0.74, 0.0, -0.37], radius: 0.04}
   # x 0.62..0.69, top z -0.16: the cluster camera (x 0.715, z -0.148) sits ahead of it and sees over it
-  - {name: column_shroud, type: box, color: dash, center: [0.655, 0.0, -0.19], size: [0.07, 0.10, 0.06]}
+  - {name: column_shroud, type: box, group: steering_wheel, color: dash, center: [0.655, 0.0, -0.19], size: [0.07, 0.10, 0.06]}
   # ---- mirrors (at the gaze targets) ----
   - {name: mirror_left, type: housing, color: dash, target: left_mirror, size: [0.08, 0.20, 0.13],
      offset: [0.04, 0.0, 0.0], glass: mirror, arm_to: [0.90, 0.50, -0.12]}

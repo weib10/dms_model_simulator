@@ -61,6 +61,11 @@ class Simulation:
         self.cfgs["cameras"] = cams
         self.cabin = Cabin(self.cfgs["cabin"])
         self.camera = Camera.from_config(camera_name, self.cfgs["cameras"], self.cabin.reference_head_center)
+        from .body import part_containing
+        inside = part_containing(self.cabin.body_occluder, self.camera.position)
+        if inside:
+            raise ValueError(f"camera {camera_name} at {np.round(self.camera.position, 3).tolist()} is inside the car "
+                             f"body part {inside!r} (configs/body.yaml): move the camera or the part")
         self.seed, self.emulator_seed = seed, emulator_seed
         self.rng, self.emulator_rng = rng_streams(seed, emulator_seed)      # behaviour, emulator
         self.behavior = BehaviorGenerator(self.cabin, self.cfgs["behavior"], self.scenario, self.rng)

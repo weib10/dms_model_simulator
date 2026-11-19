@@ -90,9 +90,15 @@ class Cabin:
         for k, h in self.held_objects.items():
             if not h["length"] > 2 * h["radius"] > 0:
                 raise ValueError(f"held_objects.{k}: length must exceed its diameter (2 x radius > 0)")
-        # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on
+        # the car body (configs/body.yaml, loaded into the cabin config as "body"): one mesh occluder, always on.
+        # Its adjust block moves the steering wheel (the steering_wheel* occluders above, the hands on the wheel and
+        # their forearms, the column parts of the body) and the dashboard; zero = as written.
         self.body = cfg.get("body") or {}
-        self.body_occluder = B.occluder(self.body, self.targets, self.eye_point)
+        wheel = next((o for o in self.occluders if o.get("name") == "steering_wheel" and "center" in o), None)
+        self.body_adjust = B.adjusters(self.body, {"steering_wheel": wheel["center"] if wheel else [0.0, 0.0, 0.0]})
+        if "steering_wheel" in self.body_adjust:
+            self._move_wheel(*self.body_adjust["steering_wheel"])
+        self.body_occluder = B.occluder(self.body, self.targets, self.eye_point, self.body_adjust)
         oc_cfg = cfg.get("occlusion", {})
         self.occlusion_eps = float(oc_cfg.get("surface_eps", 0.0))
         self.torus_segments = int(oc_cfg.get("torus_segments", 36))
@@ -100,6 +106,23 @@ class Cabin:
         self.self_occluders = [{**so, "radius": s * float(so["radius"]),
                                 **{k: (so[k] if isinstance(so[k], str) else (s * np.array(so[k], float)).tolist())
                                    for k in ("a", "b")}} for so in cfg.get("self_occluders", [])]
+
+    def _move_wheel(self, pts, dirs) -> None:
+        """Move what rides on the steering wheel: the steering_wheel* occluders, the hand states listed in body.yaml
+        adjust.steering_wheel.hands (positions and their hand / forearm occluders)."""
+        hands = set(((self.body.get("adjust") or {}).get("steering_wheel") or {}).get("hands") or [])
+        moved = []
+        for o in self.occluders:
+            if str(o.get("name", "")).startswith("steering_wheel") or o.get("active_when_hand") in hands:
+                o = dict(o)
+                for k in ("center", "a", "b"):
+                    if k in o and not isinstance(o[k], str):
+                        o[k] = pts(o[k]).tolist()
+                if "normal" in o:
+                    o["normal"] = dirs(o["normal"]).tolist()
+            moved.append(o)
+        self.occluders = moved
+        self.hands = {k: (pts(v).tolist() if k in hands and not isinstance(v, str) else v) for k, v in self.hands.items()}
 
     # ---- head ---------------------------------------------------------------
     def head_pose(self, yaw: float, pitch: float, roll: float) -> tuple[np.ndarray, np.ndarray]:

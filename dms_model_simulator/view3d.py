@@ -54,7 +54,7 @@ def _rgb(c: str) -> list[float]:
 
 def body_meshes(body: dict, cabin: Cabin, M: _Meshes) -> None:
     """configs/body.yaml parts (body.parts) as page meshes."""
-    for p in body_parts(body, cabin.targets, cabin.eye_point):
+    for p in body_parts(body, cabin.targets, cabin.eye_point, cabin.body_adjust):
         M.add(p["tris"], p["layer"], p["color"], p["alpha"], p["two_sided"])
 
 

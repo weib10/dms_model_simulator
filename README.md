@@ -147,7 +147,11 @@ One camera only; `--scale` sets the size (0.5 = 960x720).
 **3D layout** (`dms-sim view3d`): `cabin3d.html`, one file that opens straight from disk (no network, WebGL). It
 draws what the simulation uses: `configs/cabin.yaml`, `configs/cameras.yaml` and the car body
 (`configs/body.yaml`: shell, dashboard, column, mirrors, seats, the driver's torso). The body is part of the
-simulation: every part hides from a camera whatever is behind it, and `occluded_by` names the part. Two
+simulation: every part hides from a camera whatever is behind it, and `occluded_by` names the part. To move a part,
+change one number: the `adjust` block at the top of `configs/body.yaml` moves (and for the wheel tilts) the steering
+wheel with the hand on it, or the dashboard; mirrors, cluster and centre display follow their gaze targets in
+`configs/cabin.yaml`; the driver's seat follows `driver.eye_point_offset`. Cameras stay where
+`configs/cameras.yaml` puts them; a camera left inside a part stops the simulation with an error. Two
 modes, one at a time: *where the driver looks* (gaze targets, each with its zone tolerance as a ring) and *where
 the cameras are* (camera bodies, the chosen camera's field of view, "look through this camera"). Views: facing the
 driver, back seat, passenger seat, the driver's eyes, top, left side cut away. The head is what the simulation has:
